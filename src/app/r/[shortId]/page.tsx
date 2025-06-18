@@ -1,3 +1,4 @@
+
 import { redirect, notFound } from 'next/navigation';
 import { getQRCodeByShortId } from '@/app/actions';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -22,19 +23,18 @@ export default async function RedirectPage({ params }: RedirectPageProps) {
   if (qrCode && qrCode.url_destino) {
     redirect(qrCode.url_destino);
   } else {
-    // If not found, render a "not found" message within the app's styling.
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-gradient-to-br from-background to-secondary/30">
         <Card className="w-full max-w-md text-center shadow-xl">
           <CardHeader>
-            <CardTitle className="text-2xl font-headline text-destructive">QR Code Not Found</CardTitle>
+            <CardTitle className="text-2xl font-headline text-destructive">Código QR No Encontrado</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="text-muted-foreground">
-              The QR code you scanned or the link you followed ({params.shortId}) is invalid or has expired.
+              El código QR que escaneaste o el enlace que seguiste ({params.shortId}) no es válido o ha expirado.
             </p>
             <Button asChild variant="outline">
-              <Link href="/">Go to Homepage</Link>
+              <Link href="/">Ir a la Página Principal</Link>
             </Button>
           </CardContent>
         </Card>

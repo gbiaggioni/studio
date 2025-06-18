@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -37,6 +38,7 @@
     --sidebar-accent-foreground: 347 50% 30%;
     --sidebar-border: 270 30% 85%;
     --sidebar-ring: 270 69% 61%;
+    /* --font-pt-sans will be defined by next/font */
   }
 
   .dark {
@@ -80,6 +82,6 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground font-body antialiased;
+    @apply bg-background text-foreground font-body; /* Removed antialiased as it's on html now */
   }
 }

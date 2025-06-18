@@ -1,10 +1,19 @@
+
 import type { Metadata } from 'next';
+import { PT_Sans } from 'next/font/google';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 
+const ptSans = PT_Sans({
+  subsets: ['latin', 'cyrillic'],
+  weight: ['400', '700'],
+  style: ['normal', 'italic'],
+  variable: '--font-pt-sans',
+});
+
 export const metadata: Metadata = {
-  title: 'QREasy - QR Code Manager',
-  description: 'Easily create, manage, and share QR codes.',
+  title: 'QREasy - Gestor de Códigos QR',
+  description: 'Crea, gestiona y comparte tus códigos QR fácilmente.',
 };
 
 export default function RootLayout({
@@ -13,13 +22,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=PT+Sans:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet" />
-      </head>
-      <body className="font-body antialiased">
+    <html lang="es" className={`${ptSans.variable} antialiased`}>
+      <head />
+      <body className="font-body">
         {children}
         <Toaster />
       </body>

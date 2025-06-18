@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Button } from "@/components/ui/button";
@@ -23,13 +24,13 @@ export function DeleteAllButton() {
     const result = await deleteAllQRCodesAction();
     if (result.success) {
       toast({
-        title: "Success!",
+        title: "¡Éxito!",
         description: result.message,
       });
     } else {
       toast({
         title: "Error",
-        description: result.message || "Failed to delete all QR codes.",
+        description: result.message || "Error al eliminar todos los códigos QR.",
         variant: "destructive",
       });
     }
@@ -39,23 +40,23 @@ export function DeleteAllButton() {
     <AlertDialog>
       <AlertDialogTrigger asChild>
         <Button variant="destructive" size="sm">
-          <Trash2 className="mr-2 h-4 w-4" /> Delete All
+          <Trash2 className="mr-2 h-4 w-4" /> Eliminar Todos
         </Button>
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle className="flex items-center">
-            <AlertTriangle className="text-destructive mr-2" /> Are you absolutely sure?
+            <AlertTriangle className="text-destructive mr-2" /> ¿Estás absolutamente seguro?
           </AlertDialogTitle>
           <AlertDialogDescription>
-            This action cannot be undone. This will permanently delete all QR codes
-            from the database.
+            Esta acción no se puede deshacer. Esto eliminará permanentemente todos los códigos QR
+            de la base de datos.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogCancel>Cancelar</AlertDialogCancel>
           <AlertDialogAction onClick={handleDeleteAll} className="bg-destructive hover:bg-destructive/90">
-            Yes, delete all
+            Sí, eliminar todo
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

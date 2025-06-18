@@ -1,8 +1,8 @@
+
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -18,18 +18,13 @@ import { addQRCodeAction } from "@/app/actions";
 import { useToast } from "@/hooks/use-toast";
 import React from "react";
 import { PlusCircle } from "lucide-react";
-import type { QRCodeFormSchema as FormSchemaType } from "@/lib/types";
-
-const QRCodeFormSchema = z.object({
-  label: z.string().min(1, { message: "Label cannot be empty." }).max(100, { message: "Label cannot exceed 100 characters."}),
-  url_destino: z.string().url({ message: "Please enter a valid URL." }),
-});
+import { QRCodeFormSchema, type QRCodeFormValues } from "@/lib/schemas";
 
 export function QRCodeForm() {
   const { toast } = useToast();
   const [formError, setFormError] = React.useState<string | null>(null);
   
-  const form = useForm<FormSchemaType>({
+  const form = useForm<QRCodeFormValues>({
     resolver: zodResolver(QRCodeFormSchema),
     defaultValues: {
       label: "",
@@ -37,7 +32,7 @@ export function QRCodeForm() {
     },
   });
 
-  const onSubmit = async (data: FormSchemaType) => {
+  const onSubmit = async (data: QRCodeFormValues) => {
     setFormError(null);
     const formData = new FormData();
     formData.append('label', data.label);
@@ -47,15 +42,14 @@ export function QRCodeForm() {
 
     if (result.success) {
       toast({
-        title: "Success!",
+        title: "¡Éxito!",
         description: result.message,
       });
       form.reset();
     } else {
       setFormError(result.message);
       if (result.errors) {
-        // Set form errors for individual fields if available
-        (Object.keys(result.errors) as Array<keyof FormSchemaType>).forEach((key) => {
+        (Object.keys(result.errors) as Array<keyof QRCodeFormValues>).forEach((key) => {
            const fieldErrors = result.errors![key];
            if (fieldErrors && fieldErrors.length > 0) {
             form.setError(key, { type: 'server', message: fieldErrors.join(', ') });
@@ -64,7 +58,7 @@ export function QRCodeForm() {
       }
       toast({
         title: "Error",
-        description: result.message || "An unexpected error occurred.",
+        description: result.message || "Ocurrió un error inesperado.",
         variant: "destructive",
       });
     }
@@ -73,7 +67,7 @@ export function QRCodeForm() {
   return (
     <Card className="w-full max-w-lg shadow-lg">
       <CardHeader>
-        <CardTitle className="text-2xl font-headline text-center">Create New QR Code</CardTitle>
+        <CardTitle className="text-2xl font-headline text-center">Crear Nuevo Código QR</CardTitle>
       </CardHeader>
       <CardContent>
         <Form {...form}>
@@ -83,9 +77,9 @@ export function QRCodeForm() {
               name="label"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Label</FormLabel>
+                  <FormLabel>Nombre</FormLabel>
                   <FormControl>
-                    <Input placeholder="e.g., My Website" {...field} aria-describedby="label-error" />
+                    <Input placeholder="Ej: Mi Sitio Web" {...field} aria-describedby="label-error" />
                   </FormControl>
                   <FormMessage id="label-error" />
                 </FormItem>
@@ -96,9 +90,9 @@ export function QRCodeForm() {
               name="url_destino"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Destination URL</FormLabel>
+                  <FormLabel>URL de Destino</FormLabel>
                   <FormControl>
-                    <Input type="url" placeholder="https://example.com" {...field} aria-describedby="url-error" />
+                    <Input type="url" placeholder="https://ejemplo.com" {...field} aria-describedby="url-error" />
                   </FormControl>
                   <FormMessage id="url-error" />
                 </FormItem>
@@ -107,7 +101,7 @@ export function QRCodeForm() {
             {formError && <p className="text-sm font-medium text-destructive">{formError}</p>}
             <Button type="submit" className="w-full" disabled={form.formState.isSubmitting}>
               <PlusCircle className="mr-2 h-5 w-5" />
-              {form.formState.isSubmitting ? "Adding..." : "Add QR Code"}
+              {form.formState.isSubmitting ? "Agregando..." : "Agregar Código QR"}
             </Button>
           </form>
         </Form>

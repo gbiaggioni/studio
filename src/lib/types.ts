@@ -1,3 +1,4 @@
+
 export interface QRCodeEntry {
   id_db: string; // Unique database ID
   label: string;
@@ -6,7 +7,4 @@ export interface QRCodeEntry {
   created_at: Date;
 }
 
-export type QRCodeFormSchema = {
-  label: string;
-  url_destino: string;
-};
+// QRCodeFormSchema type is now inferred and exported from @/lib/schemas.ts as QRCodeFormValues

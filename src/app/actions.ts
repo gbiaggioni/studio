@@ -1,24 +1,20 @@
+
 "use server";
 
 import { revalidatePath } from 'next/cache';
-import { z } from 'zod';
+import { QRCodeFormSchema } from '@/lib/schemas';
 import { addQRCodeDB, deleteQRCodeDB, deleteAllQRCodesDB, getQRCodeByShortIdDB } from '@/lib/db';
 import type { QRCodeEntry } from '@/lib/types';
 
-const QRCodeSchema = z.object({
-  label: z.string().min(1, { message: "Label cannot be empty." }).max(100, { message: "Label too long."}),
-  url_destino: z.string().url({ message: "Invalid URL format." }),
-});
-
 export async function addQRCodeAction(prevState: any, formData: FormData) {
-  const validatedFields = QRCodeSchema.safeParse({
+  const validatedFields = QRCodeFormSchema.safeParse({
     label: formData.get('label'),
     url_destino: formData.get('url_destino'),
   });
 
   if (!validatedFields.success) {
     return {
-      message: "Validation failed.",
+      message: "La validación falló.",
       errors: validatedFields.error.flatten().fieldErrors,
       success: false,
     };
@@ -27,9 +23,9 @@ export async function addQRCodeAction(prevState: any, formData: FormData) {
   try {
     await addQRCodeDB(validatedFields.data.label, validatedFields.data.url_destino);
     revalidatePath('/');
-    return { message: "QR Code added successfully.", success: true, errors: {} };
+    return { message: "Código QR agregado exitosamente.", success: true, errors: {} };
   } catch (error) {
-    return { message: "Failed to add QR Code.", success: false, errors: {} };
+    return { message: "Error al agregar el Código QR.", success: false, errors: {} };
   }
 }
 
@@ -38,11 +34,11 @@ export async function deleteQRCodeAction(id_db: string) {
     const success = await deleteQRCodeDB(id_db);
     if (success) {
       revalidatePath('/');
-      return { message: "QR Code deleted successfully.", success: true };
+      return { message: "Código QR eliminado exitosamente.", success: true };
     }
-    return { message: "Failed to delete QR Code or QR Code not found.", success: false };
+    return { message: "Error al eliminar el Código QR o Código QR no encontrado.", success: false };
   } catch (error) {
-    return { message: "Error deleting QR Code.", success: false };
+    return { message: "Error al eliminar el Código QR.", success: false };
   }
 }
 
@@ -50,9 +46,9 @@ export async function deleteAllQRCodesAction() {
   try {
     await deleteAllQRCodesDB();
     revalidatePath('/');
-    return { message: "All QR Codes deleted successfully.", success: true };
+    return { message: "Todos los Códigos QR eliminados exitosamente.", success: true };
   } catch (error) {
-    return { message: "Error deleting all QR Codes.", success: false };
+    return { message: "Error al eliminar todos los Códigos QR.", success: false };
   }
 }
 
@@ -61,7 +57,7 @@ export async function getQRCodeByShortId(shortId: string): Promise<QRCodeEntry |
     const qrCode = await getQRCodeByShortIdDB(shortId);
     return qrCode || null;
   } catch (error) {
-    console.error("Error fetching QR code by short ID:", error);
+    console.error("Error al obtener el código QR por ID corto:", error);
     return null;
   }
 }
