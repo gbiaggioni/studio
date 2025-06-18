@@ -8,7 +8,7 @@ import { QrCode } from 'lucide-react';
 
 export default async function Home() {
   const qrCodes = await getQRCodes();
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:9002'; // Default for local dev matching package.json
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:9002';
 
   return (
     <div className="min-h-screen flex flex-col items-center p-4 md:p-8 bg-gradient-to-br from-background to-secondary/30">

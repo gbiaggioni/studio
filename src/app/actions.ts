@@ -2,7 +2,7 @@
 "use server";
 
 import { revalidatePath } from 'next/cache';
-import { QRCodeFormSchema } from '@/lib/schemas';
+import { QRCodeFormSchema } from '@/lib/schemas'; // Updated import
 import { addQRCodeDB, deleteQRCodeDB, deleteAllQRCodesDB, getQRCodeByShortIdDB } from '@/lib/db';
 import type { QRCodeEntry } from '@/lib/types';
 

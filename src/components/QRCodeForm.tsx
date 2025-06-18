@@ -18,7 +18,7 @@ import { addQRCodeAction } from "@/app/actions";
 import { useToast } from "@/hooks/use-toast";
 import React from "react";
 import { PlusCircle } from "lucide-react";
-import { QRCodeFormSchema, type QRCodeFormValues } from "@/lib/schemas";
+import { QRCodeFormSchema, type QRCodeFormValues } from "@/lib/schemas"; // Updated import
 
 export function QRCodeForm() {
   const { toast } = useToast();
