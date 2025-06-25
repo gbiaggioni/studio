@@ -87,3 +87,138 @@ El proyecto puede requerir un archivo de variables de entorno para su correcta c
     # En desarrollo, esta es la URL local. En producción, debe ser tu dominio público.
     NEXT_PUBLIC_BASE_URL=http://localhost:9002
     ```
+
+## 🚀 Despliegue en DonWeb Cloud Server (con CyberPanel)
+
+Esta guía describe cómo desplegar la aplicación en un servidor cloud de DonWeb que viene preinstalado con Ubuntu 20.04, CyberPanel y OpenLiteSpeed.
+
+La estrategia consiste en ejecutar la aplicación Next.js como un proceso independiente usando **PM2** y configurar **OpenLiteSpeed** como un proxy inverso para dirigir el tráfico del dominio a la aplicación.
+
+### Prerrequisitos
+
+-   Un Cloud Server de DonWeb con la imagen de CyberPanel.
+-   Acceso SSH al servidor (necesitarás la IP, el usuario `root` y la contraseña).
+-   Un nombre de dominio apuntando a la IP de tu servidor.
+
+### Paso 1: Conexión y Preparación del Servidor
+
+1.  **Conéctate por SSH:**
+    ```bash
+    ssh root@<IP_DE_TU_SERVIDOR>
+    ```
+
+2.  **Instala Node.js y PM2:**
+    La imagen de CyberPanel no incluye Node.js. Instala la versión LTS (Recomendada):
+    ```bash
+    # Instala NVM (Node Version Manager) para gestionar versiones de Node.js
+    curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
+
+    # Carga NVM en la sesión actual
+    export NVM_DIR="$HOME/.nvm"
+    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+    [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
+
+    # Instala la última versión LTS de Node.js
+    nvm install --lts
+
+    # Instala PM2, un gestor de procesos para mantener la app corriendo
+    npm install pm2 -g
+    ```
+
+### Paso 2: Configuración de la Base de Datos
+
+CyberPanel incluye MariaDB y phpMyAdmin. Puedes seguir las instrucciones de la sección **"Configuración de MariaDB"** de esta guía. Puedes usar la terminal o la herramienta **phpMyAdmin** disponible en CyberPanel para crear la base de datos y el usuario.
+
+-   Accede a CyberPanel: `https://<IP_DE_TU_SERVIDOR>:8090`
+-   Ve a `Database` -> `Create Database` para crear la base de datos y el usuario.
+-   Ve a `Database` -> `phpMyAdmin` para ejecutar el script SQL y crear la tabla `qr_codes`.
+
+### Paso 3: Desplegar el Código de la Aplicación
+
+1.  **Clona el repositorio desde GitHub:**
+    Navega a la carpeta de tu sitio web (CyberPanel la crea por defecto) y clona el proyecto.
+    ```bash
+    # Navega al directorio raíz de tu sitio
+    cd /home/tu-dominio.com/public_html
+
+    # Clona el proyecto
+    git clone https://github.com/tu-usuario/qreasy-app.git
+
+    # Opcional: mueve los archivos al directorio raíz si lo prefieres
+    # mv qreasy-app/* . && rm -rf qreasy-app
+    ```
+
+2.  **Instala las dependencias:**
+    ```bash
+    # Entra en la carpeta del proyecto
+    cd qreasy-app # o cd /home/tu-dominio.com/public_html si moviste los archivos
+    
+    npm install
+    ```
+
+3.  **Configura las variables de entorno:**
+    Crea el archivo `.env.local` con la configuración de tu base de datos y dominio.
+    ```bash
+    nano .env.local
+    ```
+    Pega el siguiente contenido (ajustando los valores):
+    ```env
+    DB_HOST=localhost
+    DB_USER=el_usuario_de_tu_bd
+    DB_PASSWORD=la_contraseña_de_tu_bd
+    DB_NAME=el_nombre_de_tu_bd
+    NEXT_PUBLIC_BASE_URL=https://tu-dominio.com
+    ```
+
+4.  **Construye la aplicación para producción:**
+    ```bash
+    npm run build
+    ```
+
+### Paso 4: Ejecutar la Aplicación con PM2
+
+1.  **Inicia la aplicación:**
+    Desde la carpeta del proyecto, ejecuta:
+    ```bash
+    # Inicia la app en el puerto 3000 (puedes usar otro) con el nombre 'qreasy'
+    pm2 start npm --name "qreasy" -- start -p 3000
+    ```
+
+2.  **Verifica que esté corriendo:**
+    ```bash
+    pm2 list
+    ```
+    Deberías ver la app `qreasy` con el estado `online`.
+
+3.  **Guarda la lista de procesos y configúrala para el arranque:**
+    ```bash
+    pm2 save
+    pm2 startup
+    ```
+    Copia y pega el comando que te proporcione `pm2 startup` para asegurar que la app se reinicie con el servidor.
+
+### Paso 5: Configurar OpenLiteSpeed como Proxy Inverso
+
+1.  **Accede a tu panel de CyberPanel.**
+2.  Ve a `Websites` -> `List Websites` y haz clic en `Manage` en el dominio correspondiente.
+3.  Desplázate hacia abajo hasta la sección **"Rewrite Rules"**.
+4.  Pega las siguientes reglas y guarda los cambios:
+
+    ```
+    # Estas reglas le dicen a OpenLiteSpeed que envíe todo el tráfico
+    # a tu aplicación Next.js que corre en el puerto 3000.
+    REWRITERULE ^(.*)$ http://127.0.0.1:3000/$1 [P,L]
+    ```
+
+5.  **Reinicia el servidor web** para aplicar los cambios. Puedes hacerlo desde la terminal o desde el panel de control:
+    ```bash
+    sudo systemctl restart lsws
+    ```
+
+### Paso 6: Configurar SSL (HTTPS)
+
+CyberPanel lo hace muy fácil.
+1.  En el panel de gestión de tu sitio (`Manage`), ve a la sección **"SSL"**.
+2.  Selecciona tu dominio y haz clic en **"Issue SSL"**. CyberPanel se encargará de obtener e instalar un certificado gratuito de Let's Encrypt.
+
+¡Y eso es todo! Tu aplicación QREasy ahora debería estar funcionando en tu dominio, servida de forma segura a través de HTTPS, con OpenLiteSpeed actuando como proxy para tu aplicación Node.js gestionada por PM2.
