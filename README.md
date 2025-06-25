@@ -90,9 +90,9 @@ El proyecto puede requerir un archivo de variables de entorno para su correcta c
 
 ## 🚀 Despliegue en DonWeb Cloud Server (con CyberPanel)
 
-Esta guía describe cómo desplegar la aplicación en un servidor cloud de DonWeb que viene preinstalado con Ubuntu 20.04, CyberPanel y OpenLiteSpeed.
+Esta guía describe cómo desplegar la aplicación en un servidor cloud de DonWeb que utiliza la imagen de **CyberPanel**, compatible tanto con **Ubuntu 20.04** como con **Ubuntu 22.04**.
 
-La estrategia consiste en ejecutar la aplicación Next.js como un proceso independiente usando **PM2** y configurar **OpenLiteSpeed** como un proxy inverso para dirigir el tráfico del dominio a la aplicación.
+El proceso es prácticamente idéntico para ambas versiones del sistema operativo, ya que la estrategia consiste en ejecutar la aplicación Next.js como un proceso independiente usando **PM2** y configurar **OpenLiteSpeed** como un proxy inverso para dirigir el tráfico del dominio a la aplicación.
 
 ### Prerrequisitos
 
