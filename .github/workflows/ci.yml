@@ -1,0 +1,51 @@
+# Flujo de trabajo de Integración Continua (CI) para el proyecto QREasy
+
+name: CI
+
+# Controla cuándo se ejecuta el flujo de trabajo
+on:
+  # Se ejecuta en pushes al branch `main`
+  push:
+    branches: [ "main" ]
+  # Se ejecuta en pull requests dirigidos al branch `main`
+  pull_request:
+    branches: [ "main" ]
+
+  # Permite ejecutar este flujo de trabajo manualmente desde la pestaña Actions
+  workflow_dispatch:
+
+# Un flujo de trabajo se compone de uno o más jobs que pueden ejecutarse secuencialmente o en paralelo
+jobs:
+  # Este job se llama "build"
+  build:
+    # El tipo de runner en el que se ejecutará el job
+    runs-on: ubuntu-latest
+
+    # Los pasos representan una secuencia de tareas que se ejecutarán como parte del job
+    steps:
+      # 1. Clona el repositorio bajo $GITHUB_WORKSPACE, para que el job pueda acceder a él
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 2. Configura Node.js
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20' # Usa una versión LTS de Node.js
+          cache: 'npm' # Habilita el caché para `npm`
+
+      # 3. Instala las dependencias del proyecto
+      - name: Install dependencies
+        run: npm ci
+
+      # 4. Ejecuta el linter para verificar la calidad del código
+      - name: Run linter
+        run: npm run lint
+
+      # 5. Ejecuta el verificador de tipos de TypeScript
+      - name: Run type checker
+        run: npm run typecheck
+
+      # 6. Construye el proyecto para producción para asegurar que no hay errores de build
+      - name: Run build
+        run: npm run build
