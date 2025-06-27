@@ -151,12 +151,36 @@ NEXT_PUBLIC_BASE_URL=https://esquel.org.ar
 Esta guía describe cómo desplegar la aplicación en un servidor cloud de DonWeb que utiliza la imagen de **CyberPanel**.
 
 ### Paso 1: Conexión y Preparación del Servidor
-
-(Ver guía anterior si necesitas instalar Node.js y PM2).
+Antes de desplegar, asegúrate de que tu servidor tenga todo lo necesario.
+1.  **Conéctate a tu servidor por SSH:**
+    ```bash
+    ssh root@<IP_DE_TU_SERVIDOR>
+    ```
+2.  **Instala Node.js:** Es posible que la imagen de CyberPanel no incluya Node.js. La forma más sencilla de instalarlo es usando los scripts de NodeSource. Ejecuta los siguientes comandos para instalar Node.js 20.x:
+    ```bash
+    # Para sistemas basados en CentOS/AlmaLinux (como los de DonWeb)
+    sudo dnf install -y nodejs
+    
+    # Para sistemas basados en Debian/Ubuntu
+    # curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+    # sudo apt-get install -y nodejs
+    ```
+    Verifica la instalación con `node -v` y `npm -v`.
+3.  **Instala PM2 globalmente:** PM2 es un gestor de procesos que mantendrá tu aplicación de Next.js corriendo.
+    ```bash
+    npm install pm2 -g
+    ```
 
 ### Paso 2: Configuración de la Base de Datos
-
-(Ver guía anterior para crear la base de datos y ejecutar `sql/schema.sql`).
+1.  **Inicia sesión en tu panel de CyberPanel.**
+2.  Navega a `Bases de Datos` -> `Crear Base de Datos`.
+3.  Selecciona tu sitio web (`esquel.org.ar`) en el desplegable.
+4.  Asigna un **nombre** para la base de datos (ej. `esquel_qreasy`), un **usuario** y una **contraseña segura**. Guárdalos, los necesitarás para el archivo `.env.local`.
+5.  Una vez creada, ve a `Bases de Datos` -> `phpMyAdmin` para administrarla.
+6.  Dentro de phpMyAdmin, selecciona la base de datos que acabas de crear en el panel izquierdo.
+7.  Ve a la pestaña `SQL`.
+8.  Copia el contenido completo del archivo `sql/schema.sql` de tu proyecto y pégalo en el cuadro de texto.
+9.  Haz clic en **"Continuar"** o **"Go"** para ejecutar el script y crear la tabla `qr_codes`.
 
 ### Paso 3: Desplegar el Código de la Aplicación
 
@@ -218,6 +242,46 @@ Esta guía describe cómo desplegar la aplicación en un servidor cloud de DonWe
     ```
 3.  Reinicia el servidor web: `sudo systemctl restart lsws`.
 
+### Paso 6: Configurar SSL (HTTPS)
+CyberPanel facilita la instalación de certificados SSL gratuitos de Let's Encrypt.
+1.  En el panel de CyberPanel, ve a `Websites` -> `List Websites` -> `Manage` en `esquel.org.ar`.
+2.  Busca la sección "SSL" y haz clic en "Issue SSL".
+3.  Espera a que el proceso se complete. CyberPanel se encargará de configurar y renovar el certificado automáticamente.
+4.  Asegúrate de que tu `NEXT_PUBLIC_BASE_URL` en el archivo `.env.local` use `https://` para que las URLs cortas se generen de forma segura.
+
+---
+
+### 🔄 Cómo Actualizar la Aplicación con Cambios de GitHub
+Cuando realices cambios en tu código y los subas a GitHub, sigue estos pasos para actualizar la aplicación en tu servidor:
+
+1.  **Conéctate a tu servidor por SSH.**
+2.  **Navega al directorio de tu proyecto:**
+    ```bash
+    cd /home/esquel.org.ar/public_html/studio
+    ```
+3.  **Descarga los últimos cambios desde GitHub:**
+    ```bash
+    git pull origin main
+    ```
+4.  **Instala las dependencias (si hubo cambios en `package.json`):**
+    ```bash
+    npm install
+    ```
+5.  **Reconstruye la aplicación para producción:**
+    Este paso es crucial para que tus cambios se apliquen.
+    ```bash
+    npm run build
+    ```
+6.  **Reinicia la aplicación con PM2:**
+    PM2 cargará la nueva versión sin tiempo de inactividad.
+    ```bash
+    pm2 restart qreasy
+    ```
+7.  **Verifica el estado:**
+    Asegúrate de que la aplicación esté `online`.
+    ```bash
+    pm2 list
+    ```
 ---
 
 ### 🚨 Solución de Problemas de PM2
@@ -304,9 +368,3 @@ Sigue estos pasos en la terminal de tu servidor para solucionarlo:
     ```bash
     pm2 save
     ```
-
----
-
-### Paso 6: Configurar SSL (HTTPS)
-
-(Ver guía anterior en el `README.md` original).
