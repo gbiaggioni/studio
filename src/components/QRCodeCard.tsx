@@ -105,7 +105,7 @@ export function QRCodeCard({ qrCode, baseUrl }: QRCodeCardProps) {
       const newWindow = window.open('', '_blank', 'height=600,width=800');
       if (newWindow) {
         newWindow.document.write('<html><head><title>Imprimir Código QR</title>');
-        newWindow.document.write('<style>body { font-family: "PT Sans", sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; } .qr-container { text-align: center; } canvas { margin-bottom: 1rem; } h2 { margin-bottom: 0.5rem; font-size: 1.5rem; } p { font-size: 1rem; word-break: break-all; }</style>');
+        newWindow.document.write('<style>body { font-family: "PT Sans", sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; } .qr-container { text-align: center; } svg { margin-bottom: 1rem; } h2 { margin-bottom: 0.5rem; font-size: 1.5rem; } p { font-size: 1rem; word-break: break-all; }</style>');
         newWindow.document.write('</head><body>');
         newWindow.document.write(printContent.innerHTML);
         newWindow.document.write('</body></html>');
@@ -156,7 +156,7 @@ export function QRCodeCard({ qrCode, baseUrl }: QRCodeCardProps) {
       <CardContent className="flex flex-col items-center space-y-3">
         <div id={cardPrintId} className="qr-container bg-card p-3 rounded-md border border-border">
           <h2 className="text-lg font-semibold text-center text-foreground mb-2 md:hidden print:block">{qrCode.label}</h2>
-          <QRCode value={shortUrl} size={160} level="H" renderAs="canvas" />
+          <QRCode value={shortUrl} size={160} level="H" renderAs="svg" />
           <p className="text-xs text-muted-foreground text-center mt-2 md:hidden print:block">Escanea para visitar: {qrCode.url_destino}</p>
         </div>
         
