@@ -132,7 +132,7 @@ Crea un archivo llamado `.env.local` en la raíz del proyecto (este archivo **no
 -   `DB_NAME`: El nombre de la base de datos.
 -   `NEXT_PUBLIC_BASE_URL`: La URL base completa (incluyendo `http://` o `https://`) que se usará para generar las URLs cortas.
 
-**Ejemplo para producción con el dominio `esquel.ar`:**
+**Ejemplo para producción con el dominio `esquel.org.ar`:**
 ```env
 # .env.local
 
@@ -143,66 +143,34 @@ DB_PASSWORD=la_contraseña_de_tu_bd
 DB_NAME=el_nombre_de_tu_bd
 
 # URL base para generar las URLs cortas con HTTPS
-NEXT_PUBLIC_BASE_URL=https://esquel.ar
+NEXT_PUBLIC_BASE_URL=https://esquel.org.ar
 ```
 
 ## 🚀 Despliegue en DonWeb Cloud Server (con CyberPanel)
 
-Esta guía describe cómo desplegar la aplicación en un servidor cloud de DonWeb que utiliza la imagen de **CyberPanel**, compatible tanto con **Ubuntu 20.04** como con **Ubuntu 22.04**.
-
-El proceso es prácticamente idéntico para ambas versiones del sistema operativo, ya que la estrategia consiste en ejecutar la aplicación Next.js como un proceso independiente usando **PM2** y configurar **OpenLiteSpeed** como un proxy inverso para dirigir el tráfico del dominio a la aplicación.
-
-### Prerrequisitos
-
--   Un Cloud Server de DonWeb con la imagen de CyberPanel.
--   Acceso SSH al servidor (necesitarás la IP, el usuario `root` y la contraseña).
--   El dominio `esquel.ar` apuntando a la IP de tu servidor.
+Esta guía describe cómo desplegar la aplicación en un servidor cloud de DonWeb que utiliza la imagen de **CyberPanel**.
 
 ### Paso 1: Conexión y Preparación del Servidor
 
-1.  **Conéctate por SSH:**
-    ```bash
-    ssh root@<IP_DE_TU_SERVIDOR>
-    ```
-
-2.  **Instala Node.js y PM2:**
-    La imagen de CyberPanel no incluye Node.js. Instala la versión LTS (Recomendada):
-    ```bash
-    # Instala NVM (Node Version Manager) para gestionar versiones de Node.js
-    curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
-
-    # Carga NVM en la sesión actual
-    export NVM_DIR="$HOME/.nvm"
-    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-    [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
-
-    # Instala la última versión LTS de Node.js
-    nvm install --lts
-
-    # Instala PM2, un gestor de procesos para mantener la app corriendo
-    npm install pm2 -g
-    ```
+(Ver guía anterior si necesitas instalar Node.js y PM2).
 
 ### Paso 2: Configuración de la Base de Datos
 
-1.  **Accede a CyberPanel:** `https://<IP_DE_TU_SERVIDOR>:8090`
-2.  Ve a `Database` -> `Create Database` para crear una nueva base de datos y un usuario. Anota el nombre de la base de datos, el nombre de usuario y la contraseña.
-3.  Ve a `Database` -> `phpMyAdmin` y accede con las credenciales del usuario que acabas de crear.
-4.  Una vez dentro de phpMyAdmin, selecciona tu base de datos en el panel izquierdo.
-5.  Ve a la pestaña `SQL`.
-6.  Copia el contenido del archivo `sql/schema.sql` de este repositorio y pégalo en el cuadro de texto.
-7.  Haz clic en **"Go"** para ejecutar el script. Esto creará la tabla `qr_codes` necesaria.
+(Ver guía anterior para crear la base de datos y ejecutar `sql/schema.sql`).
 
 ### Paso 3: Desplegar el Código de la Aplicación
 
 1.  **Clona el repositorio desde GitHub:**
-    Navega a la carpeta de tu sitio web (CyberPanel la crea por defecto) y clona el proyecto.
+    Navega a la carpeta donde deseas instalar el proyecto. En tu caso, es un subdirectorio.
     ```bash
     # Navega al directorio raíz de tu sitio
-    cd /home/esquel.ar/public_html
-
-    # Clona el proyecto (el punto al final clona en el directorio actual)
-    git clone https://github.com/tu-usuario-de-github/esquel.ar.git .
+    cd /home/esquel.org.ar/public_html
+    
+    # Clona el proyecto en una carpeta llamada 'studio'
+    git clone https://github.com/tu-usuario-de-github/esquel.ar.git studio
+    
+    # Entra en el directorio del proyecto
+    cd studio
     ```
 
 2.  **Instala las dependencias:**
@@ -215,14 +183,7 @@ El proceso es prácticamente idéntico para ambas versiones del sistema operativ
     ```bash
     nano .env.local
     ```
-    Pega el siguiente contenido, reemplazando los valores con los que creaste en el Paso 2:
-    ```env
-    DB_HOST=localhost
-    DB_USER=el_usuario_de_tu_bd
-    DB_PASSWORD=la_contraseña_de_tu_bd
-    DB_NAME=el_nombre_de_tu_bd
-    NEXT_PUBLIC_BASE_URL=https://esquel.ar
-    ```
+    Pega el contenido relevante para producción.
 
 4.  **Construye la aplicación para producción:**
     ```bash
@@ -231,48 +192,78 @@ El proceso es prácticamente idéntico para ambas versiones del sistema operativ
 
 ### Paso 4: Ejecutar la Aplicación con PM2
 
-1.  **Inicia la aplicación:**
-    Desde la carpeta del proyecto (`/home/esquel.ar/public_html`), ejecuta:
+(Ver la sección de solución de problemas a continuación si tienes el estado `errored`).
+
+1.  **Inicia la aplicación desde el directorio correcto:**
+    Asegúrate de estar en `/home/esquel.org.ar/public_html/studio` y ejecuta:
     ```bash
     # Inicia la app en el puerto 3000 con el nombre 'qreasy'
     pm2 start npm --name "qreasy" -- start -p 3000
     ```
 
-2.  **Verifica que esté corriendo:**
-    ```bash
-    pm2 list
-    ```
-    Deberías ver la app `qreasy` con el estado `online`.
-
-3.  **Guarda la lista de procesos y configúrala para el arranque del sistema:**
+2.  **Guarda la configuración de PM2:**
     ```bash
     pm2 save
     pm2 startup
     ```
-    Copia y ejecuta el comando que te proporcione `pm2 startup`. Esto asegura que tu aplicación se reinicie automáticamente si el servidor se reinicia.
+    Ejecuta el comando que te proporcione `pm2 startup` para asegurar que la app se reinicie con el servidor.
 
 ### Paso 5: Configurar OpenLiteSpeed como Proxy Inverso
 
-1.  **Accede a tu panel de CyberPanel.**
-2.  Ve a `Websites` -> `List Websites` y haz clic en `Manage` en `esquel.ar`.
-3.  Desplázate hacia abajo hasta la sección **"Rewrite Rules"**.
-4.  Pega las siguientes reglas y guarda los cambios:
-
+1.  En tu panel de CyberPanel, ve a `Websites` -> `List Websites` -> `Manage` en `esquel.org.ar`.
+2.  En **"Rewrite Rules"**, pega las siguientes reglas. **Importante:** Como tu proyecto está en `/studio`, necesitas ajustar las reglas para que el proxy solo se aplique a esa ruta.
     ```
-    # Estas reglas le dicen a OpenLiteSpeed que envíe todo el tráfico
-    # a tu aplicación Next.js que corre en el puerto 3000.
-    REWRITERULE ^(.*)$ http://127.0.0.1:3000/$1 [P,L]
+    # Proxy para la aplicación en /studio/
+    REWRITERULE ^/studio/(.*)$ http://127.0.0.1:3000/$1 [P,L]
     ```
+3.  Reinicia el servidor web: `sudo systemctl restart lsws`.
 
-5.  **Reinicia el servidor web** para aplicar los cambios. Desde la terminal:
+---
+
+### 🚨 Solución de Problemas de PM2 (Estado 'Errored')
+
+Si `pm2 list` muestra tu aplicación `qreasy` con el estado `errored`, significa que la aplicación no puede iniciarse. La causa más probable es que PM2 la está ejecutando desde el directorio equivocado.
+
+Sigue estos pasos **exactos** en la terminal de tu servidor para corregirlo:
+
+1.  **Detén y elimina el proceso antiguo:**
+    Esto limpiará la configuración incorrecta de PM2.
     ```bash
-    sudo systemctl restart lsws
+    pm2 stop qreasy
+    pm2 delete qreasy
     ```
+
+2.  **Navega al directorio correcto del proyecto:**
+    Asegúrate de estar en la carpeta donde se encuentra tu archivo `package.json`.
+    ```bash
+    cd /home/esquel.org.ar/public_html/studio
+    ```
+
+3.  **Inicia la aplicación nuevamente con PM2:**
+    Este comando le dice a PM2 que use el `npm start` de tu `package.json` actual. Usamos el puerto 3000 como en la guía original.
+    ```bash
+    pm2 start npm --name "qreasy" -- start -p 3000
+    ```
+
+4.  **Verifica el estado:**
+    Ahora `pm2 list` debería mostrar el estado como `online`.
+    ```bash
+    pm2 list
+    ```
+    Si sigue fallando, revisa los registros para ver el error específico:
+    ```bash
+    pm2 logs qreasy
+    ```
+
+5.  **Guarda la nueva configuración correcta:**
+    Una vez que el estado sea `online`, guarda la lista de procesos para que PM2 la recuerde después de un reinicio del servidor.
+    ```bash
+    pm2 save
+    ```
+
+---
 
 ### Paso 6: Configurar SSL (HTTPS)
 
-CyberPanel lo hace muy fácil.
-1.  En el panel de gestión de tu sitio (`Manage`), ve a la sección **"SSL"**.
-2.  Selecciona `esquel.ar` y haz clic en **"Issue SSL"**. CyberPanel se encargará de obtener e instalar un certificado gratuito de Let's Encrypt.
-
-¡Y eso es todo! Tu aplicación QREasy ahora debería estar funcionando en `https://esquel.ar`, conectada a una base de datos persistente y servida de forma segura a través de HTTPS.
+(Ver guía anterior en el `README.md` original).
+```
