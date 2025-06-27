@@ -78,6 +78,7 @@ Sigue estos pasos para ejecutar el proyecto en tu entorno local. Esto es válido
     # URL base para generar las URLs cortas en desarrollo
     NEXT_PUBLIC_BASE_URL=http://localhost:9002
     ```
+    *Nota: Si no se configura este archivo, la aplicación se iniciará pero no podrá conectarse a la base de datos. Verás una lista vacía de códigos QR y recibirás errores al intentar crear, editar o eliminar.*
 
 6.  **Ejecuta el servidor de desarrollo:**
     Inicia la aplicación en modo de desarrollo.
@@ -123,7 +124,7 @@ La aplicación utiliza variables de entorno para gestionar la configuración de 
 
 ### Variables de Entorno Requeridas
 
-Crea un archivo llamado `.env.local` en la raíz del proyecto (este archivo **no** debe subirse a GitHub). Contendrá los siguientes valores:
+Crea un archivo llamado `.env.local` en la raíz del proyecto (este archivo **no** debe subirse a GitHub). Puedes copiar el archivo `.env.example` como plantilla. Contendrá los siguientes valores:
 
 -   `DB_HOST`: La dirección del servidor de la base de datos (ej. `localhost`).
 -   `DB_USER`: El usuario de la base de datos.

@@ -16,7 +16,9 @@ Aceptamos contribuciones a través de Pull Requests (PRs). Aquí tienes los paso
 
 ## Configuración del Entorno de Desarrollo
 
-Para trabajar en el proyecto localmente, necesitarás tener instalado Node.js (versión LTS recomendada).
+Para trabajar en el proyecto localmente, necesitarás:
+- Node.js (versión LTS recomendada)
+- Una base de datos MariaDB o MySQL disponible localmente.
 
 1.  **Instalar Dependencias:**
     Desde la raíz del proyecto, ejecuta:
@@ -24,11 +26,20 @@ Para trabajar en el proyecto localmente, necesitarás tener instalado Node.js (v
     npm install
     ```
 
-2.  **Ejecutar el Servidor de Desarrollo:**
+2.  **Configurar Base de Datos:**
+    - Crea una base de datos en tu instancia local de MariaDB/MySQL (ej. `qreasy_db`).
+    - Ejecuta el contenido del script `sql/schema.sql` en tu base de datos para crear la tabla `qr_codes`.
+
+3.  **Configurar Variables de Entorno:**
+    - Copia el archivo `.env.example` a un nuevo archivo llamado `.env.local`.
+    - Abre `.env.local` y rellena las credenciales de tu base de datos local.
+
+4.  **Ejecutar el Servidor de Desarrollo:**
     ```bash
     npm run dev
     ```
-    La aplicación estará disponible en `http://localhost:9002`.
+    La aplicación estará disponible en `http://localhost:9002`. Si todo está configurado correctamente, podrás crear, ver y eliminar códigos QR.
+
 
 ## Estándares de Codificación
 
