@@ -75,18 +75,29 @@ Sigue estos pasos para ejecutar el proyecto en tu entorno local. Esto es válido
 -   `npm run lint`: Ejecuta el linter para revisar la calidad del código.
 -   `npm run typecheck`: Valida los tipos de TypeScript en el proyecto.
 
-## 🔧 Configuración
+## 🔧 Configuración del Dominio
 
-El proyecto puede requerir un archivo de variables de entorno para su correcta configuración, especialmente para la generación de las URLs cortas.
+Para que las URLs cortas funcionen correctamente tanto en desarrollo como en producción, la aplicación utiliza una variable de entorno `NEXT_PUBLIC_BASE_URL`.
 
-1.  Crea un archivo llamado `.env.local` en la raíz del proyecto.
-2.  Añade la siguiente variable:
+**Esta variable es la que define el dominio de tus URLs cortas y es totalmente compatible con HTTPS.**
 
+### Cómo configurarla
+
+1.  Crea un archivo llamado `.env.local` en la raíz del proyecto (si no existe).
+2.  Añade la variable `NEXT_PUBLIC_BASE_URL` con el valor de tu dominio de producción. Es crucial incluir el protocolo `https://` para que funcione con SSL.
+
+    **Ejemplo para producción con el dominio `esquel.ar`:**
     ```env
-    # URL base para generar las URLs cortas.
-    # En desarrollo, esta es la URL local. En producción, debe ser tu dominio público.
-    NEXT_PUBLIC_BASE_URL=http://localhost:9002
+    # .env.local
+
+    # URL base para generar las URLs cortas con HTTPS
+    NEXT_PUBLIC_BASE_URL=https://esquel.ar
     ```
+
+### Comportamiento
+
+-   **En Producción:** La aplicación usará el valor que definas en `NEXT_PUBLIC_BASE_URL`.
+-   **En Desarrollo (si no defines la variable):** La aplicación usará un valor por defecto `http://localhost:9002` para que puedas probarla localmente sin configuración adicional.
 
 ## 🚀 Despliegue en DonWeb Cloud Server (con CyberPanel)
 
