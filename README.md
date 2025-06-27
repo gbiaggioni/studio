@@ -67,6 +67,22 @@ Sigue estos pasos para ejecutar el proyecto en tu entorno local. Esto es válido
     La aplicación estará disponible en tu navegador en la siguiente dirección:
     [http://localhost:9002](http://localhost:9002)
 
+### Probando en Dispositivos Móviles
+
+Cuando ejecutas la aplicación en modo de desarrollo, las URLs cortas se generan usando `http://localhost:9002`. Tu computadora entiende que `localhost` se refiere a sí misma, pero otros dispositivos en tu red (como tu teléfono móvil) no lo saben.
+
+Para probar la redirección escaneando un código QR desde tu teléfono, necesitas que la URL corta use la **dirección IP local** de tu computadora.
+
+1.  **Averigua tu IP Local:**
+    *   **En Windows:** Abre `cmd` y escribe `ipconfig`. Busca la dirección "IPv4 Address".
+    *   **En macOS/Linux:** Abre una terminal y escribe `ip addr` o `ifconfig`. Busca la dirección `inet`.
+    *   Tu IP se verá como `192.168.1.100` (es un ejemplo).
+
+2.  **Usa la IP en la URL:**
+    Cuando pruebes, usa la URL con tu IP: `http://192.168.1.100:9002`. Si generas un código QR para probar, asegúrate de que apunte a la URL corta correcta, por ejemplo: `http://192.168.1.100:9002/r/xyz123`.
+
+*Nota: El script `npm run dev` ya está configurado para aceptar conexiones desde tu red local.*
+
 ### Scripts Disponibles
 
 -   `npm run dev`: Inicia el servidor de desarrollo con `turbopack` para recargas rápidas.
