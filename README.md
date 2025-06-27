@@ -114,7 +114,7 @@ Para probar la redirección escaneando un código QR desde tu teléfono, necesit
 
 -   `npm run dev`: Inicia el servidor de desarrollo con `turbopack` para recargas rápidas.
 -   `npm run build`: Construye la aplicación para un entorno de producción.
--   `npm run start`: Inicia la aplicación en modo de producción (requiere una `build` previa).
+-   `npm run start`: Inicia la aplicación en modo de producción (requiere una `build` previa). El puerto por defecto es 3000.
 -   `npm run lint`: Ejecuta el linter para revisar la calidad del código.
 -   `npm run typecheck`: Valida los tipos de TypeScript en el proyecto.
 
@@ -197,8 +197,8 @@ Esta guía describe cómo desplegar la aplicación en un servidor cloud de DonWe
 1.  **Inicia la aplicación desde el directorio correcto:**
     Asegúrate de estar en `/home/esquel.org.ar/public_html/studio` y ejecuta:
     ```bash
-    # Inicia la app en el puerto 3000 con el nombre 'qreasy'
-    pm2 start npm --name "qreasy" -- start -p 3000
+    # Inicia la app con el nombre 'qreasy'. El puerto 3000 se define en package.json.
+    pm2 start npm --name "qreasy" -- start
     ```
 
 2.  **Guarda la configuración de PM2:**
@@ -222,7 +222,7 @@ Esta guía describe cómo desplegar la aplicación en un servidor cloud de DonWe
 
 ### 🚨 Solución de Problemas de PM2 (Estado 'Errored')
 
-Si `pm2 list` muestra tu aplicación `qreasy` con el estado `errored`, significa que la aplicación no puede iniciarse. La causa más probable es que PM2 la está ejecutando desde el directorio equivocado.
+Si `pm2 list` muestra tu aplicación `qreasy` con el estado `errored`, significa que la aplicación no puede iniciarse. La causa más probable es que PM2 la está ejecutando desde el directorio equivocado o con un comando incorrecto.
 
 Sigue estos pasos **exactos** en la terminal de tu servidor para corregirlo:
 
@@ -239,10 +239,10 @@ Sigue estos pasos **exactos** en la terminal de tu servidor para corregirlo:
     cd /home/esquel.org.ar/public_html/studio
     ```
 
-3.  **Inicia la aplicación nuevamente con PM2:**
-    Este comando le dice a PM2 que use el `npm start` de tu `package.json` actual. Usamos el puerto 3000 como en la guía original.
+3.  **Inicia la aplicación nuevamente con PM2 (Comando Simplificado):**
+    Este comando le dice a PM2 que use el `npm start` de tu `package.json` actual. Como hemos definido el puerto dentro del script `start`, ya no necesitas añadirlo aquí.
     ```bash
-    pm2 start npm --name "qreasy" -- start -p 3000
+    pm2 start npm --name "qreasy" -- start
     ```
 
 4.  **Verifica el estado:**
