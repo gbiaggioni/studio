@@ -230,23 +230,36 @@ Antes de desplegar, asegúrate de que tu servidor tenga todo lo necesario.
     ```
     Ejecuta el comando que te proporcione `pm2 startup` para asegurar que la app se reinicie con el servidor.
 
-### Paso 5: Configurar OpenLiteSpeed como Proxy Inverso
+### Paso 5: Configurar Proxy Inverso y Forzar HTTPS
 
-1.  En tu panel de CyberPanel, ve a `Websites` -> `List Websites` -> `Manage` en `esquel.org.ar`.
-2.  En **"Rewrite Rules"**, pega las siguientes reglas. **Importante:** Como tu proyecto está en `/studio`, necesitas ajustar las reglas para que el proxy solo se aplique a esa ruta.
+En CyberPanel, las reglas de reescritura y proxy se gestionan directamente en el panel de administración del sitio, no a través de archivos `.htaccess` (que son para servidores Apache).
+
+1.  **Configurar SSL (Si aún no lo has hecho):**
+    -   En tu panel de CyberPanel, ve a `Websites` -> `List Websites` -> `Manage` para tu dominio `esquel.org.ar`.
+    -   Busca la sección "SSL" y haz clic en "Issue SSL". Esto instalará un certificado gratuito de Let's Encrypt y habilitará HTTPS.
+    -   Asegúrate de que tu variable `NEXT_PUBLIC_BASE_URL` en `.env.local` use `https://`.
+
+2.  **Añadir Reglas de Proxy:**
+    -   En la misma pantalla de `Manage`, desplázate hacia abajo hasta la sección **"Rewrite Rules"**.
+    -   Pega el siguiente bloque de código completo en el cuadro de texto. Estas reglas fuerzan todo el tráfico a usar HTTPS (si CyberPanel no lo hizo automáticamente) y dirigen las peticiones a `/studio/` hacia tu aplicación Next.js.
+    
     ```
-    # Proxy para la aplicación en /studio/
+    RewriteEngine On
+    
+    # Forzar HTTPS (CyberPanel a menudo añade esto, pero tenerlo aquí es seguro)
+    RewriteCond %{HTTPS} !=on
+    RewriteRule ^/?(.*) https://%{SERVER_NAME}/$1 [R,L]
+    
+    # Proxy para la aplicación Next.js en el subdirectorio /studio/
     REWRITERULE ^/studio/(.*)$ http://127.0.0.1:3001/$1 [P,L]
     ```
-3.  Reinicia el servidor web: `sudo systemctl restart lsws`.
 
-### Paso 6: Configurar SSL (HTTPS)
-CyberPanel facilita la instalación de certificados SSL gratuitos de Let's Encrypt.
-1.  En el panel de CyberPanel, ve a `Websites` -> `List Websites` -> `Manage` en `esquel.org.ar`.
-2.  Busca la sección "SSL" y haz clic en "Issue SSL".
-3.  Espera a que el proceso se complete. CyberPanel se encargará de configurar y renovar el certificado automáticamente.
-4.  Asegúrate de que tu `NEXT_PUBLIC_BASE_URL` en el archivo `.env.local` use `https://` para que las URLs cortas se generen de forma segura.
-
+3.  **Guardar y Reiniciar:**
+    -   Haz clic en "Save Rewrite Rules".
+    -   Para que los cambios se apliquen de inmediato, reinicia el servidor web desde la terminal:
+        ```bash
+        sudo systemctl restart lsws
+        ```
 ---
 
 ### 🔄 Cómo Actualizar la Aplicación con Cambios de GitHub
@@ -309,6 +322,13 @@ Este error ocurre porque tienes cambios en archivos de tu servidor (como `packag
     npm run build
     pm2 restart qreasy
     ```
+
+#### Error de `git pull`: "fatal: couldn't find remote ref main"
+
+Este error significa que la rama principal en tu repositorio de GitHub se llama `master` y no `main`. Simplemente reemplaza `main` por `master` en el comando:
+```bash
+git pull origin master
+```
 
 #### Estado 'Errored' en PM2
 Si `pm2 list` muestra tu aplicación `qreasy` con el estado `errored`, significa que la aplicación no puede iniciarse. La causa más probable es que PM2 la está ejecutando desde el directorio equivocado o con un comando incorrecto.
