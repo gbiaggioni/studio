@@ -114,7 +114,7 @@ Para probar la redirección escaneando un código QR desde tu teléfono, necesit
 
 -   `npm run dev`: Inicia el servidor de desarrollo con `turbopack` para recargas rápidas.
 -   `npm run build`: Construye la aplicación para un entorno de producción.
--   `npm run start`: Inicia la aplicación en modo de producción (requiere una `build` previa). El puerto por defecto es 3000.
+-   `npm run start`: Inicia la aplicación en modo de producción (requiere una `build` previa). El puerto se define en el script `start`.
 -   `npm run lint`: Ejecuta el linter para revisar la calidad del código.
 -   `npm run typecheck`: Valida los tipos de TypeScript en el proyecto.
 
@@ -197,7 +197,7 @@ Esta guía describe cómo desplegar la aplicación en un servidor cloud de DonWe
 1.  **Inicia la aplicación desde el directorio correcto:**
     Asegúrate de estar en `/home/esquel.org.ar/public_html/studio` y ejecuta:
     ```bash
-    # Inicia la app con el nombre 'qreasy'. El puerto 3000 se define en package.json.
+    # Inicia la app con el nombre 'qreasy'. El puerto se define en el script 'start' de package.json.
     pm2 start npm --name "qreasy" -- start
     ```
 
@@ -214,7 +214,7 @@ Esta guía describe cómo desplegar la aplicación en un servidor cloud de DonWe
 2.  En **"Rewrite Rules"**, pega las siguientes reglas. **Importante:** Como tu proyecto está en `/studio`, necesitas ajustar las reglas para que el proxy solo se aplique a esa ruta.
     ```
     # Proxy para la aplicación en /studio/
-    REWRITERULE ^/studio/(.*)$ http://127.0.0.1:3000/$1 [P,L]
+    REWRITERULE ^/studio/(.*)$ http://127.0.0.1:3001/$1 [P,L]
     ```
 3.  Reinicia el servidor web: `sudo systemctl restart lsws`.
 
@@ -263,7 +263,7 @@ Sigue estos pasos **exactos** en la terminal de tu servidor para corregirlo:
     ```
 
 #### Error de Puerto en Uso (EADDRINUSE)
-Si en los registros (`pm2 logs qreasy`) ves un error como `Error: listen EADDRINUSE: address already in use :::3000`, significa que otro proceso ya está ocupando el puerto 3000 y tu aplicación no puede iniciarse.
+Si en los registros (`pm2 logs qreasy`) ves un error como `Error: listen EADDRINUSE: address already in use :::3001`, significa que otro proceso ya está ocupando el puerto 3001 y tu aplicación no puede iniciarse.
 
 Sigue estos pasos en la terminal de tu servidor para solucionarlo:
 
@@ -275,9 +275,9 @@ Sigue estos pasos en la terminal de tu servidor para solucionarlo:
     ```
 
 2.  **Encuentra y detén el proceso que ocupa el puerto:**
-    Averigua qué proceso está usando el puerto 3000.
+    Averigua qué proceso está usando el puerto 3001.
     ```bash
-    sudo lsof -i :3000
+    sudo lsof -i :3001
     ```
     Este comando te mostrará una lista de procesos. Fíjate en la columna `PID` (Process ID). Si ves algún proceso, detenlo usando su PID. Por ejemplo, si el PID es `12345`:
     ```bash
@@ -295,7 +295,7 @@ Sigue estos pasos en la terminal de tu servidor para solucionarlo:
 4.  **Verifica los registros y el estado:**
     Comprueba que la aplicación se haya iniciado correctamente.
     ```bash
-    pm2 logs qreasy  # Deberías ver un mensaje de que el servidor se inició en el puerto 3000
+    pm2 logs qreasy  # Deberías ver un mensaje de que el servidor se inició en el puerto 3001
     pm2 list         # Debería mostrar el estado como 'online'
     ```
 
@@ -310,4 +310,3 @@ Sigue estos pasos en la terminal de tu servidor para solucionarlo:
 ### Paso 6: Configurar SSL (HTTPS)
 
 (Ver guía anterior en el `README.md` original).
-```
