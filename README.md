@@ -260,7 +260,7 @@ Cuando realices cambios en tu código y los subas a GitHub, sigue estos pasos pa
 3.  **Descarga los últimos cambios desde GitHub:**
     Aquí es donde puede ocurrir un error si tienes cambios locales.
     ```bash
-    git pull origin main
+    git pull origin master
     ```
     *Si recibes un error sobre que tus cambios locales serían sobreescritos, consulta la sección de solución de problemas a continuación.*
 
@@ -299,9 +299,9 @@ Este error ocurre porque tienes cambios en archivos de tu servidor (como `packag
     ```bash
     git reset --hard HEAD
     ```
-3.  **Descarga los cambios de GitHub:** Ahora que no hay conflictos, `git pull` funcionará. Usa el nombre de tu rama principal (`main` o `master`).
+3.  **Descarga los cambios de GitHub:** Ahora que no hay conflictos, `git pull` funcionará. Usa el nombre de tu rama principal (`master`).
     ```bash
-    git pull origin main
+    git pull origin master
     ```
 4.  **Continúa con el proceso de actualización normal:**
     ```bash
