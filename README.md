@@ -7,7 +7,7 @@ QREasy es una aplicación web moderna y sencilla para crear, gestionar y compart
 -   **Creación de Códigos QR:** Genera códigos QR dinámicamente a partir de cualquier URL de destino.
 -   **Etiquetado Personalizado:** Asigna un nombre o etiqueta a cada código QR para una fácil identificación.
 -   **Galería de Códigos:** Visualiza todos tus códigos QR en una interfaz de tarjeta limpia y organizada.
--   **URL Corta Única:** Cada código QR obtiene una URL corta y única (ej. `tu-dominio.com/r/xyz123`) para la redirección.
+-   **URL Corta Única:** Cada código QR obtiene una URL corta y única (ej. `esquel.ar/r/xyz123`) para la redirección.
 -   **Gestión Completa:**
     -   Copia la URL corta al portapapeles con un solo clic.
     -   Imprime códigos QR individuales directamente desde la aplicación.
@@ -41,12 +41,12 @@ Sigue estos pasos para ejecutar el proyecto en tu entorno local. Esto es válido
     Abre tu terminal y clona el proyecto desde GitHub.
 
     ```bash
-    git clone https://github.com/gbiaggioni/qreasy-app.git
+    git clone https://github.com/tu-usuario-de-github/esquel.ar.git
     ```
 
 2.  **Navega al directorio del proyecto:**
     ```bash
-    cd qreasy-app
+    cd esquel.ar
     ```
 
 3.  **Instala las dependencias:**
@@ -98,7 +98,7 @@ El proceso es prácticamente idéntico para ambas versiones del sistema operativ
 
 -   Un Cloud Server de DonWeb con la imagen de CyberPanel.
 -   Acceso SSH al servidor (necesitarás la IP, el usuario `root` y la contraseña).
--   Un nombre de dominio apuntando a la IP de tu servidor.
+-   El dominio `esquel.ar` apuntando a la IP de tu servidor.
 
 ### Paso 1: Conexión y Preparación del Servidor
 
@@ -139,19 +139,17 @@ CyberPanel incluye MariaDB y phpMyAdmin. Puedes seguir las instrucciones de la s
     Navega a la carpeta de tu sitio web (CyberPanel la crea por defecto) y clona el proyecto.
     ```bash
     # Navega al directorio raíz de tu sitio
-    cd /home/tu-dominio.com/public_html
+    cd /home/esquel.ar/public_html
 
     # Clona el proyecto
-    git clone https://github.com/tu-usuario/qreasy-app.git
-
-    # Opcional: mueve los archivos al directorio raíz si lo prefieres
-    # mv qreasy-app/* . && rm -rf qreasy-app
+    git clone https://github.com/tu-usuario-de-github/esquel.ar.git .
+    # (El punto al final clona el contenido directamente en public_html)
     ```
 
 2.  **Instala las dependencias:**
     ```bash
     # Entra en la carpeta del proyecto
-    cd qreasy-app # o cd /home/tu-dominio.com/public_html si moviste los archivos
+    cd /home/esquel.ar/public_html
     
     npm install
     ```
@@ -161,13 +159,13 @@ CyberPanel incluye MariaDB y phpMyAdmin. Puedes seguir las instrucciones de la s
     ```bash
     nano .env.local
     ```
-    Pega el siguiente contenido (ajustando los valores):
+    Pega el siguiente contenido (ajustando los valores de la BD):
     ```env
     DB_HOST=localhost
     DB_USER=el_usuario_de_tu_bd
     DB_PASSWORD=la_contraseña_de_tu_bd
     DB_NAME=el_nombre_de_tu_bd
-    NEXT_PUBLIC_BASE_URL=https://tu-dominio.com
+    NEXT_PUBLIC_BASE_URL=https://esquel.ar
     ```
 
 4.  **Construye la aplicación para producción:**
@@ -200,7 +198,7 @@ CyberPanel incluye MariaDB y phpMyAdmin. Puedes seguir las instrucciones de la s
 ### Paso 5: Configurar OpenLiteSpeed como Proxy Inverso
 
 1.  **Accede a tu panel de CyberPanel.**
-2.  Ve a `Websites` -> `List Websites` y haz clic en `Manage` en el dominio correspondiente.
+2.  Ve a `Websites` -> `List Websites` y haz clic en `Manage` en `esquel.ar`.
 3.  Desplázate hacia abajo hasta la sección **"Rewrite Rules"**.
 4.  Pega las siguientes reglas y guarda los cambios:
 
@@ -219,6 +217,6 @@ CyberPanel incluye MariaDB y phpMyAdmin. Puedes seguir las instrucciones de la s
 
 CyberPanel lo hace muy fácil.
 1.  En el panel de gestión de tu sitio (`Manage`), ve a la sección **"SSL"**.
-2.  Selecciona tu dominio y haz clic en **"Issue SSL"**. CyberPanel se encargará de obtener e instalar un certificado gratuito de Let's Encrypt.
+2.  Selecciona `esquel.ar` y haz clic en **"Issue SSL"**. CyberPanel se encargará de obtener e instalar un certificado gratuito de Let's Encrypt.
 
-¡Y eso es todo! Tu aplicación QREasy ahora debería estar funcionando en tu dominio, servida de forma segura a través de HTTPS, con OpenLiteSpeed actuando como proxy para tu aplicación Node.js gestionada por PM2.
+¡Y eso es todo! Tu aplicación QREasy ahora debería estar funcionando en `https://esquel.ar`, servida de forma segura a través de HTTPS, con OpenLiteSpeed actuando como proxy para tu aplicación Node.js gestionada por PM2.
