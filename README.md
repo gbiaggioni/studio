@@ -216,8 +216,6 @@ Antes de desplegar, asegúrate de que tu servidor tenga todo lo necesario.
 
 ### Paso 4: Ejecutar la Aplicación con PM2
 
-(Ver la sección de solución de problemas a continuación si tienes el estado `errored`).
-
 1.  **Inicia la aplicación desde el directorio correcto:**
     Asegúrate de estar en `/home/esquel.org.ar/public_html/studio` y ejecuta:
     ```bash
@@ -260,9 +258,12 @@ Cuando realices cambios en tu código y los subas a GitHub, sigue estos pasos pa
     cd /home/esquel.org.ar/public_html/studio
     ```
 3.  **Descarga los últimos cambios desde GitHub:**
+    Aquí es donde puede ocurrir un error si tienes cambios locales.
     ```bash
     git pull origin main
     ```
+    *Si recibes un error sobre que tus cambios locales serían sobreescritos, consulta la sección de solución de problemas a continuación.*
+
 4.  **Instala las dependencias (si hubo cambios en `package.json`):**
     ```bash
     npm install
@@ -284,9 +285,32 @@ Cuando realices cambios en tu código y los subas a GitHub, sigue estos pasos pa
     ```
 ---
 
-### 🚨 Solución de Problemas de PM2
+### 🚨 Solución de Problemas
 
-#### Estado 'Errored'
+#### Error de `git pull`: "Your local changes to the following files would be overwritten"
+
+Este error ocurre porque tienes cambios en archivos de tu servidor (como `package.json` o `package-lock.json`) que no están en GitHub. La solución es descartar esos cambios locales y forzar al servidor a usar la versión de GitHub.
+
+1.  **Navega al directorio de tu proyecto:**
+    ```bash
+    cd /home/esquel.org.ar/public_html/studio
+    ```
+2.  **Resetea tus archivos locales:** Este comando descarta todos tus cambios locales y deja el directorio de trabajo limpio.
+    ```bash
+    git reset --hard HEAD
+    ```
+3.  **Descarga los cambios de GitHub:** Ahora que no hay conflictos, `git pull` funcionará. Usa el nombre de tu rama principal (`main` o `master`).
+    ```bash
+    git pull origin main
+    ```
+4.  **Continúa con el proceso de actualización normal:**
+    ```bash
+    npm install
+    npm run build
+    pm2 restart qreasy
+    ```
+
+#### Estado 'Errored' en PM2
 Si `pm2 list` muestra tu aplicación `qreasy` con el estado `errored`, significa que la aplicación no puede iniciarse. La causa más probable es que PM2 la está ejecutando desde el directorio equivocado o con un comando incorrecto.
 
 Sigue estos pasos **exactos** en la terminal de tu servidor para corregirlo:
