@@ -20,12 +20,10 @@ let pool: mysql.Pool;
 function getPool(): mysql.Pool {
   if (!pool || pool.pool.ended) {
     if (!dbConfig.host || !dbConfig.user || !dbConfig.database) {
-      if (typeof window === 'undefined') {
-        console.error("FATAL: Database environment variables are not configured.");
-      }
+      // Return a mock pool that will reject promises. This will be handled by callers.
       return {
         // @ts-ignore
-        execute: () => Promise.reject(new Error("Database not configured."))
+        execute: () => Promise.reject(new Error("La base de datos no está configurada. Por favor, revisa tu archivo .env.local."))
       }
     }
     pool = mysql.createPool(dbConfig);
@@ -54,14 +52,18 @@ export async function generateShortId(length: number = 6): Promise<string> {
                 isUnique = true;
             }
         } catch (error) {
+            // Re-throw the specific "Database not configured" error, otherwise throw a generic one.
+            if (error instanceof Error && error.message.includes("La base de datos no está configurada")) {
+              throw error;
+            }
             console.error("Error checking short_id uniqueness:", error);
-            throw new Error("Could not connect to the database to generate a unique ID.");
+            throw new Error("No se pudo conectar a la base de datos para generar un ID único.");
         }
         attempts++;
     }
 
     if (!isUnique) {
-        throw new Error("Could not generate a unique ID after multiple attempts.");
+        throw new Error("No se pudo generar un ID único después de múltiples intentos.");
     }
 
     return result;
@@ -69,9 +71,18 @@ export async function generateShortId(length: number = 6): Promise<string> {
 
 
 export async function getQRCodes(): Promise<QRCodeEntry[]> {
-    const db = getPool();
-    const [rows] = await db.execute<RowDataPacket[]>('SELECT * FROM qr_codes ORDER BY created_at DESC');
-    return rows as QRCodeEntry[];
+    try {
+        const db = getPool();
+        const [rows] = await db.execute<RowDataPacket[]>('SELECT * FROM qr_codes ORDER BY created_at DESC');
+        return rows as QRCodeEntry[];
+    } catch (error) {
+        if (process.env.NODE_ENV === 'development') {
+            const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
+            console.warn(`No se pudieron obtener los códigos QR: ${errorMessage}`);
+        }
+        // Return an empty array to allow the page to render without crashing.
+        return [];
+    }
 }
 
 
@@ -124,10 +135,19 @@ export async function deleteAllQRCodesDB(): Promise<boolean> {
 
 
 export async function getQRCodeByShortIdDB(short_id: string): Promise<QRCodeEntry | undefined> {
-    const db = getPool();
-    const [rows] = await db.execute<RowDataPacket[]>('SELECT * FROM qr_codes WHERE short_id = ?', [short_id]);
-    if (rows.length > 0) {
-        return rows[0] as QRCodeEntry;
+    try {
+        const db = getPool();
+        const [rows] = await db.execute<RowDataPacket[]>('SELECT * FROM qr_codes WHERE short_id = ?', [short_id]);
+        if (rows.length > 0) {
+            return rows[0] as QRCodeEntry;
+        }
+        return undefined;
+    } catch(error) {
+        if (process.env.NODE_ENV === 'development') {
+            const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
+            console.warn(`No se pudo obtener el código QR para el ID corto "${short_id}": ${errorMessage}`);
+        }
+        // Return undefined to allow the redirect page to show a "not found" message.
+        return undefined;
     }
-    return undefined;
 }
