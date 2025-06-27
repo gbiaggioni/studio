@@ -232,29 +232,27 @@ Antes de desplegar, asegúrate de que tu servidor tenga todo lo necesario.
 
 ### Paso 5: Configurar Proxy Inverso y Forzar HTTPS
 
-En CyberPanel, las reglas de reescritura y proxy se gestionan directamente en el panel de administración del sitio, no a través de archivos `.htaccess` (que son para servidores Apache).
+En CyberPanel, las reglas de reescritura se gestionan en el panel de administración del sitio. **No uses archivos `.htaccess`**.
 
-1.  **Configurar SSL (Si aún no lo has hecho):**
-    -   En tu panel de CyberPanel, ve a `Websites` -> `List Websites` -> `Manage` para tu dominio `esquel.org.ar`.
-    -   Busca la sección "SSL" y haz clic en "Issue SSL". Esto instalará un certificado gratuito de Let's Encrypt y habilitará HTTPS.
-    -   Asegúrate de que tu variable `NEXT_PUBLIC_BASE_URL` en `.env.local` use `https://`.
-
-2.  **Añadir Reglas de Proxy:**
-    -   En la misma pantalla de `Manage`, desplázate hacia abajo hasta la sección **"Rewrite Rules"**.
-    -   Pega el siguiente bloque de código completo en el cuadro de texto. Estas reglas fuerzan todo el tráfico a usar HTTPS (si CyberPanel no lo hizo automáticamente) y dirigen las peticiones a `/studio/` hacia tu aplicación Next.js.
+1.  **Ve a CyberPanel:** Navega a `Websites` -> `List Websites` -> `Manage` para tu dominio.
+2.  **Configura SSL:** En la sección "SSL", haz clic en "Issue SSL" para instalar un certificado y habilitar HTTPS. Asegúrate de que `NEXT_PUBLIC_BASE_URL` en tu `.env.local` use `https://`.
+3.  **Añade Reglas de Proxy en "Rewrite Rules":**
+    Desplázate a la sección **"Rewrite Rules"** y pega el siguiente bloque de código. Este se encarga de forzar HTTPS y de redirigir correctamente las peticiones a tu aplicación Next.js.
     
     ```
     RewriteEngine On
     
-    # Forzar HTTPS (CyberPanel a menudo añade esto, pero tenerlo aquí es seguro)
+    # 1. Forzar HTTPS (si CyberPanel no lo hace automáticamente)
     RewriteCond %{HTTPS} !=on
     RewriteRule ^/?(.*) https://%{SERVER_NAME}/$1 [R,L]
     
-    # Proxy para la aplicación Next.js en el subdirectorio /studio/
-    REWRITERULE ^/studio/(.*)$ http://127.0.0.1:3001/$1 [P,L]
+    # 2. Proxy para la aplicación Next.js que se ejecuta en un subdirectorio
+    # Esto captura cualquier petición a /studio/ y la reenvía a tu app en el puerto 3001,
+    # manteniendo el /studio/ en la ruta para que Next.js funcione correctamente.
+    RewriteRule ^/studio(/.*)?$ http://127.0.0.1:3001/studio$1 [P,L]
     ```
 
-3.  **Guardar y Reiniciar:**
+4.  **Guardar y Reiniciar:**
     -   Haz clic en "Save Rewrite Rules".
     -   Para que los cambios se apliquen de inmediato, reinicia el servidor web desde la terminal:
         ```bash
@@ -282,7 +280,7 @@ Cuando realices cambios en tu código y los subas a GitHub, sigue estos pasos pa
     npm install
     ```
 5.  **Reconstruye la aplicación para producción:**
-    Este paso es crucial para que tus cambios se apliquen.
+    Este paso es **crucial** para que tus cambios se apliquen.
     ```bash
     npm run build
     ```

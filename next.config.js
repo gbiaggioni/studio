@@ -1,5 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  basePath: '/studio',
   /* config options here */
   typescript: {
     ignoreBuildErrors: true,
