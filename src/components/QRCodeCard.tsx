@@ -102,18 +102,60 @@ export function QRCodeCard({ qrCode, baseUrl }: QRCodeCardProps) {
   const handlePrint = () => {
     const printContent = document.getElementById(cardPrintId);
     if (printContent) {
-      const newWindow = window.open('', '_blank', 'height=600,width=800');
+      const newWindow = window.open('', '_blank', 'height=800,width=600');
       if (newWindow) {
-        newWindow.document.write('<html><head><title>Imprimir Código QR</title>');
-        newWindow.document.write('<style>body { font-family: "PT Sans", sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; } .qr-container { text-align: center; } svg { margin-bottom: 1rem; } h2 { margin-bottom: 0.5rem; font-size: 1.5rem; } p { font-size: 1rem; word-break: break-all; }</style>');
-        newWindow.document.write('</head><body>');
-        newWindow.document.write(printContent.innerHTML);
-        newWindow.document.write('</body></html>');
+        newWindow.document.write(`
+          <html>
+            <head>
+              <title>Imprimir Código QR</title>
+              <style>
+                @media print {
+                  @page { size: A4; margin: 0; }
+                  body { margin: 2cm; }
+                }
+                body { 
+                  font-family: "PT Sans", sans-serif; 
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  min-height: 100vh;
+                }
+                .qr-print-container {
+                  width: 100%;
+                  max-width: 17cm; /* A4 width (21cm) minus margins (2cm*2) */
+                  text-align: center;
+                  display: flex;
+                  flex-direction: column;
+                  align-items: center;
+                }
+                .qr-print-container svg {
+                  width: 100%;
+                  height: auto;
+                  margin-bottom: 1.5cm;
+                }
+                .qr-print-container h2 {
+                  font-size: 24pt;
+                  font-weight: bold;
+                  margin-bottom: 1cm;
+                }
+                .qr-print-container p {
+                  font-size: 12pt;
+                  word-break: break-all;
+                }
+              </style>
+            </head>
+            <body>
+              <div class="qr-print-container">
+                ${printContent.innerHTML}
+              </div>
+            </body>
+          </html>
+        `);
         newWindow.document.close();
         setTimeout(() => {
           newWindow.print();
           newWindow.close();
-        }, 250); 
+        }, 250);
       }
     }
   };
