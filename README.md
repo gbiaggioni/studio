@@ -132,9 +132,9 @@ Crea un archivo llamado `.env.local` en la raíz del proyecto (este archivo **no
 -   `DB_NAME`: El nombre de la base de datos.
 -   `NEXT_PUBLIC_BASE_URL`: La URL base completa (incluyendo `http://` o `https://`) que se usará para generar las URLs cortas.
 
-**Ejemplo para producción con el dominio `esquel.org.ar`:**
+**Ejemplo para producción con el dominio `esquel.org.ar` y desplegada en el subdirectorio `/studio`:**
 ```env
-# .env.local
+# .env.local (PRODUCCIÓN)
 
 # Configuración de la Base de Datos de Producción
 DB_HOST=localhost
@@ -142,8 +142,10 @@ DB_USER=el_usuario_de_tu_bd
 DB_PASSWORD=la_contraseña_de_tu_bd
 DB_NAME=el_nombre_de_tu_bd
 
-# URL base para generar las URLs cortas con HTTPS
-NEXT_PUBLIC_BASE_URL=https://esquel.org.ar
+# ⚠️ ¡IMPORTANTE!
+# URL base para generar las URLs cortas con HTTPS y el subdirectorio.
+# DEBE INCLUIR el /studio al final.
+NEXT_PUBLIC_BASE_URL=https://esquel.org.ar/studio
 ```
 
 ## 🚀 Despliegue en DonWeb Cloud Server (con CyberPanel)
@@ -207,9 +209,10 @@ Antes de desplegar, asegúrate de que tu servidor tenga todo lo necesario.
     ```bash
     nano .env.local
     ```
-    Pega el contenido relevante para producción.
+    Pega el contenido relevante para producción, **asegurándote de que `NEXT_PUBLIC_BASE_URL` incluya `/studio`**.
 
 4.  **Construye la aplicación para producción:**
+    Este paso aplica la configuración `basePath` y optimiza la app.
     ```bash
     npm run build
     ```
@@ -219,7 +222,7 @@ Antes de desplegar, asegúrate de que tu servidor tenga todo lo necesario.
 1.  **Inicia la aplicación desde el directorio correcto:**
     Asegúrate de estar en `/home/esquel.org.ar/public_html/studio` y ejecuta:
     ```bash
-    # Inicia la app con el nombre 'qreasy'. El puerto se define en el script 'start' de package.json.
+    # Inicia la app con el nombre 'qreasy'. El puerto 3001 se define en el script 'start' de package.json.
     pm2 start npm --name "qreasy" -- start
     ```
 
@@ -235,7 +238,7 @@ Antes de desplegar, asegúrate de que tu servidor tenga todo lo necesario.
 En CyberPanel, las reglas de reescritura se gestionan en el panel de administración del sitio. **No uses archivos `.htaccess`**.
 
 1.  **Ve a CyberPanel:** Navega a `Websites` -> `List Websites` -> `Manage` para tu dominio.
-2.  **Configura SSL:** En la sección "SSL", haz clic en "Issue SSL" para instalar un certificado y habilitar HTTPS. Asegúrate de que `NEXT_PUBLIC_BASE_URL` en tu `.env.local` use `https://`.
+2.  **Configura SSL:** En la sección "SSL", haz clic en "Issue SSL" para instalar un certificado y habilitar HTTPS.
 3.  **Añade Reglas de Proxy en "Rewrite Rules":**
     Desplázate a la sección **"Rewrite Rules"** y pega el siguiente bloque de código. Este se encarga de forzar HTTPS y de redirigir correctamente las peticiones a tu aplicación Next.js.
     
