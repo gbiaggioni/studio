@@ -43,6 +43,20 @@ export async function addQRCodeDB(label: string, url_destino: string): Promise<Q
   return newQRCode;
 }
 
+export async function updateQRCodeDB(id_db: string, label: string, url_destino: string): Promise<QRCodeEntry | undefined> {
+  await new Promise(resolve => setTimeout(resolve, 100));
+  const qrCodeIndex = qrCodes.findIndex(qr => qr.id_db === id_db);
+  if (qrCodeIndex > -1) {
+    qrCodes[qrCodeIndex] = {
+      ...qrCodes[qrCodeIndex],
+      label,
+      url_destino,
+    };
+    return qrCodes[qrCodeIndex];
+  }
+  return undefined;
+}
+
 export async function deleteQRCodeDB(id_db: string): Promise<boolean> {
   await new Promise(resolve => setTimeout(resolve, 100));
   const initialLength = qrCodes.length;
