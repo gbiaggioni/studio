@@ -220,8 +220,9 @@ Esta guía describe cómo desplegar la aplicación en un servidor cloud de DonWe
 
 ---
 
-### 🚨 Solución de Problemas de PM2 (Estado 'Errored')
+### 🚨 Solución de Problemas de PM2
 
+#### Estado 'Errored'
 Si `pm2 list` muestra tu aplicación `qreasy` con el estado `errored`, significa que la aplicación no puede iniciarse. La causa más probable es que PM2 la está ejecutando desde el directorio equivocado o con un comando incorrecto.
 
 Sigue estos pasos **exactos** en la terminal de tu servidor para corregirlo:
@@ -240,7 +241,7 @@ Sigue estos pasos **exactos** en la terminal de tu servidor para corregirlo:
     ```
 
 3.  **Inicia la aplicación nuevamente con PM2 (Comando Simplificado):**
-    Este comando le dice a PM2 que use el `npm start` de tu `package.json` actual. Como hemos definido el puerto dentro del script `start`, ya no necesitas añadirlo aquí.
+    Este comando le dice a PM2 que use el `npm start` de tu `package.json` actual.
     ```bash
     pm2 start npm --name "qreasy" -- start
     ```
@@ -257,6 +258,49 @@ Sigue estos pasos **exactos** en la terminal de tu servidor para corregirlo:
 
 5.  **Guarda la nueva configuración correcta:**
     Una vez que el estado sea `online`, guarda la lista de procesos para que PM2 la recuerde después de un reinicio del servidor.
+    ```bash
+    pm2 save
+    ```
+
+#### Error de Puerto en Uso (EADDRINUSE)
+Si en los registros (`pm2 logs qreasy`) ves un error como `Error: listen EADDRINUSE: address already in use :::3000`, significa que otro proceso ya está ocupando el puerto 3000 y tu aplicación no puede iniciarse.
+
+Sigue estos pasos en la terminal de tu servidor para solucionarlo:
+
+1.  **Detén y elimina todos los procesos de PM2:**
+    Esto asegura que no haya instancias antiguas o duplicadas intentando ejecutarse.
+    ```bash
+    pm2 stop all
+    pm2 delete all
+    ```
+
+2.  **Encuentra y detén el proceso que ocupa el puerto:**
+    Averigua qué proceso está usando el puerto 3000.
+    ```bash
+    sudo lsof -i :3000
+    ```
+    Este comando te mostrará una lista de procesos. Fíjate en la columna `PID` (Process ID). Si ves algún proceso, detenlo usando su PID. Por ejemplo, si el PID es `12345`:
+    ```bash
+    sudo kill -9 12345
+    ```
+    *Nota: Si el comando `lsof` no está disponible, puedes instalarlo con `sudo yum install lsof` en CentOS/AlmaLinux o `sudo apt-get install lsof` en Debian/Ubuntu.*
+
+3.  **Reinicia la aplicación con PM2:**
+    Ahora que el puerto está libre, navega al directorio de tu proyecto y reinicia la aplicación.
+    ```bash
+    cd /home/esquel.org.ar/public_html/studio
+    pm2 start npm --name "qreasy" -- start
+    ```
+
+4.  **Verifica los registros y el estado:**
+    Comprueba que la aplicación se haya iniciado correctamente.
+    ```bash
+    pm2 logs qreasy  # Deberías ver un mensaje de que el servidor se inició en el puerto 3000
+    pm2 list         # Debería mostrar el estado como 'online'
+    ```
+
+5.  **Guarda la configuración de PM2:**
+    Una vez que todo funcione, guarda la lista de procesos para que se reinicie correctamente con el servidor.
     ```bash
     pm2 save
     ```
