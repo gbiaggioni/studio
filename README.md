@@ -217,7 +217,23 @@ Antes de desplegar, asegúrate de que tu servidor tenga todo lo necesario.
     npm run build
     ```
 
-### Paso 4: Ejecutar la Aplicación con PM2
+### Paso 4: Verificar Permisos (¡Crucial!)
+El servidor web (OpenLiteSpeed) necesita poder leer los archivos de tu proyecto. Para asegurarte de que tenga los permisos correctos, ejecuta estos comandos desde la raíz del proyecto (`/home/esquel.org.ar/public_html/studio`):
+
+```bash
+# Cambia el propietario de todos los archivos al usuario 'root' (o tu usuario de despliegue)
+# Esto es importante para que tengas control total
+sudo chown -R root:root .
+
+# Asigna los permisos correctos a las carpetas (755)
+sudo find . -type d -exec chmod 755 {} \;
+
+# Asigna los permisos correctos a los archivos (644)
+sudo find . -type f -exec chmod 644 {} \;
+```
+Esto garantiza que tu usuario (`root`) pueda escribir, pero el servidor web (que se ejecuta como otro usuario) solo pueda leer, lo cual es una buena práctica de seguridad.
+
+### Paso 5: Ejecutar la Aplicación con PM2
 
 1.  **Inicia la aplicación desde el directorio correcto:**
     Asegúrate de estar en `/home/esquel.org.ar/public_html/studio` y ejecuta:
@@ -233,7 +249,7 @@ Antes de desplegar, asegúrate de que tu servidor tenga todo lo necesario.
     ```
     Ejecuta el comando que te proporcione `pm2 startup` para asegurar que la app se reinicie con el servidor.
 
-### Paso 5: Configurar Proxy Inverso y Forzar HTTPS
+### Paso 6: Configurar Proxy Inverso y Forzar HTTPS
 
 En CyberPanel, las reglas de reescritura se gestionan en el panel de administración del sitio. **No uses archivos `.htaccess`**.
 
@@ -247,12 +263,16 @@ En CyberPanel, las reglas de reescritura se gestionan en el panel de administrac
     
     # 1. Forzar HTTPS (si CyberPanel no lo hace automáticamente)
     RewriteCond %{HTTPS} !=on
-    RewriteRule ^/?(.*) https://%{SERVER_NAME}/$1 [R,L]
-    
-    # 2. Proxy para la aplicación Next.js que se ejecuta en un subdirectorio
+    RewriteRule ^/?(.*) https://%{SERVER_NAME}/$1 [R=301,L]
+
+    # 2. Asegurar que /studio siempre tenga una barra al final
+    RewriteCond %{REQUEST_URI} ^/studio$
+    RewriteRule ^(.*)$ https://%{HTTP_HOST}/studio/ [R=301,L]
+
+    # 3. Proxy para la aplicación Next.js en el subdirectorio /studio/
     # Esto captura cualquier petición a /studio/ y la reenvía a tu app en el puerto 3001,
     # manteniendo el /studio/ en la ruta para que Next.js funcione correctamente.
-    RewriteRule ^/studio(/.*)?$ http://127.0.0.1:3001/studio$1 [P,L]
+    RewriteRule ^studio/(.*)$ http://127.0.0.1:3001/studio/$1 [P,L]
     ```
 
 4.  **Guardar y Reiniciar:**
@@ -272,7 +292,6 @@ Cuando realices cambios en tu código y los subas a GitHub, sigue estos pasos pa
     cd /home/esquel.org.ar/public_html/studio
     ```
 3.  **Descarga los últimos cambios desde GitHub:**
-    Aquí es donde puede ocurrir un error si tienes cambios locales.
     ```bash
     git pull origin master
     ```
@@ -287,12 +306,18 @@ Cuando realices cambios en tu código y los subas a GitHub, sigue estos pasos pa
     ```bash
     npm run build
     ```
-6.  **Reinicia la aplicación con PM2:**
+6.  **Reaplica los permisos por si se añadieron nuevos archivos:**
+    ```bash
+    sudo find . -type d -exec chmod 755 {} \;
+    sudo find . -type f -exec chmod 644 {} \;
+    ```
+
+7.  **Reinicia la aplicación con PM2:**
     PM2 cargará la nueva versión sin tiempo de inactividad.
     ```bash
     pm2 restart qreasy
     ```
-7.  **Verifica el estado:**
+8.  **Verifica el estado:**
     Asegúrate de que la aplicación esté `online`.
     ```bash
     pm2 list
