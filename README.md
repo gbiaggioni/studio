@@ -217,21 +217,22 @@ Antes de desplegar, asegúrate de que tu servidor tenga todo lo necesario.
     npm run build
     ```
 
-### Paso 4: Verificar Permisos (¡Crucial!)
-El servidor web (OpenLiteSpeed) necesita poder leer los archivos de tu proyecto. Para asegurarte de que tenga los permisos correctos, ejecuta estos comandos desde la raíz del proyecto (`/home/esquel.org.ar/public_html/studio`):
+### Paso 4: Establecer Permisos (¡Crucial!)
+El servidor web (OpenLiteSpeed) y el gestor de procesos (PM2) necesitan permisos para leer y ejecutar los archivos de tu proyecto. Este es un paso crítico.
+
+Ejecuta estos comandos desde la raíz del proyecto (`/home/esquel.org.ar/public_html/studio`):
 
 ```bash
-# Cambia el propietario de todos los archivos al usuario 'root' (o tu usuario de despliegue)
-# Esto es importante para que tengas control total
-sudo chown -R root:root .
-
-# Asigna los permisos correctos a las carpetas (755)
+# Asigna permisos correctos a las carpetas (755: rwx r-x r-x)
 sudo find . -type d -exec chmod 755 {} \;
 
-# Asigna los permisos correctos a los archivos (644)
+# Asigna permisos de solo lectura a la mayoría de los archivos (644: rw- r-- r--)
 sudo find . -type f -exec chmod 644 {} \;
+
+# ¡IMPORTANTE! Devuelve el permiso de ejecución al script de Next.js.
+# El comando anterior elimina este permiso, pero es necesario para que PM2 pueda iniciar la aplicación.
+sudo chmod +x node_modules/.bin/next
 ```
-Esto garantiza que tu usuario (`root`) pueda escribir, pero el servidor web (que se ejecuta como otro usuario) solo pueda leer, lo cual es una buena práctica de seguridad.
 
 ### Paso 5: Ejecutar la Aplicación con PM2
 
@@ -310,6 +311,7 @@ Cuando realices cambios en tu código y los subas a GitHub, sigue estos pasos pa
     ```bash
     sudo find . -type d -exec chmod 755 {} \;
     sudo find . -type f -exec chmod 644 {} \;
+    sudo chmod +x node_modules/.bin/next
     ```
 
 7.  **Reinicia la aplicación con PM2:**
