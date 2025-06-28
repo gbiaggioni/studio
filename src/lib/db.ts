@@ -73,10 +73,8 @@ export async function getQRCodes(): Promise<QRCodeEntry[]> {
         const [rows] = await db.execute<RowDataPacket[]>('SELECT * FROM qr_codes ORDER BY created_at DESC');
         return rows as QRCodeEntry[];
     } catch (error) {
-        if (process.env.NODE_ENV === 'development') {
-            const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
-            console.warn(`No se pudieron obtener los códigos QR: ${errorMessage}`);
-        }
+        const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
+        console.error(`[QREASY_DB_ERROR] No se pudieron obtener los códigos QR: ${errorMessage}`);
         // Return an empty array to allow the page to render without crashing.
         return [];
     }
@@ -140,10 +138,8 @@ export async function getQRCodeByShortIdDB(short_id: string): Promise<QRCodeEntr
         }
         return undefined;
     } catch(error) {
-        if (process.env.NODE_ENV === 'development') {
-            const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
-            console.warn(`No se pudo obtener el código QR para el ID corto "${short_id}": ${errorMessage}`);
-        }
+        const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
+        console.error(`[QREASY_DB_ERROR] No se pudo obtener el código QR para el ID corto "${short_id}": ${errorMessage}`);
         // Return undefined to allow the redirect page to show a "not found" message.
         return undefined;
     }

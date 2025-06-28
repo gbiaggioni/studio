@@ -326,6 +326,15 @@ Cuando realices cambios en tu código y los subas a GitHub, sigue estos pasos pa
 
 ### 🚨 Solución de Problemas
 
+#### Error 500 (Internal Server Error) al acceder a la URL
+Este error casi siempre indica que la aplicación Next.js no puede conectarse a la base de datos.
+1.  **Revisa los registros de la aplicación:**
+    ```bash
+    pm2 logs qreasy
+    ```
+2.  **Busca errores de base de datos:** Busca en los registros líneas que contengan `[QREASY_DB_ERROR]`. Un error común es `Access denied for user...` (acceso denegado).
+3.  **Verifica tu archivo `.env.local`:** Este es el paso más importante. Asegúrate de que los valores de `DB_HOST`, `DB_USER`, `DB_PASSWORD` y `DB_NAME` sean **exactamente** los mismos que configuraste en CyberPanel. Un solo carácter erróneo causará el fallo.
+
 #### Error de `git pull`: "Your local changes to the following files would be overwritten"
 
 Este error ocurre porque tienes cambios en archivos de tu servidor (como `package.json` o `package-lock.json`) que no están en GitHub. La solución es descartar esos cambios locales y forzar al servidor a usar la versión de GitHub.
