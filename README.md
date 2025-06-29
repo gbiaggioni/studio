@@ -252,30 +252,36 @@ sudo chmod +x node_modules/.bin/next
 
 ### Paso 6: Configurar CyberPanel para Conectar con la Aplicación (Proxy Inverso)
 
-Este es el paso más importante y el que suele causar errores. Aquí le diremos a CyberPanel cómo encontrar tu aplicación Node.js que se está ejecutando en el puerto 3001.
+Este es el paso más importante y el que soluciona el error `Proxy target is not defined`. Lo haremos manualmente editando la configuración del host virtual.
 
-**¡Error Común!** No puedes simplemente añadir una regla de reescritura que apunte a `127.0.0.1:3001`. El error `Proxy target is not defined` significa que primero debemos "registrar" tu aplicación en CyberPanel.
-
-#### 6.1. Crear la "Aplicación Externa"
+#### 6.1. Registrar la Aplicación Externa (Método Manual)
 
 1.  En tu panel de CyberPanel, ve a `Websites` -> `List Websites` -> `Manage` (para tu dominio `esquel.org.ar`).
-2.  Busca la sección `Application Setup` y haz clic en `LiteSpeed Web Server`.
-3.  Ve a la pestaña `External App` y haz clic en `Add`.
-4.  Rellena el formulario con la siguiente información **exacta**:
-    *   **Type**: `Web Server`
-    *   **Name**: `qreasy-app`  *(¡Este nombre es importante!)*
-    *   **Address**: `127.0.0.1:3001`
-    *   Deja los demás campos con sus valores por defecto.
-5.  Haz clic en `Save`.
+2.  Busca la sección `Configuraciones` y haz clic en **`vHost Conf`**.
+3.  Se abrirá un editor de texto. Desplázate hasta el **final del archivo**.
+4.  Pega el siguiente bloque de código **exactamente como está** al final de todo el contenido:
 
-Ahora CyberPanel sabe que `qreasy-app` es un alias para tu aplicación de Next.js.
+    ```
+    extprocessor qreasy-app {
+      type                    proxy
+      address                 127.0.0.1:3001
+      maxConns                100
+      pcKeepAliveTimeout      60
+      initTimeout             60
+      retryTimeout            0
+      respBuffer              0
+    }
+    ```
+5.  Haz clic en **"Save"** o **"Guardar"**.
+
+Con esto, le has dicho a OpenLiteSpeed que existe una aplicación llamada `qreasy-app` escuchando en `127.0.0.1:3001`.
 
 #### 6.2. Añadir las Reglas de Reescritura
 
 Ahora que la aplicación está registrada, vamos a dirigir el tráfico hacia ella.
 
 1.  Vuelve a la página de `Manage` de tu sitio web.
-2.  Desplázate hacia abajo hasta la sección `Rewrite Rules`.
+2.  Busca la sección `Configuraciones` y haz clic en **`Rewrite Rules`**.
 3.  Pega el siguiente bloque de código **exactamente como está**. Reemplaza cualquier contenido anterior que tuvieras.
 
     ```
@@ -291,7 +297,7 @@ Ahora que la aplicación está registrada, vamos a dirigir el tráfico hacia ell
 
     # 3. Proxy para la aplicación Next.js en el subdirectorio /studio/
     # ¡IMPORTANTE! Esto apunta al nombre de la aplicación externa que creamos, no a la IP/puerto.
-    RewriteRule ^studio/(.*)$ http://qreasy-app/studio/$1 [P,L]
+    RewriteRule ^studio/(.*)$ http://qreasy-app/$1 [P,L]
     ```
 
 4.  Haz clic en **"Save Rewrite Rules"**.
@@ -364,7 +370,7 @@ Si después de seguir todos los pasos aún tienes problemas, sigue esta lista de
     ```bash
     pm2 logs qreasy
     ```
-    -   Busca errores obvios como `Permission denied` (problema de permisos de archivo) o `Error: connect ECONNREFUSED` (problema de conexión a la base de datos). Las soluciones para estos están en los pasos de la guía principal.
+    -   Busca errores obvios como `Permission denied` (problema de permisos de archivo, solucionado en el Paso 4) o `Error: connect ECONNREFUSED` (problema de conexión a la base de datos, revisa tu `.env.local`).
 
 #### Paso B: Verifica la Conexión Directa a la Aplicación
 
@@ -381,10 +387,10 @@ Si PM2 muestra `online`, vamos a confirmar que responde localmente.
 
 Este es el paso final y el más común.
 
-1.  **Revisa la Aplicación Externa**: Asegúrate de que la aplicación `qreasy-app` existe en CyberPanel (`Manage` -> `LiteSpeed Web Server` -> `External App`) y apunta a `127.0.0.1:3001`.
-2.  **Revisa las Rewrite Rules**: Asegúrate de que el contenido en `Manage` -> `Rewrite Rules` sea **exactamente** el del **Paso 6.2**. Un solo carácter erróneo puede hacer que falle.
+1.  **Revisa la Configuración `vHost Conf`**: Asegúrate de que el bloque `extprocessor qreasy-app` existe al final del archivo en `Manage` -> `vHost Conf`.
+2.  **Revisa las `Rewrite Rules`**: Asegúrate de que el contenido en `Manage` -> `Rewrite Rules` sea **exactamente** el del **Paso 6.2** y que la última línea apunte a `http://qreasy-app/$1 [P,L]`.
 3.  **Guarda y REINICIA el Servidor Web (¡EL PASO MÁS IMPORTANTE!)**:
-    -   Después de guardar las reglas, ejecuta este comando en la terminal. **Sin este paso, los cambios no se aplican.**
+    -   Después de guardar los cambios, ejecuta este comando en la terminal. **Sin este paso, los cambios no se aplican.**
     ```bash
     sudo systemctl restart lsws
     ```
