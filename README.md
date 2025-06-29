@@ -107,10 +107,31 @@ Asegúrate de haber completado los siguientes pasos iniciales al menos una vez:
 5.  **Construcción de la aplicación** con `npm run build`.
 6.  **Inicio de la aplicación con PM2** usando `pm2 start npm --name "qreasy" -- start` y `pm2 save`. Verifica que esté en línea con `pm2 list`.
 
-### Paso 6: Configurar `vHost Conf`
+### Paso 6: Ajustar Permisos de la Carpeta (¡Paso Crucial!)
+Este es el paso más importante para evitar errores `403` o `404`. Le da al servidor web (LiteSpeed) los permisos necesarios para acceder a los archivos de tu proyecto.
+
+1.  **Conéctate a tu servidor por SSH.**
+2.  Navega a la carpeta que contiene tu proyecto (un nivel por encima de `studio`).
+    ```bash
+    cd /home/esquel.org.ar/public_html/
+    ```
+3.  Ejecuta los siguientes dos comandos para establecer el propietario y los permisos correctos. **Es vital que el propietario sea el usuario de tu sitio (`esque9858`), no `root`.**
+    
+    ```bash
+    # Este comando cambia el propietario de todos los archivos al usuario correcto.
+    sudo chown -R esque9858:esque9858 studio
+
+    # Este comando asegura que los permisos sean los adecuados (lectura y ejecución).
+    sudo chmod -R 755 studio
+    ```
+
+### Paso 7: Configurar `vHost Conf` (La Clave Final)
+Esta configuración le dice al servidor cómo encontrar y comunicarse con tu aplicación Node.js.
+
 1.  En tu panel de CyberPanel, ve a `Websites` -> `List Websites` -> `Manage` (para tu dominio).
-2.  En la sección `Configuraciones`, haz clic en **`vHost Conf`**.
-3.  **Borra todo el contenido** y pega **solamente** el siguiente bloque. Este código define tu aplicación para que el servidor la reconozca.
+2.  En la sección `Configuraciones`, haz clic en **`Rewrite Rules`** y **asegúrate de que esté completamente vacía**. Guarda los cambios.
+3.  Ahora, en la misma sección, haz clic en **`vHost Conf`**.
+4.  **Borra todo el contenido** y pega **solamente** el siguiente bloque. Este código define tu aplicación y le dice al servidor cómo redirigir el tráfico hacia ella.
 
    ```
    extprocessor qreasy-app {
@@ -122,39 +143,17 @@ Asegúrate de haber completado los siguientes pasos iniciales al menos una vez:
      retryTimeout            0
      respBuffer              0
    }
+
+   rewrite  {
+     enable                  1
+     autoLoadHtaccess        0
+     RewriteRule ^/studio/(.*)$ http://127.0.0.1:3001/studio/$1 [P,L]
+   }
    ```
-4.  **Guarda los cambios.**
+5.  **Guarda los cambios.**
 
-### Paso 7: Ajustar Permisos de la Carpeta (¡El Paso Más Importante!)
-Este paso es crucial para evitar errores `403` o `404`. Le da al servidor web permiso para acceder a los archivos de tu proyecto. El error `chown: invalid group` ocurre porque el nombre del grupo del servidor web no es `litespeed`. Usaremos una configuración más segura que funcionará.
-
-1.  **Conéctate a tu servidor por SSH.**
-2.  Navega a la carpeta que contiene tu proyecto (un nivel por encima de `studio`).
-    ```bash
-    cd /home/esquel.org.ar/public_html/
-    ```
-3.  Ejecuta los siguientes dos comandos para establecer el propietario y los permisos correctos.
-    
-    ```bash
-    # Este comando establece al usuario actual como el propietario. Es un comando seguro que no dará error.
-    sudo chown -R $USER:$USER studio
-
-    # Este segundo comando es el más importante: da al servidor web los permisos necesarios para leer y ejecutar los archivos.
-    sudo chmod -R 755 studio
-    ```
-
-### Paso 8: Configurar `Rewrite Rules` (La Clave Final)
-1.  Ahora, vuelve a la página de `Manage` en CyberPanel y, en la misma sección `Configuraciones`, haz clic en **`Rewrite Rules`**.
-2.  **Borra todo el contenido** y pega **solamente** el siguiente bloque de código. Esta regla es la correcta y redirige todo el tráfico de `/studio/` a tu aplicación **sin perder la ruta**.
-
-   ```
-   RewriteEngine On
-   RewriteRule ^/studio/(.*)$ http://127.0.0.1:3001/studio/$1 [P,L]
-   ```
-3.  **Guarda los cambios.**
-
-### Paso 9: Reiniciar el Servidor Web (¡El Paso Final y Crucial!)
-Para que todos estos cambios en la configuración se apliquen, **es absolutamente necesario que reinicies el servidor web**.
+### Paso 8: Reiniciar el Servidor Web (¡El Paso Final!)
+Para que todos estos cambios en la configuración y los permisos se apliquen, **es absolutamente necesario que reinicies el servidor web**.
 Abre la terminal de tu servidor y ejecuta:
 ```bash
 sudo systemctl restart lsws
@@ -197,5 +196,3 @@ Cuando realices cambios en tu código y los subas a GitHub, sigue estos pasos pa
     ```bash
     pm2 list
     ```
-
-    
