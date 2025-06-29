@@ -125,19 +125,23 @@ Asegúrate de haber completado los siguientes pasos iniciales al menos una vez:
    ```
 4.  **Guarda los cambios.**
 
-### Paso 7: Ajustar Permisos de la Carpeta (¡Muy Importante!)
-Este paso es crucial para evitar errores `403` o `404`. Le da al servidor web permiso para acceder a los archivos de tu proyecto.
+### Paso 7: Ajustar Permisos de la Carpeta (¡El Paso Más Importante!)
+Este paso es crucial para evitar errores `403` o `404`. Le da al servidor web permiso para acceder a los archivos de tu proyecto. El error `chown: invalid group` ocurre porque el nombre del grupo del servidor web no es `litespeed`. Usaremos una configuración más segura que funcionará.
+
 1.  **Conéctate a tu servidor por SSH.**
 2.  Navega a la carpeta que contiene tu proyecto (un nivel por encima de `studio`).
     ```bash
     cd /home/esquel.org.ar/public_html/
     ```
 3.  Ejecuta los siguientes dos comandos para establecer el propietario y los permisos correctos.
+    
     ```bash
-    sudo chown -R $USER:litespeed studio
+    # Este comando establece al usuario actual como el propietario. Es un comando seguro que no dará error.
+    sudo chown -R $USER:$USER studio
+
+    # Este segundo comando es el más importante: da al servidor web los permisos necesarios para leer y ejecutar los archivos.
     sudo chmod -R 755 studio
     ```
-    *Esto asegura que tu usuario es el dueño de los archivos y que el servidor web (`litespeed`) tiene permiso para leerlos y ejecutarlos.*
 
 ### Paso 8: Configurar `Rewrite Rules`
 1.  Ahora, vuelve a la página de `Manage` en CyberPanel y, en la misma sección `Configuraciones`, haz clic en **`Rewrite Rules`**.
