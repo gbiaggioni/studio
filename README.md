@@ -250,15 +250,34 @@ sudo chmod +x node_modules/.bin/next
     ```
     Ejecuta el comando que te proporcione `pm2 startup` para asegurar que la app se reinicie con el servidor.
 
-### Paso 6: Configurar Proxy Inverso y Forzar HTTPS
+### Paso 6: Configurar CyberPanel para Conectar con la Aplicación (Proxy Inverso)
 
-En CyberPanel, las reglas de reescritura se gestionan en el panel de administración del sitio. **No uses archivos `.htaccess`**.
+Este es el paso más importante y el que suele causar errores. Aquí le diremos a CyberPanel cómo encontrar tu aplicación Node.js que se está ejecutando en el puerto 3001.
 
-1.  **Ve a CyberPanel:** Navega a `Websites` -> `List Websites` -> `Manage` para tu dominio.
-2.  **Configura SSL:** En la sección "SSL", haz clic en "Issue SSL" para instalar un certificado y habilitar HTTPS.
-3.  **Añade Reglas de Proxy en "Rewrite Rules":**
-    Desplázate a la sección **"Rewrite Rules"** y pega el siguiente bloque de código. Este se encarga de forzar HTTPS y de redirigir correctamente las peticiones a tu aplicación Next.js.
-    
+**¡Error Común!** No puedes simplemente añadir una regla de reescritura que apunte a `127.0.0.1:3001`. El error `Proxy target is not defined` significa que primero debemos "registrar" tu aplicación en CyberPanel.
+
+#### 6.1. Crear la "Aplicación Externa"
+
+1.  En tu panel de CyberPanel, ve a `Websites` -> `List Websites` -> `Manage` (para tu dominio `esquel.org.ar`).
+2.  Busca la sección `Application Setup` y haz clic en `LiteSpeed Web Server`.
+3.  Ve a la pestaña `External App` y haz clic en `Add`.
+4.  Rellena el formulario con la siguiente información **exacta**:
+    *   **Type**: `Web Server`
+    *   **Name**: `qreasy-app`  *(¡Este nombre es importante!)*
+    *   **Address**: `127.0.0.1:3001`
+    *   Deja los demás campos con sus valores por defecto.
+5.  Haz clic en `Save`.
+
+Ahora CyberPanel sabe que `qreasy-app` es un alias para tu aplicación de Next.js.
+
+#### 6.2. Añadir las Reglas de Reescritura
+
+Ahora que la aplicación está registrada, vamos a dirigir el tráfico hacia ella.
+
+1.  Vuelve a la página de `Manage` de tu sitio web.
+2.  Desplázate hacia abajo hasta la sección `Rewrite Rules`.
+3.  Pega el siguiente bloque de código **exactamente como está**. Reemplaza cualquier contenido anterior que tuvieras.
+
     ```
     RewriteEngine On
     
@@ -266,22 +285,27 @@ En CyberPanel, las reglas de reescritura se gestionan en el panel de administrac
     RewriteCond %{HTTPS} !=on
     RewriteRule ^/?(.*) https://%{SERVER_NAME}/$1 [R=301,L]
 
-    # 2. Asegurar que /studio siempre tenga una barra al final
+    # 2. Asegurar que /studio siempre tenga una barra al final (previene errores)
     RewriteCond %{REQUEST_URI} ^/studio$
     RewriteRule ^(.*)$ https://%{HTTP_HOST}/studio/ [R=301,L]
 
     # 3. Proxy para la aplicación Next.js en el subdirectorio /studio/
-    # Esto captura cualquier petición a /studio/ y la reenvía a tu app en el puerto 3001,
-    # manteniendo el /studio/ en la ruta para que Next.js funcione correctamente.
-    RewriteRule ^studio/(.*)$ http://127.0.0.1:3001/studio/$1 [P,L]
+    # ¡IMPORTANTE! Esto apunta al nombre de la aplicación externa que creamos, no a la IP/puerto.
+    RewriteRule ^studio/(.*)$ http://qreasy-app/studio/$1 [P,L]
     ```
 
-4.  **Guardar y Reiniciar (¡El Paso Más Importante!):**
-    -   Haz clic en "Save Rewrite Rules".
-    -   Para que los cambios se apliquen de inmediato, **es absolutamente crucial que reinicies el servidor web**. Este es el paso que la mayoría de la gente olvida. Abre la terminal de tu servidor y ejecuta:
-        ```bash
-        sudo systemctl restart lsws
-        ```
+4.  Haz clic en **"Save Rewrite Rules"**.
+
+### Paso 7: Reiniciar el Servidor Web (¡El Paso Final y Crucial!)
+
+Para que todos estos cambios se apliquen, **es absolutamente necesario que reinicies el servidor web**.
+
+Abre la terminal de tu servidor y ejecuta:
+```bash
+sudo systemctl restart lsws
+```
+
+¡Y listo! Ahora, cuando visites `https://esquel.org.ar/studio/`, debería funcionar.
 ---
 
 ### 🔄 Cómo Actualizar la Aplicación con Cambios de GitHub
@@ -327,77 +351,42 @@ Cuando realices cambios en tu código y los subas a GitHub, sigue estos pasos pa
 
 ### 🚨 Guía de Diagnóstico y Solución de Problemas
 
-Si sigues sin poder acceder a tu sitio, sigue esta lista de verificación en orden. **El 99% de los problemas se resuelven aquí.**
+Si después de seguir todos los pasos aún tienes problemas, sigue esta lista de verificación en orden. El 99% de los problemas se resuelven aquí.
 
 #### Paso A: Verifica que la Aplicación Esté Realmente Corriendo
 
 1.  **Ejecuta `pm2 list`**:
     -   ¿El estado (`status`) de `qreasy` es `online`?
-    -   **Si es `online`**: ¡Perfecto! La aplicación funciona. El problema está en el servidor web. Ve al **Paso B**.
-    -   **Si es `errored`**: La aplicación no puede arrancar. Continúa con el punto 2.
+        -   **Si es `online`**: ¡Perfecto! La aplicación funciona. El problema está en el servidor web. Ve al **Paso C**.
+        -   **Si es `errored`**: La aplicación no puede arrancar. Continúa con el punto 2.
 
-2.  **Si está `errored`, limpia y reinicia PM2**:
-    A veces PM2 se queda "atascado". Límpialo siguiendo estos pasos exactos:
+2.  **Si está `errored`, lee el registro de errores**:
     ```bash
-    # Detén y elimina el proceso dañado
-    pm2 stop qreasy
-    pm2 delete qreasy
-
-    # Vuelve a iniciarlo desde la carpeta del proyecto
-    cd /home/esquel.org.ar/public_html/studio
-    pm2 start npm --name "qreasy" -- start
-
-    # Guarda la nueva configuración
-    pm2 save
-    ```
-    - Vuelve a ejecutar `pm2 list`. Si ahora está `online`, ve al **Paso B**. Si sigue `errored`, ve al punto 3.
-
-3.  **Si sigue `errored`, lee el registro de errores**:
-    ```bash
-    # Borra los registros viejos para tener una vista limpia
-    pm2 flush qreasy
-
-    # Intenta reiniciar una última vez
-    pm2 restart qreasy
-
-    # Espera 5 segundos y luego revisa los registros
     pm2 logs qreasy
     ```
-    -   **Busca errores obvios**:
-        -   `Error: listen EADDRINUSE: address already in use :::3001`: Otro proceso está usando el puerto.
-            -   **Solución**: Ejecuta `sudo lsof -i :3001`, mira el `PID` del proceso y mátalo con `sudo kill -9 <PID>`. Luego `pm2 restart qreasy`.
-        -   `Error: Access denied for user...`: Las credenciales en tu `.env.local` (DB_USER, DB_PASSWORD, etc.) son incorrectas.
-            -   **Solución**: Revísalas y corrígelas. Luego `pm2 restart qreasy`.
-        -   `sh: 1: next: Permission denied`: Faltan permisos de ejecución.
-            -   **Solución**: Ejecuta de nuevo los comandos del **Paso 4: Establecer Permisos** y luego `pm2 restart qreasy`.
-        -   `[GLOBAL_ERROR_BOUNDARY]`: Este es un error de la aplicación. El mensaje que sigue te dirá qué está mal.
+    -   Busca errores obvios como `Permission denied` (problema de permisos de archivo) o `Error: connect ECONNREFUSED` (problema de conexión a la base de datos). Las soluciones para estos están en los pasos de la guía principal.
 
 #### Paso B: Verifica la Conexión Directa a la Aplicación
 
-Si `pm2 list` muestra `online`, tu aplicación está funcionando. Ahora vamos a confirmar que responde a las peticiones.
+Si PM2 muestra `online`, vamos a confirmar que responde localmente.
 
 1.  **Ejecuta este comando en la terminal de tu servidor**:
     ```bash
     curl -I http://127.0.0.1:3001/studio/
     ```
-    -   **Si obtienes una respuesta `HTTP/1.1 200 OK`**: ¡FELICIDADES! Tu aplicación funciona y responde correctamente. El problema está 100% en las reglas de tu servidor web. Ve al **Paso C**.
-    -   **Si obtienes `Connection refused` o no responde**: Es muy raro si PM2 dice `online`, pero podría indicar un firewall interno. El problema sigue siendo del servidor. Ve al **Paso C**.
+    -   **Si obtienes una respuesta `HTTP/1.1 200 OK`**: ¡FELICIDADES! Tu aplicación funciona perfectamente. El problema está 100% en la configuración de CyberPanel. Ve al **Paso C**.
+    -   **Si obtienes `Connection refused`**: Es muy raro si PM2 dice `online`, pero podría indicar un firewall interno. El problema sigue siendo del servidor. Ve al **Paso C**.
 
-#### Paso C: Verifica la Configuración del Servidor Web (OpenLiteSpeed)
+#### Paso C: Verifica la Configuración del Servidor Web (CyberPanel/OpenLiteSpeed)
 
-Este es el paso final y más común.
+Este es el paso final y el más común.
 
-1.  **Revisa las Rewrite Rules**:
-    -   Ve a CyberPanel -> Websites -> List Websites -> Manage -> Rewrite Rules.
-    -   Asegúrate de que el contenido sea **exactamente** el del **Paso 6: Configurar Proxy Inverso** de esta guía. Un solo carácter erróneo puede hacer que falle. Copia y pega de nuevo si es necesario.
-
-2.  **Guarda y REINICIA el Servidor Web (¡EL PASO MÁS IMPORTANTE!)**:
-    -   Después de guardar las reglas en CyberPanel, ejecuta este comando en la terminal. **Sin este paso, los cambios no se aplican.**
+1.  **Revisa la Aplicación Externa**: Asegúrate de que la aplicación `qreasy-app` existe en CyberPanel (`Manage` -> `LiteSpeed Web Server` -> `External App`) y apunta a `127.0.0.1:3001`.
+2.  **Revisa las Rewrite Rules**: Asegúrate de que el contenido en `Manage` -> `Rewrite Rules` sea **exactamente** el del **Paso 6.2**. Un solo carácter erróneo puede hacer que falle.
+3.  **Guarda y REINICIA el Servidor Web (¡EL PASO MÁS IMPORTANTE!)**:
+    -   Después de guardar las reglas, ejecuta este comando en la terminal. **Sin este paso, los cambios no se aplican.**
     ```bash
     sudo systemctl restart lsws
     ```
-
-3.  **Prueba en el navegador**:
+4.  **Prueba en el navegador**:
     -   Abre una nueva pestaña en modo incógnito (para evitar la caché) y visita `https://esquel.org.ar/studio/`.
-
-Si después de seguir estos tres pasos (A, B y C) al pie de la letra sigue sin funcionar, el problema es excepcionalmente raro y probablemente esté relacionado con la configuración específica de tu instancia de CyberPanel o alguna regla de firewall a nivel de proveedor.
