@@ -111,7 +111,7 @@ Asegúrate de haber completado los siguientes pasos iniciales al menos una vez:
 Este es el paso más importante para evitar errores `403` o `404`. Le da al servidor web (LiteSpeed) los permisos necesarios para acceder a los archivos de tu proyecto.
 
 1.  **Conéctate a tu servidor por SSH.**
-2.  Ejecuta el siguiente comando para cambiar el propietario de todos los archivos al usuario correcto de tu sitio (`esque9858`, que es el usuario que ejecuta los procesos de PHP y tiene los permisos adecuados en CyberPanel).
+2.  Ejecuta el siguiente comando para cambiar el propietario de todos los archivos al usuario correcto de tu sitio (`esque9858`), que es el usuario que ejecuta los procesos de PHP y tiene los permisos adecuados en CyberPanel.
     ```bash
     sudo chown -R esque9858:esque9858 /home/esquel.org.ar/public_html/studio
     ```
@@ -121,7 +121,7 @@ Este es el paso más importante para evitar errores `403` o `404`. Le da al serv
     ```
     
 ### Paso 7: Configurar `vHost Conf` (La Clave Final)
-Esta configuración le dice al servidor cómo encontrar y comunicarse con tu aplicación Node.js sin invalidar la configuración de tu sitio PHP existente.
+Esta configuración unificada le dice al servidor cómo encontrar y comunicarse con tu aplicación Node.js sin invalidar la configuración de tu sitio PHP existente.
 
 1.  En tu panel de CyberPanel, ve a `Websites` -> `List Websites` -> `Manage` (para tu dominio).
 2.  En la sección `Configuraciones`, haz clic en **`Rewrite Rules`** y **asegúrate de que esté completamente vacía**. Guarda los cambios.
