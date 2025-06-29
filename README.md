@@ -250,37 +250,11 @@ sudo chmod +x node_modules/.bin/next
     ```
     Ejecuta el comando que te proporcione `pm2 startup` para asegurar que la app se reinicie con el servidor.
 
-### Paso 6: Configurar CyberPanel para Conectar con la Aplicación (Proxy Inverso)
+### Paso 6: Configurar las Reglas de Proxy en CyberPanel (¡Solución Final!)
 
-Este es el paso más importante y el que soluciona el error `Proxy target is not defined`. Lo haremos manualmente editando la configuración del host virtual.
-
-#### 6.1. Registrar la Aplicación Externa (Método Manual)
+Este es el paso final para conectar tu dominio con la aplicación.
 
 1.  En tu panel de CyberPanel, ve a `Websites` -> `List Websites` -> `Manage` (para tu dominio `esquel.org.ar`).
-2.  Busca la sección `Configuraciones` y haz clic en **`vHost Conf`**.
-3.  Se abrirá un editor de texto. Desplázate hasta el **final del archivo**.
-4.  Pega el siguiente bloque de código **exactamente como está** al final de todo el contenido:
-
-    ```
-    extprocessor qreasy-app {
-      type                    proxy
-      address                 127.0.0.1:3001
-      maxConns                100
-      pcKeepAliveTimeout      60
-      initTimeout             60
-      retryTimeout            0
-      respBuffer              0
-    }
-    ```
-5.  Haz clic en **"Save"** o **"Guardar"**.
-
-Con esto, le has dicho a OpenLiteSpeed que existe una aplicación llamada `qreasy-app` escuchando en `127.0.0.1:3001`.
-
-#### 6.2. Añadir las Reglas de Reescritura
-
-Ahora que la aplicación está registrada, vamos a dirigir el tráfico hacia ella.
-
-1.  Vuelve a la página de `Manage` de tu sitio web.
 2.  Busca la sección `Configuraciones` y haz clic en **`Rewrite Rules`**.
 3.  Pega el siguiente bloque de código **exactamente como está**. Reemplaza cualquier contenido anterior que tuvieras.
 
@@ -296,22 +270,24 @@ Ahora que la aplicación está registrada, vamos a dirigir el tráfico hacia ell
     RewriteRule ^(.*)$ https://%{HTTP_HOST}/studio/ [R=301,L]
 
     # 3. Proxy para la aplicación Next.js en el subdirectorio /studio/
-    # ¡IMPORTANTE! Esta es la regla corregida. Pasa el '/studio' a la aplicación.
-    RewriteRule ^studio/(.*)$ http://qreasy-app/studio/$1 [P,L]
+    # ¡IMPORTANTE! Esta es la regla corregida y simplificada.
+    # Pasa la petición a la aplicación Next.js, conservando el subdirectorio /studio.
+    RewriteRule ^studio/(.*)$ http://127.0.0.1:3001/studio/$1 [P,L]
     ```
 
 4.  Haz clic en **"Save Rewrite Rules"**.
+5.  **Nota:** Si previamente añadiste algo en la sección `vHost Conf`, es recomendable que lo elimines para evitar conflictos. La configuración en `Rewrite Rules` es suficiente.
 
 ### Paso 7: Reiniciar el Servidor Web (¡El Paso Final y Crucial!)
 
-Para que todos estos cambios se apliquen, **es absolutamente necesario que reinicies el servidor web**.
+Para que todos estos cambios en las reglas se apliquen, **es absolutamente necesario que reinicies el servidor web**.
 
 Abre la terminal de tu servidor y ejecuta:
 ```bash
 sudo systemctl restart lsws
 ```
 
-¡Y listo! Ahora, cuando visites `https://esquel.org.ar/studio/`, debería funcionar.
+¡Y listo! Ahora, cuando visites `https://esquel.org.ar/studio/`, debería funcionar correctamente.
 ---
 
 ### 🔄 Cómo Actualizar la Aplicación con Cambios de GitHub
@@ -355,22 +331,16 @@ Cuando realices cambios en tu código y los subas a GitHub, sigue estos pasos pa
     ```
 ---
 
-### 🚨 Guía de Diagnóstico y Solución de Problemas
+### 🚨 Guía de Diagnóstico y Solución de Problemas (Checklist Final)
 
-Si después de seguir todos los pasos aún tienes problemas, sigue esta lista de verificación en orden. El 99% de los problemas se resuelven aquí.
+Si después de seguir todos los pasos aún tienes problemas, sigue esta lista de verificación en orden.
 
 #### Paso A: Verifica que la Aplicación Esté Realmente Corriendo
 
-1.  **Ejecuta `pm2 list`**:
+1.  **Ejecuta `pm2 list` en la terminal de tu servidor**:
     -   ¿El estado (`status`) de `qreasy` es `online`?
-        -   **Si es `online`**: ¡Perfecto! La aplicación funciona. El problema está en el servidor web. Ve al **Paso C**.
-        -   **Si es `errored`**: La aplicación no puede arrancar. Continúa con el punto 2.
-
-2.  **Si está `errored`, lee el registro de errores**:
-    ```bash
-    pm2 logs qreasy
-    ```
-    -   Busca errores obvios como `Permission denied` (problema de permisos de archivo, solucionado en el Paso 4) o `Error: connect ECONNREFUSED` (problema de conexión a la base de datos, revisa tu `.env.local`).
+        -   **Si es `online`**: ¡Perfecto! La aplicación funciona. El problema está en la comunicación con el servidor web. Ve al **Paso B**.
+        -   **Si es `errored`**: La aplicación no puede arrancar. Lee los registros con `pm2 logs qreasy` para ver el error (probablemente una conexión fallida a la base de datos). Revisa tu archivo `.env.local`.
 
 #### Paso B: Verifica la Conexión Directa a la Aplicación
 
@@ -380,19 +350,18 @@ Si PM2 muestra `online`, vamos a confirmar que responde localmente.
     ```bash
     curl -I http://127.0.0.1:3001/studio/
     ```
-    -   **Si obtienes una respuesta `HTTP/1.1 200 OK`**: ¡FELICIDADES! Tu aplicación funciona perfectamente. El problema está 100% en la configuración de CyberPanel. Ve al **Paso C**.
-    -   **Si obtienes `Connection refused`**: Es muy raro si PM2 dice `online`, pero podría indicar un firewall interno. El problema sigue siendo del servidor. Ve al **Paso C**.
+    -   **Si obtienes una respuesta `HTTP/1.1 200 OK`**: ¡FELICIDADES! Tu aplicación funciona perfectamente. El problema está 100% en la configuración del servidor web (Paso C).
+    -   **Si obtienes `Connection refused`**: Es muy raro si PM2 dice `online`, pero podría indicar un firewall interno.
 
 #### Paso C: Verifica la Configuración del Servidor Web (CyberPanel/OpenLiteSpeed)
 
 Este es el paso final y el más común.
 
-1.  **Revisa la Configuración `vHost Conf`**: Asegúrate de que el bloque `extprocessor qreasy-app` existe al final del archivo en `Manage` -> `vHost Conf`.
-2.  **Revisa las `Rewrite Rules`**: Asegúrate de que el contenido en `Manage` -> `Rewrite Rules` sea **exactamente** el del **Paso 6.2** y que la última línea apunte a `http://qreasy-app/studio/$1 [P,L]`.
-3.  **Guarda y REINICIA el Servidor Web (¡EL PASO MÁS IMPORTANTE!)**:
+1.  **Revisa las `Rewrite Rules`**: Asegúrate de que el contenido en `Manage` -> `Rewrite Rules` sea **exactamente** el del **Paso 6** y que la última línea sea `RewriteRule ^studio/(.*)$ http://127.0.0.1:3001/studio/$1 [P,L]`.
+2.  **Guarda y REINICIA el Servidor Web (¡EL PASO MÁS IMPORTANTE!)**:
     -   Después de guardar los cambios, ejecuta este comando en la terminal. **Sin este paso, los cambios no se aplican.**
     ```bash
     sudo systemctl restart lsws
     ```
-4.  **Prueba en el navegador**:
-    -   Abre una nueva pestaña en modo incógnito (para evitar la caché) y visita `https://esquel.org.ar/studio/`.
+3.  **Prueba en el navegador**:
+    -   Abre una nueva pestaña en modo incógnito (para evitar la caché) y visita `https://esquel.org.ar/studio/`. Si ves errores 404 en la consola, es casi seguro que el reinicio de `lsws` no se completó correctamente o las reglas no se guardaron.
