@@ -188,12 +188,13 @@ extprocessor qreasy-app {
   initTimeout             60
   retryTimeout            0
   respBuffer              0
+  autoStart               0
 }
 
-rewrite  {
-  enable                  1
-  autoLoadHtaccess        0
-  RewriteRule ^/studio/(.*)$ http://qreasy-app/studio/$1 [P,L]
+context /studio/ {
+  type                    proxy
+  handler                 qreasy-app
+  addDefaultCharset       off
 }
 
 context /.well-known/acme-challenge {
@@ -269,5 +270,3 @@ Cuando realices cambios en tu código y los subas a GitHub, sigue estos pasos pa
     ```bash
     pm2 list
     ```
-
-    
