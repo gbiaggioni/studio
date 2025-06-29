@@ -98,30 +98,59 @@ Sigue estos pasos para ejecutar el proyecto en tu entorno local. Esto es válido
 
 Esta guía contiene los pasos finales y probados para desplegar la aplicación en tu entorno. Sigue cada paso meticulosamente.
 
-### Paso 1 al 5: Preparación del Servidor (Si ya lo hiciste, puedes omitirlos)
+### Paso 1 al 4: Preparación del Servidor (Si ya lo hiciste, puedes omitirlos)
 Asegúrate de haber completado los siguientes pasos iniciales al menos una vez:
 1.  **Conexión SSH** e instalación de Node.js y PM2.
-2.  **Configuración de la Base de Datos** en CyberPanel.
-3.  **Despliegue del código** con `git clone` en la carpeta `studio`.
-4.  **Configuración de `.env.local`** para producción.
-5.  **Construcción de la aplicación** con `npm run build`.
-6.  **Inicio de la aplicación con PM2** usando `pm2 start npm --name "qreasy" -- start` y `pm2 save`. Verifica que esté en línea con `pm2 list`.
+2.  **Configuración de la Base de Datos** en CyberPanel y en tu archivo `.env.local`.
+3.  **Despliegue del código** con `git clone` o `git pull` en la carpeta `studio`.
+4.  **Instalación de dependencias y construcción** con `npm install` y `npm run build`.
+
+### Paso 5: Iniciar la Aplicación con PM2 (¡Como el Usuario Correcto!)
+Este paso es crucial para evitar errores de permisos entre el servidor web y tu aplicación.
+
+1.  **Conéctate a tu servidor por SSH** como `root`.
+2.  **Si tienes una versión anterior de la app corriendo en PM2 como `root`, detenla y elimínala:**
+    ```bash
+    pm2 stop qreasy
+    pm2 delete qreasy
+    pm2 save --force
+    ```
+3.  **Inicia sesión como el usuario de tu sitio web (`esque9858`):**
+    ```bash
+    su - esque9858
+    ```
+4.  **Desde la sesión de `esque9858`, navega a la carpeta de la aplicación:**
+    ```bash
+    cd /home/esquel.org.ar/public_html/studio
+    ```
+5.  **Inicia la aplicación con PM2. Esto la ejecutará como el usuario `esque9858`:**
+    ```bash
+    pm2 start npm --name "qreasy" -- start
+    ```
+6.  **Guarda la lista de procesos de PM2 para que se reinicie automáticamente:**
+    ```bash
+    pm2 save
+    ```
+7.  **Regresa a tu sesión de `root`:**
+    ```bash
+    exit
+    ```
+8.  Verifica que la aplicación está en línea con `pm2 list`. Ahora debería mostrar a `esque9858` como el usuario.
 
 ### Paso 6: Corregir Permisos de la Carpeta (¡Paso Crucial!)
-Este es el paso más importante para evitar errores `403` o `404`. Le da al servidor web (LiteSpeed) los permisos necesarios para acceder a los archivos de tu proyecto.
+Este paso asegura que el servidor web pueda leer los archivos.
 
-1.  **Conéctate a tu servidor por SSH.**
-2.  Ejecuta el siguiente comando para cambiar el propietario de todos los archivos al usuario correcto de tu sitio (`esque9858`), que es el usuario que ejecuta los procesos de PHP y tiene los permisos adecuados en CyberPanel.
+1.  **Como `root`, ejecuta el siguiente comando** para asegurar que el propietario de todos los archivos es el usuario de tu sitio:
     ```bash
     sudo chown -R esque9858:esque9858 /home/esquel.org.ar/public_html/studio
     ```
-3.  A continuación, ejecuta este comando para asegurar que los permisos de las carpetas y archivos sean los correctos (lectura y ejecución para directorios, lectura para archivos).
+2.  A continuación, ejecuta este comando para asegurar que los permisos sean los correctos (lectura y ejecución para directorios, lectura para archivos):
     ```bash
     sudo chmod -R 755 /home/esquel.org.ar/public_html/studio
     ```
-    
+
 ### Paso 7: Configurar `vHost Conf` (La Clave Final)
-Esta configuración unificada le dice al servidor cómo encontrar y comunicarse con tu aplicación Node.js sin invalidar la configuración de tu sitio PHP existente.
+Esta configuración unificada le dice al servidor cómo encontrar y comunicarse con tu aplicación Node.js de forma robusta.
 
 1.  En tu panel de CyberPanel, ve a `Websites` -> `List Websites` -> `Manage` (para tu dominio).
 2.  En la sección `Configuraciones`, haz clic en **`Rewrite Rules`** y **asegúrate de que esté completamente vacía**. Guarda los cambios.
@@ -228,7 +257,7 @@ vhssl  {
 
 ### Paso 8: Reiniciar el Servidor Web (¡El Paso Final!)
 Para que todos estos cambios en la configuración y los permisos se apliquen, **es absolutamente necesario que reinicies el servidor web**.
-Abre la terminal de tu servidor y ejecuta:
+En la terminal de tu servidor (como `root`), ejecuta:
 ```bash
 sudo systemctl restart lsws
 ```
@@ -240,7 +269,7 @@ sudo systemctl restart lsws
 ### 🔄 Cómo Actualizar la Aplicación con Cambios de GitHub
 Cuando realices cambios en tu código y los subas a GitHub, sigue estos pasos para actualizar la aplicación en tu servidor:
 
-1.  **Conéctate a tu servidor por SSH.**
+1.  **Conéctate a tu servidor por SSH** (puedes hacerlo directamente como `esque9858` si has configurado una llave SSH, o como `root` y luego `su - esque9858`).
 2.  **Navega al directorio de tu proyecto:**
     ```bash
     cd /home/esquel.org.ar/public_html/studio
@@ -266,7 +295,5 @@ Cuando realices cambios en tu código y los subas a GitHub, sigue estos pasos pa
     pm2 restart qreasy
     ```
 7.  **Verifica el estado:**
-    Asegúrate de que la aplicación esté `online`.
-    ```bash
-    pm2 list
-    ```
+    Asegúrate de que la aplicación esté `online` con `pm2 list`.
+
