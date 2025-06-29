@@ -114,45 +114,40 @@ pm2 list
 Deberías ver el estado de `qreasy` como `online`. Si no lo está, iníciala con:
 ```bash
 # Desde /home/esquel.org.ar/public_html/studio
-pm2 start npm --name "qreasy" -- start
+pm2 start npm --name "qreasy" -- start -H 0.0.0.0
 pm2 save
 ```
 
 ### Paso 6: Configuración del Servidor Web (La Solución Definitiva)
 
-Este es el paso final y más importante para conectar tu dominio con la aplicación.
+Este es el paso final y más importante para conectar tu dominio con la aplicación. Consiste en dos partes.
 
-#### 6.1 - Vaciar las Reglas de Reescritura
+#### 6.1 - Configurar `vHost Conf`
 1.  En tu panel de CyberPanel, ve a `Websites` -> `List Websites` -> `Manage` (para `esquel.org.ar`).
-2.  Busca la sección `Configuraciones` y haz clic en **`Rewrite Rules`**.
-3.  **ASEGÚRATE DE QUE EL CUADRO DE TEXTO ESTÉ COMPLETAMENTE VACÍO.** Borra cualquier regla que exista.
-4.  Haz clic en **"Guardar"**.
+2.  En la sección `Configuraciones`, haz clic en **`vHost Conf`**.
+3.  **Borra todo el contenido** y pega **solamente** este bloque de código. Su única función es registrar tu aplicación con el nombre `qreasy-app`.
 
-#### 6.2 - Configurar el vHost
-1.  Vuelve a la página de `Manage` de tu dominio.
-2.  Busca la sección `Configuraciones` y haz clic en **`vHost Conf`**.
-3.  **Borra cualquier contenido que haya** y pega el siguiente bloque de código **exactamente como está**:
+   ```
+   extprocessor qreasy-app {
+     type                    node
+     address                 127.0.0.1:3001
+     maxConns                100
+     pcKeepAliveTimeout      60
+     initTimeout             60
+     retryTimeout            0
+     respBuffer              0
+   }
+   ```
+4.  **Guarda los cambios.**
 
+#### 6.2 - Configurar `Rewrite Rules`
+1.  Ahora, vuelve a la página de `Manage` y, en la misma sección `Configuraciones`, haz clic en **`Rewrite Rules`**.
+2.  **Borra cualquier contenido previo** y pega el siguiente código. Esta regla le dice al servidor que todo lo que llegue a `/studio/` debe ser manejado por la aplicación `qreasy-app` que definimos antes.
     ```
-    extprocessor qreasy-app {
-      type                    node
-      address                 127.0.0.1:3001
-      maxConns                100
-      pcKeepAliveTimeout      60
-      initTimeout             60
-      retryTimeout            0
-      respBuffer              0
-    }
-    
-    context /studio/ {
-      type                    proxy
-      handler                 qreasy-app
-      addDefaultCharset       off
-      allow                   *
-    }
+    RewriteEngine On
+    RewriteRule ^/studio/(.*)$ http://qreasy-app/$1 [P,L]
     ```
-    *Nota: La línea `allow *` es la clave. Le dice al servidor que permita el acceso público a este contexto, solucionando el error 403 "access denied".*
-4.  Haz clic en **"Guardar"**. Este cambio debería guardarse sin errores.
+3.  **Guarda los cambios.**
 
 ### Paso 7: Reiniciar el Servidor Web (¡El Paso Final y Crucial!)
 
