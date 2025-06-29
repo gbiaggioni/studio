@@ -1,3 +1,4 @@
+
 # QREasy - Gestor de Códigos QR
 
 QREasy es una aplicación web moderna y sencilla para crear, gestionar y compartir códigos QR. Ha sido desarrollada con un stack tecnológico actual, enfocándose en el rendimiento, la escalabilidad y una experiencia de usuario fluida.
@@ -250,37 +251,44 @@ sudo chmod +x node_modules/.bin/next
     ```
     Ejecuta el comando que te proporcione `pm2 startup` para asegurar que la app se reinicie con el servidor.
 
-### Paso 6: Configurar las Reglas de Proxy en CyberPanel (¡Solución Final!)
+### Paso 6: Configurar el Proxy en CyberPanel (¡Solución Definitiva!)
 
-Este es el paso final para conectar tu dominio con la aplicación.
+Este es el paso final para conectar tu dominio con la aplicación. **Vamos a usar el método correcto y más robusto para tu servidor.**
 
 1.  En tu panel de CyberPanel, ve a `Websites` -> `List Websites` -> `Manage` (para tu dominio `esquel.org.ar`).
-2.  Busca la sección `Configuraciones` y haz clic en **`Rewrite Rules`**.
-3.  Pega el siguiente bloque de código **exactamente como está**. Reemplaza cualquier contenido anterior que tuvieras.
+2.  Busca la sección `Configuraciones` y haz clic en **`vHost Conf`**.
+3.  **Borra cualquier contenido que haya** y pega el siguiente bloque de código **exactamente como está**:
 
     ```
-    RewriteEngine On
+    # 1. DEFINE THE EXTERNAL APPLICATION
+    # This tells OpenLiteSpeed about your Node.js app running on port 3001.
+    extprocessor qreasy-app {
+      type                    node
+      address                 127.0.0.1:3001
+      maxConns                100
+      pcKeepAliveTimeout      60
+      initTimeout             60
+      retryTimeout            0
+      respBuffer              0
+    }
     
-    # 1. Forzar HTTPS (si CyberPanel no lo hace automáticamente)
-    RewriteCond %{HTTPS} !=on
-    RewriteRule ^/?(.*) https://%{SERVER_NAME}/$1 [R=301,L]
-
-    # 2. Asegurar que /studio siempre tenga una barra al final (previene errores)
-    RewriteCond %{REQUEST_URI} ^/studio$
-    RewriteRule ^(.*)$ https://%{HTTP_HOST}/studio/ [R=301,L]
-
-    # 3. Proxy para la aplicación Next.js en el subdirectorio /studio/
-    # ¡IMPORTANTE! Esta es la regla corregida y simplificada.
-    # Pasa la petición a la aplicación Next.js, conservando el subdirectorio /studio.
-    RewriteRule ^studio/(.*)$ http://127.0.0.1:3001/studio/$1 [P,L]
+    # 2. CREATE A PROXY CONTEXT
+    # This is the correct way to map a subfolder to your application.
+    # It tells the server: "any request to /studio/ should be sent to qreasy-app".
+    # This is better than a rewrite rule because it handles pathing correctly.
+    context /studio/ {
+      type                    proxy
+      handler                 qreasy-app
+      addDefaultCharset       off
+    }
     ```
-
-4.  Haz clic en **"Save Rewrite Rules"**.
-5.  **Nota:** Si previamente añadiste algo en la sección `vHost Conf`, es recomendable que lo elimines para evitar conflictos. La configuración en `Rewrite Rules` es suficiente.
+    
+4.  Haz clic en **"Guardar"**.
+5.  **Importante**: Vuelve a la página de `Manage` de tu dominio y ve a `Rewrite Rules`. **Asegúrate de que el cuadro de texto de las reglas de reescritura esté completamente vacío** y guarda los cambios para evitar conflictos.
 
 ### Paso 7: Reiniciar el Servidor Web (¡El Paso Final y Crucial!)
 
-Para que todos estos cambios en las reglas se apliquen, **es absolutamente necesario que reinicies el servidor web**.
+Para que todos estos cambios en la configuración se apliquen, **es absolutamente necesario que reinicies el servidor web**.
 
 Abre la terminal de tu servidor y ejecuta:
 ```bash
@@ -288,6 +296,7 @@ sudo systemctl restart lsws
 ```
 
 ¡Y listo! Ahora, cuando visites `https://esquel.org.ar/studio/`, debería funcionar correctamente.
+
 ---
 
 ### 🔄 Cómo Actualizar la Aplicación con Cambios de GitHub
@@ -357,11 +366,12 @@ Si PM2 muestra `online`, vamos a confirmar que responde localmente.
 
 Este es el paso final y el más común.
 
-1.  **Revisa las `Rewrite Rules`**: Asegúrate de que el contenido en `Manage` -> `Rewrite Rules` sea **exactamente** el del **Paso 6** y que la última línea sea `RewriteRule ^studio/(.*)$ http://127.0.0.1:3001/studio/$1 [P,L]`.
-2.  **Guarda y REINICIA el Servidor Web (¡EL PASO MÁS IMPORTANTE!)**:
+1.  **Revisa la `vHost Conf`**: Asegúrate de que el contenido en `Manage` -> `vHost Conf` sea **exactamente** el del **Paso 6** y que no haya nada más.
+2.  **Revisa las `Rewrite Rules`**: Ve a `Manage` -> `Rewrite Rules` y asegúrate de que el cuadro de texto esté **completamente vacío**.
+3.  **Guarda y REINICIA el Servidor Web (¡EL PASO MÁS IMPORTANTE!)**:
     -   Después de guardar los cambios, ejecuta este comando en la terminal. **Sin este paso, los cambios no se aplican.**
     ```bash
     sudo systemctl restart lsws
     ```
-3.  **Prueba en el navegador**:
+4.  **Prueba en el navegador**:
     -   Abre una nueva pestaña en modo incógnito (para evitar la caché) y visita `https://esquel.org.ar/studio/`. Si ves errores 404 en la consola, es casi seguro que el reinicio de `lsws` no se completó correctamente o las reglas no se guardaron.
