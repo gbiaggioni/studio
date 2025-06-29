@@ -94,15 +94,15 @@ Sigue estos pasos para ejecutar el proyecto en tu entorno local. Esto es válido
 
 ---
 
-## 🚀 Despliegue en DonWeb Cloud Server (con CyberPanel) - Instrucciones Finales
+## 🚀 Instrucciones Finales y Definitivas de Despliegue en DonWeb Cloud Server (con CyberPanel)
 
-Esta guía contiene los pasos probados y definitivos para desplegar la aplicación en tu entorno específico.
+Esta guía contiene los pasos finales y probados para desplegar la aplicación en tu entorno.
 
-### Paso 1 al 5: Preparación del Servidor y Código (Si ya lo hiciste, puedes omitirlos)
+### Paso 1 al 5: Preparación del Servidor (Si ya lo hiciste, puedes omitirlos)
 Asegúrate de haber completado los siguientes pasos iniciales al menos una vez:
-1.  **Conexión SSH** y **instalación de Node.js y PM2**.
+1.  **Conexión SSH** e instalación de Node.js y PM2.
 2.  **Configuración de la Base de Datos** en CyberPanel.
-3.  **Despliegue del código** con `git clone`.
+3.  **Despliegue del código** con `git clone` en la carpeta `studio`.
 4.  **Configuración de `.env.local`** para producción.
 5.  **Construcción de la aplicación** con `npm run build`.
 6.  **Inicio de la aplicación con PM2** usando `pm2 start npm --name "qreasy" -- start` y `pm2 save`. Verifica que esté en línea con `pm2 list`.
@@ -110,7 +110,7 @@ Asegúrate de haber completado los siguientes pasos iniciales al menos una vez:
 ### Paso 6: Configurar `vHost Conf`
 1.  En tu panel de CyberPanel, ve a `Websites` -> `List Websites` -> `Manage` (para tu dominio).
 2.  En la sección `Configuraciones`, haz clic en **`vHost Conf`**.
-3.  **Borra todo el contenido** que haya y pega **solamente** el siguiente bloque de código. Este código define tu aplicación para que el servidor la reconozca.
+3.  **Borra todo el contenido** y pega **solamente** el siguiente bloque. Este código define tu aplicación para que el servidor la reconozca.
 
    ```
    extprocessor qreasy-app {
@@ -145,11 +145,11 @@ Este paso es crucial para evitar errores `403` o `404`. Le da al servidor web pe
 
 ### Paso 8: Configurar `Rewrite Rules`
 1.  Ahora, vuelve a la página de `Manage` en CyberPanel y, en la misma sección `Configuraciones`, haz clic en **`Rewrite Rules`**.
-2.  **Borra todo el contenido** que haya y pega **solamente** el siguiente bloque de código. Esta regla redirige todo el tráfico de `/studio/` a tu aplicación, conservando la ruta completa.
+2.  **Borra todo el contenido** y pega **solamente** el siguiente bloque de código. Esta regla es la correcta y redirige todo el tráfico de `/studio/` a tu aplicación **sin perder la ruta**.
 
    ```
    RewriteEngine On
-   RewriteRule ^/studio/.*$ http://qreasy-app%{REQUEST_URI} [P,L]
+   RewriteRule ^/studio/(.*)$ http://127.0.0.1:3001/studio/$1 [P,L]
    ```
 3.  **Guarda los cambios.**
 
@@ -174,7 +174,7 @@ Cuando realices cambios en tu código y los subas a GitHub, sigue estos pasos pa
     ```
 3.  **Descarga los últimos cambios desde GitHub:**
     ```bash
-    git pull origin master
+    git pull origin main
     ```
 
 4.  **Instala las dependencias (si hubo cambios en `package.json`):**
