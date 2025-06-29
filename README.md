@@ -402,7 +402,7 @@ Sigue estos pasos **exactos** en la terminal de tu servidor para corregirlo:
     ```
 
 5.  **Guarda la nueva configuración correcta:**
-    Una vez que el estado sea `online`, guarda la lista de procesos para que PM2 la recuerde después de un reinicio del servidor.
+    Once que el estado sea `online`, guarda la lista de procesos para que PM2 la recuerde después de un reinicio del servidor.
     ```bash
     pm2 save
     ```
