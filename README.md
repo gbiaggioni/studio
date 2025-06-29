@@ -96,48 +96,60 @@ Sigue estos pasos para ejecutar el proyecto en tu entorno local. Esto es válido
 
 ## 🚀 Instrucciones Finales y Definitivas de Despliegue en DonWeb Cloud Server (con CyberPanel)
 
-Esta guía contiene los pasos finales y probados para desplegar la aplicación en tu entorno. Sigue cada paso meticulosamente.
+Esta guía contiene los pasos finales, consolidados y probados para desplegar la aplicación en tu entorno. Sigue cada paso meticulosamente. El objetivo es asegurar que todos los archivos y procesos pertenezcan al usuario correcto (`esque9858`) para eliminar cualquier conflicto de permisos.
 
-### Paso 1 al 4: Preparación del Servidor (Si ya lo hiciste, puedes omitirlos)
-Asegúrate de haber completado los siguientes pasos iniciales al menos una vez:
-1.  **Conexión SSH** e instalación de Node.js y PM2.
-2.  **Configuración de la Base de Datos** en CyberPanel y en tu archivo `.env.local`.
-3.  **Despliegue del código** con `git clone` o `git pull` en la carpeta `studio`.
-4.  **Instalación de dependencias y construcción** con `npm install` y `npm run build`.
-
-### Paso 5: Iniciar la Aplicación con PM2 (¡Como el Usuario Correcto!)
-Este paso es crucial para alinear todos los permisos.
+### Paso 1: Conexión y Limpieza (Como `root`)
 
 1.  **Conéctate a tu servidor por SSH** como `root`.
-2.  **Si tienes una versión anterior de la app corriendo en PM2, detenla y elimínala:**
-    ```bash
-    pm2 stop qreasy
-    pm2 delete qreasy
-    ```
-3.  **Navega a la carpeta de la aplicación:**
+2.  **Navega a la carpeta de la aplicación:**
     ```bash
     cd /home/esquel.org.ar/public_html/studio
     ```
-4.  **Inicia la aplicación con PM2, especificando que se ejecute como el usuario de tu sitio web (`esque9858`).** Esto es fundamental para evitar errores de permisos.
+3.  **Detén y elimina cualquier proceso de PM2 anterior.** Esto es crucial para empezar de cero.
     ```bash
-    pm2 start npm --name "qreasy" -- start --uid esque9858 --gid esque9858
+    pm2 stop qreasy
+    pm2 delete qreasy
+    pm2 save --force
     ```
-5.  **Guarda la lista de procesos de PM2 para que se reinicie automáticamente:**
+4.  **Limpia los artefactos de construcción antiguos.** Esto elimina las carpetas que pudieron haber sido creadas por `root` y que causan el estado `errored`.
     ```bash
-    pm2 save
+    rm -rf node_modules .next
     ```
-6.  Verifica que la aplicación está en línea con `pm2 list`. Ahora debería mostrar a `esque9858` como el usuario.
-
-### Paso 6: Corregir Permisos de la Carpeta
-Este paso asegura que el usuario del sitio web sea el propietario de todos los archivos.
-
-1.  **Como `root`, ejecuta el siguiente comando**:
+5.  **Asegura que todos los archivos restantes pertenecen al usuario correcto.**
     ```bash
-    sudo chown -R esque9858:esque9858 /home/esquel.org.ar/public_html/studio
+    chown -R esque9858:esque9858 /home/esquel.org.ar/public_html/studio
     ```
 
-### Paso 7: Configurar `vHost Conf` (La Clave Final)
-Esta configuración unificada le dice al servidor cómo encontrar y comunicarse con tu aplicación Node.js de forma robusta.
+### Paso 2: Instalación y Construcción (Como el Usuario Correcto)
+
+Ahora, realizaremos la instalación y construcción como el usuario `esque9858` para garantizar que todos los nuevos archivos tengan los permisos correctos desde su creación.
+
+1.  **Cambia al usuario del sitio web:**
+    ```bash
+    su - esque9858
+    ```
+    *Nota: Tu prompt en la terminal cambiará para indicar que ahora eres el usuario `esque9858`.*
+
+2.  **Navega de nuevo a la carpeta del proyecto** (desde la sesión de `esque9858`):
+    ```bash
+    cd /home/esquel.org.ar/public_html/studio
+    ```
+3.  **Instala las dependencias.** Esto creará una nueva carpeta `node_modules` propiedad de `esque9858`.
+    ```bash
+    npm install
+    ```
+4.  **Construye la aplicación.** Esto creará una nueva carpeta `.next` propiedad de `esque9858`.
+    ```bash
+    npm run build
+    ```
+5.  **Sal de la sesión del usuario** para volver a ser `root`.
+    ```bash
+    exit
+    ```
+
+### Paso 3: Configurar el Servidor Web (vHost Conf)
+
+Esta configuración unificada le dice al servidor cómo encontrar y comunicarse con tu aplicación Node.js de forma robusta, utilizando el método de `contexto` que es el más fiable.
 
 1.  En tu panel de CyberPanel, ve a `Websites` -> `List Websites` -> `Manage` (para tu dominio).
 2.  En la sección `Configuraciones`, haz clic en **`Rewrite Rules`** y **asegúrate de que esté completamente vacía**. Guarda los cambios.
@@ -145,141 +157,157 @@ Esta configuración unificada le dice al servidor cómo encontrar y comunicarse 
 4.  **Borra todo el contenido** y pega **el siguiente bloque completo**. Este bloque contiene tu configuración existente de PHP y SSL, con las adiciones necesarias para la aplicación Node.js.
 
    ```
-docRoot                   $VH_ROOT/public_html
-vhDomain                  $VH_NAME
-vhAliases                 www.$VH_NAME
-adminEmails               gbiaggioni@gmail.com
-enableGzip                1
-enableIpGeo               1
-
-index  {
-  useServer               0
-  indexFiles              index.php, index.html
-}
-
-errorlog $VH_ROOT/logs/$VH_NAME.error_log {
-  useServer               0
-  logLevel                WARN
-  rollingSize             10M
-}
-
-accesslog $VH_ROOT/logs/$VH_NAME.access_log {
-  useServer               0
-  logFormat               "%h %l %u %t \"%r\" %>s %b \"%{Referer}i\" \"%{User-Agent}i\""
-  logHeaders              5
-  rollingSize             10M
-  keepDays                10
-  compressArchive         1
-}
-
-scripthandler  {
-  add                     lsapi:esque9858 php
-}
-
-extprocessor esque9858 {
-  type                    lsapi
-  address                 UDS://tmp/lshttpd/esque9858.sock
-  maxConns                10
-  env                     LSAPI_CHILDREN=10
-  initTimeout             600
-  retryTimeout            0
-  persistConn             1
-  pcKeepAliveTimeout      1
-  respBuffer              0
-  autoStart               1
-  path                    /usr/local/lsws/lsphp83/bin/lsphp
-  extUser                 esque9858
-  extGroup                esque9858
-  memSoftLimit            2047M
-  memHardLimit            2047M
-  procSoftLimit           400
-  procHardLimit           500
-}
-
-extprocessor qreasy-app {
-  type                    node
-  address                 127.0.0.1:3001
-  maxConns                100
-  pcKeepAliveTimeout      60
-  initTimeout             60
-  retryTimeout            0
-  respBuffer              0
-  autoStart               0
-}
-
-context /studio/ {
-  type                    proxy
-  handler                 qreasy-app
-  addDefaultCharset       off
-}
-
-context /.well-known/acme-challenge {
-  location                /usr/local/lsws/Example/html/.well-known/acme-challenge
-  allowBrowse             1
-
-  rewrite  {
-    enable                  0
-  }
-  addDefaultCharset       off
-
-  phpIniOverride  {
-
-  }
-}
-
-vhssl  {
-  keyFile                 /etc/letsencrypt/live/esquel.org.ar/privkey.pem
-  certFile                /etc/letsencrypt/live/esquel.org.ar/fullchain.pem
-  certChain               1
-  sslProtocol             24
-  enableECDHE             1
-  renegProtection         1
-  sslSessionCache         1
-  enableSpdy              15
-  enableStapling           1
-  ocspRespMaxAge           86400
-}
+   docRoot                   $VH_ROOT/public_html
+   vhDomain                  $VH_NAME
+   vhAliases                 www.$VH_NAME
+   adminEmails               gbiaggioni@gmail.com
+   enableGzip                1
+   enableIpGeo               1
+   
+   index  {
+     useServer               0
+     indexFiles              index.php, index.html
+   }
+   
+   errorlog $VH_ROOT/logs/$VH_NAME.error_log {
+     useServer               0
+     logLevel                WARN
+     rollingSize             10M
+   }
+   
+   accesslog $VH_ROOT/logs/$VH_NAME.access_log {
+     useServer               0
+     logFormat               "%h %l %u %t \"%r\" %>s %b \"%{Referer}i\" \"%{User-Agent}i\""
+     logHeaders              5
+     rollingSize             10M
+     keepDays                10
+     compressArchive         1
+   }
+   
+   scripthandler  {
+     add                     lsapi:esque9858 php
+   }
+   
+   extprocessor esque9858 {
+     type                    lsapi
+     address                 UDS://tmp/lshttpd/esque9858.sock
+     maxConns                10
+     env                     LSAPI_CHILDREN=10
+     initTimeout             600
+     retryTimeout            0
+     persistConn             1
+     pcKeepAliveTimeout      1
+     respBuffer              0
+     autoStart               1
+     path                    /usr/local/lsws/lsphp83/bin/lsphp
+     extUser                 esque9858
+     extGroup                esque9858
+     memSoftLimit            2047M
+     memHardLimit            2047M
+     procSoftLimit           400
+     procHardLimit           500
+   }
+   
+   extprocessor qreasy-app {
+     type                    node
+     address                 127.0.0.1:3001
+     maxConns                100
+     pcKeepAliveTimeout      60
+     initTimeout             60
+     retryTimeout            0
+     respBuffer              0
+     autoStart               0
+   }
+   
+   context /studio/ {
+     type                    proxy
+     handler                 qreasy-app
+     addDefaultCharset       off
+   }
+   
+   context /.well-known/acme-challenge {
+     location                /usr/local/lsws/Example/html/.well-known/acme-challenge
+     allowBrowse             1
+   
+     rewrite  {
+       enable                  0
+     }
+     addDefaultCharset       off
+   
+     phpIniOverride  {
+   
+     }
+   }
+   
+   vhssl  {
+     keyFile                 /etc/letsencrypt/live/esquel.org.ar/privkey.pem
+     certFile                /etc/letsencrypt/live/esquel.org.ar/fullchain.pem
+     certChain               1
+     sslProtocol             24
+     enableECDHE             1
+     renegProtection         1
+     sslSessionCache         1
+     enableSpdy              15
+     enableStapling           1
+     ocspRespMaxAge           86400
+   }
    ```
 5.  **Guarda los cambios.**
 
-### Paso 8: Reiniciar el Servidor Web (¡El Paso Final!)
-Para que todos estos cambios en la configuración y los permisos se apliquen, **es absolutamente necesario que reinicies el servidor web**.
-En la terminal de tu servidor (como `root`), ejecuta:
-```bash
-sudo systemctl restart lsws
-```
+### Paso 4: Iniciar la Aplicación y Finalizar (Como `root`)
 
-¡Y listo! Ahora, cuando visites `https://esquel.org.ar/studio/`, debería funcionar correctamente, y tu sitio principal seguirá funcionando como siempre.
+1.  **Como `root`, navega a la carpeta de la aplicación:**
+    ```bash
+    cd /home/esquel.org.ar/public_html/studio
+    ```
+2.  **Inicia la aplicación con PM2**, especificando que se ejecute como el usuario de tu sitio web (`esque9858`). Esto es fundamental para evitar errores de permisos.
+    ```bash
+    pm2 start npm --name "qreasy" -- start --uid esque9858 --gid esque9858
+    ```
+3.  **Guarda la lista de procesos de PM2** para que se reinicie automáticamente:
+    ```bash
+    pm2 save
+    ```
+4.  **Verifica que la aplicación está en línea** con `pm2 list`. Ahora debería mostrar a `esque9858` como el usuario y el estado `online`.
+5.  **Reinicia el servidor web (El Paso Final!)** Para que todos los cambios se apliquen.
+    ```bash
+    sudo systemctl restart lsws
+    ```
+
+¡Y listo! Ahora, cuando visites `https://esquel.org.ar/studio/`, debería funcionar correctamente.
 
 ---
 
 ### 🔄 Cómo Actualizar la Aplicación con Cambios de GitHub
-Cuando realices cambios en tu código y los subas a GitHub, sigue estos pasos para actualizar la aplicación en tu servidor:
+Cuando realices cambios en tu código y los subas a GitHub, sigue este nuevo procedimiento simplificado:
 
 1.  **Conéctate a tu servidor por SSH** como `root`.
-2.  **Navega al directorio de tu proyecto:**
+2.  **Cambia al usuario de tu sitio:**
+    ```bash
+    su - esque9858
+    ```
+3.  **Navega al directorio de tu proyecto:**
     ```bash
     cd /home/esquel.org.ar/public_html/studio
     ```
-3.  **Descarga los últimos cambios desde GitHub:**
+4.  **Descarga los últimos cambios desde GitHub:**
     ```bash
     git pull origin main
     ```
-
-4.  **Instala las dependencias (si hubo cambios en `package.json`):**
+5.  **Instala las dependencias (si hubo cambios en `package.json`):**
     ```bash
     npm install
     ```
-5.  **Reconstruye la aplicación para producción:**
-    Este paso es **crucial** para que tus cambios se apliquen.
+6.  **Reconstruye la aplicación para producción:**
     ```bash
     npm run build
     ```
-
-6.  **Reinicia la aplicación con PM2:**
-    PM2 cargará la nueva versión sin tiempo de inactividad.
+7.  **Reinicia la aplicación con PM2:**
     ```bash
     pm2 restart qreasy
     ```
-7.  **Verifica el estado:**
-    Asegúrate de que la aplicación esté `online` con `pm2 list`.
+8.  **Vuelve a tu sesión de `root`:**
+    ```bash
+    exit
+    ```
+¡Eso es todo! La nueva versión estará en línea.
