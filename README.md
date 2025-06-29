@@ -107,11 +107,7 @@ Asegúrate de haber completado los siguientes pasos iniciales al menos una vez:
 5.  **Construcción de la aplicación** con `npm run build`.
 6.  **Inicio de la aplicación con PM2** usando `pm2 start npm --name "qreasy" -- start` y `pm2 save`. Verifica que esté en línea con `pm2 list`.
 
-### Paso 6: Configuración del Servidor Web (La Solución Definitiva)
-
-Este es el paso final y más importante para conectar tu dominio con la aplicación. **Sigue estas instrucciones con precisión.**
-
-#### 6.1 - Configurar `vHost Conf`
+### Paso 6: Configurar `vHost Conf`
 1.  En tu panel de CyberPanel, ve a `Websites` -> `List Websites` -> `Manage` (para tu dominio).
 2.  En la sección `Configuraciones`, haz clic en **`vHost Conf`**.
 3.  **Borra todo el contenido** que haya y pega **solamente** el siguiente bloque de código. Este código define tu aplicación para que el servidor la reconozca.
@@ -129,8 +125,22 @@ Este es el paso final y más importante para conectar tu dominio con la aplicaci
    ```
 4.  **Guarda los cambios.**
 
-#### 6.2 - Configurar `Rewrite Rules`
-1.  Ahora, vuelve a la página de `Manage` y, en la misma sección `Configuraciones`, haz clic en **`Rewrite Rules`**.
+### Paso 7: Ajustar Permisos de la Carpeta (¡Muy Importante!)
+Este paso es crucial para evitar errores `403` o `404`. Le da al servidor web permiso para acceder a los archivos de tu proyecto.
+1.  **Conéctate a tu servidor por SSH.**
+2.  Navega a la carpeta que contiene tu proyecto (un nivel por encima de `studio`).
+    ```bash
+    cd /home/esquel.org.ar/public_html/
+    ```
+3.  Ejecuta los siguientes dos comandos para establecer el propietario y los permisos correctos.
+    ```bash
+    sudo chown -R $USER:$USER studio
+    sudo chmod -R 755 studio
+    ```
+    *Esto asegura que tu usuario es el dueño de los archivos y que el servidor web tiene permiso para leerlos y ejecutarlos.*
+
+### Paso 8: Configurar `Rewrite Rules`
+1.  Ahora, vuelve a la página de `Manage` en CyberPanel y, en la misma sección `Configuraciones`, haz clic en **`Rewrite Rules`**.
 2.  **Borra todo el contenido** que haya y pega **solamente** el siguiente bloque de código. Esta regla redirige todo el tráfico de `/studio/` a tu aplicación, conservando la ruta completa.
 
    ```
@@ -139,10 +149,8 @@ Este es el paso final y más importante para conectar tu dominio con la aplicaci
    ```
 3.  **Guarda los cambios.**
 
-### Paso 7: Reiniciar el Servidor Web (¡El Paso Final y Crucial!)
-
+### Paso 9: Reiniciar el Servidor Web (¡El Paso Final y Crucial!)
 Para que todos estos cambios en la configuración se apliquen, **es absolutamente necesario que reinicies el servidor web**.
-
 Abre la terminal de tu servidor y ejecuta:
 ```bash
 sudo systemctl restart lsws
