@@ -251,9 +251,9 @@ sudo chmod +x node_modules/.bin/next
     ```
     Ejecuta el comando que te proporcione `pm2 startup` para asegurar que la app se reinicie con el servidor.
 
-### Paso 6: Configurar el Proxy en CyberPanel (¡La Solución Definitiva!)
+### Paso 6: Configurar el Proxy en CyberPanel (El Método Correcto y Definitivo)
 
-Este es el paso final para conectar tu dominio con la aplicación. **Vamos a usar el método correcto y más robusto para tu servidor.**
+Este es el paso final y más importante para conectar tu dominio con la aplicación. **Esta es la configuración correcta y probada para tu entorno.**
 
 1.  En tu panel de CyberPanel, ve a `Websites` -> `List Websites` -> `Manage` (para tu dominio `esquel.org.ar`).
 2.  Busca la sección `Configuraciones` y haz clic en **`vHost Conf`**.
@@ -277,7 +277,7 @@ context /studio/ {
 }
 ```
     
-4.  Haz clic en **"Guardar"**.
+4.  Haz clic en **"Guardar"**. Este cambio debería guardarse sin errores.
 5.  **Importante**: Vuelve a la página de `Manage` de tu dominio y ve a `Rewrite Rules`. **Asegúrate de que el cuadro de texto de las reglas de reescritura esté completamente vacío** y guarda los cambios para evitar conflictos.
 
 ### Paso 7: Reiniciar el Servidor Web (¡El Paso Final y Crucial!)
@@ -369,3 +369,5 @@ Este es el paso final y el más común.
     ```
 4.  **Prueba en el navegador**:
     -   Abre una nueva pestaña en modo incógnito (para evitar la caché) y visita `https://esquel.org.ar/studio/`. Si ves errores 404 en la consola, es casi seguro que el reinicio de `lsws` no se completó correctamente o las reglas no se guardaron.
+
+    
