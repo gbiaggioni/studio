@@ -260,22 +260,22 @@ Este es el paso final y más importante para conectar tu dominio con la aplicaci
 3.  **Borra cualquier contenido que haya** y pega el siguiente bloque de código **exactamente como está**, sin comentarios ni espacios extra:
 
     ```
-extprocessor qreasy-app {
-  type                    node
-  address                 127.0.0.1:3001
-  maxConns                100
-  pcKeepAliveTimeout      60
-  initTimeout             60
-  retryTimeout            0
-  respBuffer              0
-}
-
-context /studio/ {
-  type                    proxy
-  handler                 qreasy-app
-  addDefaultCharset       off
-}
-```
+    extprocessor qreasy-app {
+      type                    node
+      address                 127.0.0.1:3001
+      maxConns                100
+      pcKeepAliveTimeout      60
+      initTimeout             60
+      retryTimeout            0
+      respBuffer              0
+    }
+    
+    context /studio/ {
+      type                    proxy
+      handler                 qreasy-app
+      addDefaultCharset       off
+    }
+    ```
     
 4.  Haz clic en **"Guardar"**. Este cambio debería guardarse sin errores.
 5.  **Importante**: Vuelve a la página de `Manage` de tu dominio y ve a `Rewrite Rules`. **Asegúrate de que el cuadro de texto de las reglas de reescritura esté completamente vacío** y guarda los cambios para evitar conflictos.
