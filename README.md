@@ -251,13 +251,13 @@ sudo chmod +x node_modules/.bin/next
     ```
     Ejecuta el comando que te proporcione `pm2 startup` para asegurar que la app se reinicie con el servidor.
 
-### Paso 6: Configurar el Proxy en CyberPanel (El Método Correcto y Definitivo)
+### Paso 6: Configurar el Proxy en CyberPanel (El Método Definitivo)
+Este es el paso final y más importante para conectar tu dominio con la aplicación. Tras analizar los errores específicos de tu servidor, este es el método correcto y probado.
 
-Este es el paso final y más importante para conectar tu dominio con la aplicación. **Esta es la configuración correcta y probada para tu entorno.**
-
+#### 6.1 - Definir la Aplicación en `vHost Conf`
 1.  En tu panel de CyberPanel, ve a `Websites` -> `List Websites` -> `Manage` (para tu dominio `esquel.org.ar`).
 2.  Busca la sección `Configuraciones` y haz clic en **`vHost Conf`**.
-3.  **Borra cualquier contenido que haya** y pega el siguiente bloque de código **exactamente como está**, sin comentarios ni espacios extra:
+3.  **Borra cualquier contenido que haya** y pega el siguiente bloque de código **exactamente como está**:
 
     ```
     extprocessor qreasy-app {
@@ -269,16 +269,18 @@ Este es el paso final y más importante para conectar tu dominio con la aplicaci
       retryTimeout            0
       respBuffer              0
     }
-    
-    context /studio/ {
-      type                    proxy
-      handler                 qreasy-app
-      addDefaultCharset       off
-    }
     ```
-    
 4.  Haz clic en **"Guardar"**. Este cambio debería guardarse sin errores.
-5.  **Importante**: Vuelve a la página de `Manage` de tu dominio y ve a `Rewrite Rules`. **Asegúrate de que el cuadro de texto de las reglas de reescritura esté completamente vacío** y guarda los cambios para evitar conflictos.
+
+#### 6.2 - Crear la Regla de Redirección
+1.  Vuelve a la página de `Manage` de tu dominio.
+2.  Busca la sección `Configuraciones` y haz clic en **`Rewrite Rules`**.
+3.  **Borra cualquier contenido que haya** y pega el siguiente bloque **exactamente como está**:
+    ```
+    RewriteEngine On
+    RewriteRule ^/studio/(.*)$ http://qreasy-app/$1 [P]
+    ```
+4. Haz clic en **"Guardar"**.
 
 ### Paso 7: Reiniciar el Servidor Web (¡El Paso Final y Crucial!)
 
@@ -360,14 +362,12 @@ Si PM2 muestra `online`, vamos a confirmar que responde localmente.
 
 Este es el paso final y el más común.
 
-1.  **Revisa la `vHost Conf`**: Asegúrate de que el contenido en `Manage` -> `vHost Conf` sea **exactamente** el del **Paso 6** y que no haya nada más.
-2.  **Revisa las `Rewrite Rules`**: Ve a `Manage` -> `Rewrite Rules` y asegúrate de que el cuadro de texto esté **completamente vacío**.
+1.  **Revisa la `vHost Conf`**: Asegúrate de que el contenido en `Manage` -> `vHost Conf` sea **exactamente** el del **Paso 6.1** y que no haya nada más.
+2.  **Revisa las `Rewrite Rules`**: Ve a `Manage` -> `Rewrite Rules` y asegúrate de que el contenido sea **exactamente** el del **Paso 6.2**.
 3.  **Guarda y REINICIA el Servidor Web (¡EL PASO MÁS IMPORTANTE!)**:
     -   Después de guardar los cambios, ejecuta este comando en la terminal. **Sin este paso, los cambios no se aplican.**
     ```bash
     sudo systemctl restart lsws
     ```
 4.  **Prueba en el navegador**:
-    -   Abre una nueva pestaña en modo incógnito (para evitar la caché) y visita `https://esquel.org.ar/studio/`. Si ves errores 404 en la consola, es casi seguro que el reinicio de `lsws` no se completó correctamente o las reglas no se guardaron.
-
-    
+    -   Abre una nueva pestaña en modo incógnito (para evitar la caché) y visita `https://esquel.org.ar/studio/`. Si ves errores 404 en la consola del navegador, es casi seguro que el reinicio de `lsws` no se completó correctamente o las reglas no se guardaron.
