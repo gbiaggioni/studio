@@ -134,10 +134,10 @@ Este paso es crucial para evitar errores `403` o `404`. Le da al servidor web pe
     ```
 3.  Ejecuta los siguientes dos comandos para establecer el propietario y los permisos correctos.
     ```bash
-    sudo chown -R $USER:$USER studio
+    sudo chown -R $USER:litespeed studio
     sudo chmod -R 755 studio
     ```
-    *Esto asegura que tu usuario es el dueño de los archivos y que el servidor web tiene permiso para leerlos y ejecutarlos.*
+    *Esto asegura que tu usuario es el dueño de los archivos y que el servidor web (`litespeed`) tiene permiso para leerlos y ejecutarlos.*
 
 ### Paso 8: Configurar `Rewrite Rules`
 1.  Ahora, vuelve a la página de `Manage` en CyberPanel y, en la misma sección `Configuraciones`, haz clic en **`Rewrite Rules`**.
@@ -193,3 +193,5 @@ Cuando realices cambios en tu código y los subas a GitHub, sigue estos pasos pa
     ```bash
     pm2 list
     ```
+
+    
