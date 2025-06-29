@@ -296,8 +296,8 @@ Ahora que la aplicación está registrada, vamos a dirigir el tráfico hacia ell
     RewriteRule ^(.*)$ https://%{HTTP_HOST}/studio/ [R=301,L]
 
     # 3. Proxy para la aplicación Next.js en el subdirectorio /studio/
-    # ¡IMPORTANTE! Esto apunta al nombre de la aplicación externa que creamos, no a la IP/puerto.
-    RewriteRule ^studio/(.*)$ http://qreasy-app/$1 [P,L]
+    # ¡IMPORTANTE! Esta es la regla corregida. Pasa el '/studio' a la aplicación.
+    RewriteRule ^studio/(.*)$ http://qreasy-app/studio/$1 [P,L]
     ```
 
 4.  Haz clic en **"Save Rewrite Rules"**.
@@ -388,7 +388,7 @@ Si PM2 muestra `online`, vamos a confirmar que responde localmente.
 Este es el paso final y el más común.
 
 1.  **Revisa la Configuración `vHost Conf`**: Asegúrate de que el bloque `extprocessor qreasy-app` existe al final del archivo en `Manage` -> `vHost Conf`.
-2.  **Revisa las `Rewrite Rules`**: Asegúrate de que el contenido en `Manage` -> `Rewrite Rules` sea **exactamente** el del **Paso 6.2** y que la última línea apunte a `http://qreasy-app/$1 [P,L]`.
+2.  **Revisa las `Rewrite Rules`**: Asegúrate de que el contenido en `Manage` -> `Rewrite Rules` sea **exactamente** el del **Paso 6.2** y que la última línea apunte a `http://qreasy-app/studio/$1 [P,L]`.
 3.  **Guarda y REINICIA el Servidor Web (¡EL PASO MÁS IMPORTANTE!)**:
     -   Después de guardar los cambios, ejecuta este comando en la terminal. **Sin este paso, los cambios no se aplican.**
     ```bash
