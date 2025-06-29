@@ -148,8 +148,10 @@ Este es el paso final y más importante para conectar tu dominio con la aplicaci
       type                    proxy
       handler                 qreasy-app
       addDefaultCharset       off
+      allow                   *
     }
     ```
+    *Nota: La línea `allow *` es la clave. Le dice al servidor que permita el acceso público a este contexto, solucionando el error 403 "access denied".*
 4.  Haz clic en **"Guardar"**. Este cambio debería guardarse sin errores.
 
 ### Paso 7: Reiniciar el Servidor Web (¡El Paso Final y Crucial!)
