@@ -275,11 +275,12 @@ Este es el paso final para conectar tu dominio con la aplicación. **Vamos a usa
     # 2. CREATE A PROXY CONTEXT
     # This is the correct way to map a subfolder to your application.
     # It tells the server: "any request to /studio/ should be sent to qreasy-app".
-    # This is better than a rewrite rule because it handles pathing correctly.
     context /studio/ {
       type                    proxy
       handler                 qreasy-app
       addDefaultCharset       off
+      # ¡IMPORTANTE! Esta línea es necesaria para permitir el acceso al proxy.
+      allow                   all
     }
     ```
     
@@ -375,3 +376,4 @@ Este es el paso final y el más común.
     ```
 4.  **Prueba en el navegador**:
     -   Abre una nueva pestaña en modo incógnito (para evitar la caché) y visita `https://esquel.org.ar/studio/`. Si ves errores 404 en la consola, es casi seguro que el reinicio de `lsws` no se completó correctamente o las reglas no se guardaron.
+```
