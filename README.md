@@ -129,99 +129,99 @@ Esta configuración unificada le dice al servidor cómo encontrar y comunicarse 
 4.  **Borra todo el contenido** y pega **el siguiente bloque completo**. Este bloque contiene tu configuración existente de PHP y SSL, con las adiciones necesarias para la aplicación Node.js.
 
    ```
-    docRoot                   $VH_ROOT/public_html
-    vhDomain                  $VH_NAME
-    vhAliases                 www.$VH_NAME
-    adminEmails               gbiaggioni@gmail.com
-    enableGzip                1
-    enableIpGeo               1
+docRoot                   $VH_ROOT/public_html
+vhDomain                  $VH_NAME
+vhAliases                 www.$VH_NAME
+adminEmails               gbiaggioni@gmail.com
+enableGzip                1
+enableIpGeo               1
 
-    index  {
-      useServer               0
-      indexFiles              index.php, index.html
-    }
+index  {
+  useServer               0
+  indexFiles              index.php, index.html
+}
 
-    errorlog $VH_ROOT/logs/$VH_NAME.error_log {
-      useServer               0
-      logLevel                WARN
-      rollingSize             10M
-    }
+errorlog $VH_ROOT/logs/$VH_NAME.error_log {
+  useServer               0
+  logLevel                WARN
+  rollingSize             10M
+}
 
-    accesslog $VH_ROOT/logs/$VH_NAME.access_log {
-      useServer               0
-      logFormat               "%h %l %u %t \"%r\" %>s %b \"%{Referer}i\" \"%{User-Agent}i\""
-      logHeaders              5
-      rollingSize             10M
-      keepDays                10
-      compressArchive         1
-    }
+accesslog $VH_ROOT/logs/$VH_NAME.access_log {
+  useServer               0
+  logFormat               "%h %l %u %t \"%r\" %>s %b \"%{Referer}i\" \"%{User-Agent}i\""
+  logHeaders              5
+  rollingSize             10M
+  keepDays                10
+  compressArchive         1
+}
 
-    scripthandler  {
-      add                     lsapi:esque9858 php
-    }
+scripthandler  {
+  add                     lsapi:esque9858 php
+}
 
-    extprocessor esque9858 {
-      type                    lsapi
-      address                 UDS://tmp/lshttpd/esque9858.sock
-      maxConns                10
-      env                     LSAPI_CHILDREN=10
-      initTimeout             600
-      retryTimeout            0
-      persistConn             1
-      pcKeepAliveTimeout      1
-      respBuffer              0
-      autoStart               1
-      path                    /usr/local/lsws/lsphp83/bin/lsphp
-      extUser                 esque9858
-      extGroup                esque9858
-      memSoftLimit            2047M
-      memHardLimit            2047M
-      procSoftLimit           400
-      procHardLimit           500
-    }
+extprocessor esque9858 {
+  type                    lsapi
+  address                 UDS://tmp/lshttpd/esque9858.sock
+  maxConns                10
+  env                     LSAPI_CHILDREN=10
+  initTimeout             600
+  retryTimeout            0
+  persistConn             1
+  pcKeepAliveTimeout      1
+  respBuffer              0
+  autoStart               1
+  path                    /usr/local/lsws/lsphp83/bin/lsphp
+  extUser                 esque9858
+  extGroup                esque9858
+  memSoftLimit            2047M
+  memHardLimit            2047M
+  procSoftLimit           400
+  procHardLimit           500
+}
 
-    extprocessor qreasy-app {
-      type                    node
-      address                 127.0.0.1:3001
-      maxConns                100
-      pcKeepAliveTimeout      60
-      initTimeout             60
-      retryTimeout            0
-      respBuffer              0
-    }
+extprocessor qreasy-app {
+  type                    node
+  address                 127.0.0.1:3001
+  maxConns                100
+  pcKeepAliveTimeout      60
+  initTimeout             60
+  retryTimeout            0
+  respBuffer              0
+}
 
-    rewrite  {
-      enable                  1
-      autoLoadHtaccess        0
-      RewriteRule ^/studio/(.*)$ http://127.0.0.1:3001/studio/$1 [P,L]
-    }
+rewrite  {
+  enable                  1
+  autoLoadHtaccess        0
+  RewriteRule ^/studio/(.*)$ http://qreasy-app/studio/$1 [P,L]
+}
 
-    context /.well-known/acme-challenge {
-      location                /usr/local/lsws/Example/html/.well-known/acme-challenge
-      allowBrowse             1
+context /.well-known/acme-challenge {
+  location                /usr/local/lsws/Example/html/.well-known/acme-challenge
+  allowBrowse             1
 
-      rewrite  {
-        enable                  0
-      }
-      addDefaultCharset       off
+  rewrite  {
+    enable                  0
+  }
+  addDefaultCharset       off
 
-      phpIniOverride  {
+  phpIniOverride  {
 
-      }
-    }
+  }
+}
 
-    vhssl  {
-      keyFile                 /etc/letsencrypt/live/esquel.org.ar/privkey.pem
-      certFile                /etc/letsencrypt/live/esquel.org.ar/fullchain.pem
-      certChain               1
-      sslProtocol             24
-      enableECDHE             1
-      renegProtection         1
-      sslSessionCache         1
-      enableSpdy              15
-      enableStapling           1
-      ocspRespMaxAge           86400
-    }
+vhssl  {
+  keyFile                 /etc/letsencrypt/live/esquel.org.ar/privkey.pem
+  certFile                /etc/letsencrypt/live/esquel.org.ar/fullchain.pem
+  certChain               1
+  sslProtocol             24
+  enableECDHE             1
+  renegProtection         1
+  sslSessionCache         1
+  enableSpdy              15
+  enableStapling           1
+  ocspRespMaxAge           86400
+}
    ```
 5.  **Guarda los cambios.**
 
@@ -269,3 +269,5 @@ Cuando realices cambios en tu código y los subas a GitHub, sigue estos pasos pa
     ```bash
     pm2 list
     ```
+
+    
