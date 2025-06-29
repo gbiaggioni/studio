@@ -330,13 +330,17 @@ Cuando realices cambios en tu código y los subas a GitHub, sigue estos pasos pa
 ### 🚨 Solución de Problemas
 
 #### Error 500 (Internal Server Error) al acceder a la URL
-Este error casi siempre indica que la aplicación Next.js no puede conectarse a la base de datos.
-1.  **Revisa los registros de la aplicación:**
+Un error 500 indica un fallo en el servidor. Puede ser por la conexión a la base de datos o cualquier otro error de ejecución. Gracias al nuevo manejador de errores, podemos encontrar la causa exacta.
+
+1.  **Provoca el error:** Intenta acceder a `https://esquel.org.ar/studio/` para que ocurra el error 500.
+2.  **Revisa los registros de la aplicación:**
     ```bash
     pm2 logs qreasy
     ```
-2.  **Busca errores de base de datos:** Busca en los registros líneas que contengan `[QREASY_DB_ERROR]`. Un error común es `Access denied for user...` (acceso denegado).
-3.  **Verifica tu archivo `.env.local`:** Este es el paso más importante. Asegúrate de que los valores de `DB_HOST`, `DB_USER`, `DB_PASSWORD` y `DB_NAME` sean **exactamente** los mismos que configuraste en CyberPanel. Un solo carácter erróneo causará el fallo.
+3.  **Busca el error detallado:** Busca en los registros una línea que comience con `[GLOBAL_ERROR_BOUNDARY]`. El texto que sigue a esa etiqueta es el error exacto que está ocurriendo en tu aplicación.
+    -   Si el error dice `Access denied for user...`, el problema son las credenciales de la base de datos.
+    -   Si dice cualquier otra cosa, el registro te dará la pista para solucionarlo.
+4.  **Verifica tu archivo `.env.local`:** Si el error está relacionado con la base de datos, asegúrate de que los valores de `DB_HOST`, `DB_USER`, `DB_PASSWORD` y `DB_NAME` sean **exactamente** los mismos que configuraste en CyberPanel.
 
 #### Error de `git pull`: "Your local changes to the following files would be overwritten"
 
