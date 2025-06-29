@@ -111,27 +111,22 @@ Asegúrate de haber completado los siguientes pasos iniciales al menos una vez:
 Este es el paso más importante para evitar errores `403` o `404`. Le da al servidor web (LiteSpeed) los permisos necesarios para acceder a los archivos de tu proyecto.
 
 1.  **Conéctate a tu servidor por SSH.**
-2.  Navega a la carpeta que contiene tu proyecto (un nivel por encima de `studio`).
+2.  Ejecuta el siguiente comando para cambiar el propietario de todos los archivos al usuario correcto de tu sitio (`esque9858`, que es el usuario que ejecuta los procesos de PHP y tiene los permisos adecuados en CyberPanel).
     ```bash
-    cd /home/esquel.org.ar/public_html/
+    sudo chown -R esque9858:esque9858 /home/esquel.org.ar/public_html/studio
     ```
-3.  Ejecuta los siguientes dos comandos para establecer el propietario y los permisos correctos. **Es vital que el propietario sea el usuario de tu sitio (`esque9858`), no `root`.**
+3.  A continuación, ejecuta este comando para asegurar que los permisos de las carpetas y archivos sean los correctos (lectura y ejecución para directorios, lectura para archivos).
+    ```bash
+    sudo chmod -R 755 /home/esquel.org.ar/public_html/studio
+    ```
     
-    ```bash
-    # Este comando cambia el propietario de todos los archivos al usuario correcto.
-    sudo chown -R esque9858:esque9858 studio
-
-    # Este comando asegura que los permisos sean los adecuados (lectura y ejecución).
-    sudo chmod -R 755 studio
-    ```
-
 ### Paso 7: Configurar `vHost Conf` (La Clave Final)
-Esta configuración le dice al servidor cómo encontrar y comunicarse con tu aplicación Node.js.
+Esta configuración le dice al servidor cómo encontrar y comunicarse con tu aplicación Node.js de forma directa y sin ambigüedades, evitando conflictos con `.htaccess` u otras reglas.
 
 1.  En tu panel de CyberPanel, ve a `Websites` -> `List Websites` -> `Manage` (para tu dominio).
 2.  En la sección `Configuraciones`, haz clic en **`Rewrite Rules`** y **asegúrate de que esté completamente vacía**. Guarda los cambios.
 3.  Ahora, en la misma sección, haz clic en **`vHost Conf`**.
-4.  **Borra todo el contenido** y pega **solamente** el siguiente bloque. Este código define tu aplicación y le dice al servidor cómo redirigir el tráfico hacia ella.
+4.  **Borra todo el contenido** y pega **solamente** el siguiente bloque. Este código define tu aplicación y le dice al servidor cómo redirigir el tráfico hacia ella de forma correcta.
 
    ```
    extprocessor qreasy-app {
@@ -196,3 +191,4 @@ Cuando realices cambios en tu código y los subas a GitHub, sigue estos pasos pa
     ```bash
     pm2 list
     ```
+    
