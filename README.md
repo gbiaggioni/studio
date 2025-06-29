@@ -111,15 +111,10 @@ Asegúrate de haber completado los siguientes pasos iniciales al menos una vez:
 
 Este es el paso final y más importante para conectar tu dominio con la aplicación. **Sigue estas instrucciones con precisión.**
 
-#### 6.1 - Limpiar las `Rewrite Rules`
+#### 6.1 - Configurar `vHost Conf`
 1.  En tu panel de CyberPanel, ve a `Websites` -> `List Websites` -> `Manage` (para tu dominio).
-2.  En la sección `Configuraciones`, haz clic en **`Rewrite Rules`**.
-3.  **Borra todo el contenido** que haya en el cuadro de texto. Es crucial que esté completamente vacío.
-4.  **Guarda los cambios**.
-
-#### 6.2 - Configurar `vHost Conf`
-1.  Ahora, vuelve a la página de `Manage` y, en la misma sección `Configuraciones`, haz clic en **`vHost Conf`**.
-2.  **Borra todo el contenido** que haya y pega **solamente** el siguiente bloque de código.
+2.  En la sección `Configuraciones`, haz clic en **`vHost Conf`**.
+3.  **Borra todo el contenido** que haya y pega **solamente** el siguiente bloque de código. Este código define tu aplicación para que el servidor la reconozca.
 
    ```
    extprocessor qreasy-app {
@@ -131,17 +126,18 @@ Este es el paso final y más importante para conectar tu dominio con la aplicaci
      retryTimeout            0
      respBuffer              0
    }
-
-   context /studio/ {
-     type                    proxy
-     handler                 qreasy-app
-     addDefaultCharset       off
-     accessControl {
-       allow *
-     }
-   }
    ```
-3.  **Guarda los cambios.** Este código define tu aplicación y luego crea un "contexto de proxy" que redirige todo el tráfico de `/studio/` hacia ella, permitiendo el acceso explícitamente.
+4.  **Guarda los cambios.**
+
+#### 6.2 - Configurar `Rewrite Rules`
+1.  Ahora, vuelve a la página de `Manage` y, en la misma sección `Configuraciones`, haz clic en **`Rewrite Rules`**.
+2.  **Borra todo el contenido** que haya y pega **solamente** el siguiente bloque de código. Esta regla redirige todo el tráfico de `/studio/` a tu aplicación, conservando la ruta completa.
+
+   ```
+   RewriteEngine On
+   RewriteRule ^/studio/.*$ http://qreasy-app%{REQUEST_URI} [P,L]
+   ```
+3.  **Guarda los cambios.**
 
 ### Paso 7: Reiniciar el Servidor Web (¡El Paso Final y Crucial!)
 
