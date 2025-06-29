@@ -276,12 +276,13 @@ En CyberPanel, las reglas de reescritura se gestionan en el panel de administrac
     RewriteRule ^studio/(.*)$ http://127.0.0.1:3001/studio/$1 [P,L]
     ```
 
-4.  **Guardar y Reiniciar:**
+4.  **Guardar y Reiniciar (¡El Paso Más Importante!):**
     -   Haz clic en "Save Rewrite Rules".
-    -   Para que los cambios se apliquen de inmediato, reinicia el servidor web desde la terminal:
+    -   Para que los cambios se apliquen de inmediato, **es absolutamente crucial que reinicies el servidor web**. Este es el paso que la mayoría de la gente olvida. Abre la terminal de tu servidor y ejecuta:
         ```bash
         sudo systemctl restart lsws
         ```
+    -   *Opcional: Si quieres ver los registros de PM2 limpios sin errores antiguos, puedes ejecutar `pm2 flush qreasy`.*
 ---
 
 ### 🔄 Cómo Actualizar la Aplicación con Cambios de GitHub
