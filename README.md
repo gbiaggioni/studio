@@ -282,7 +282,6 @@ En CyberPanel, las reglas de reescritura se gestionan en el panel de administrac
         ```bash
         sudo systemctl restart lsws
         ```
-    -   *Opcional: Si quieres ver los registros de PM2 limpios sin errores antiguos, puedes ejecutar `pm2 flush qreasy`.*
 ---
 
 ### 🔄 Cómo Actualizar la Aplicación con Cambios de GitHub
@@ -297,7 +296,6 @@ Cuando realices cambios en tu código y los subas a GitHub, sigue estos pasos pa
     ```bash
     git pull origin master
     ```
-    *Si recibes un error sobre que tus cambios locales serían sobreescritos, consulta la sección de solución de problemas a continuación.*
 
 4.  **Instala las dependencias (si hubo cambios en `package.json`):**
     ```bash
@@ -327,130 +325,79 @@ Cuando realices cambios en tu código y los subas a GitHub, sigue estos pasos pa
     ```
 ---
 
-### 🚨 Solución de Problemas
+### 🚨 Guía de Diagnóstico y Solución de Problemas
 
-#### Error 500 (Internal Server Error) al acceder a la URL
-Un error 500 indica un fallo en el servidor. Puede ser por la conexión a la base de datos o cualquier otro error de ejecución. Gracias al nuevo manejador de errores, podemos encontrar la causa exacta.
+Si sigues sin poder acceder a tu sitio, sigue esta lista de verificación en orden. **El 99% de los problemas se resuelven aquí.**
 
-1.  **Provoca el error:** Intenta acceder a `https://esquel.org.ar/studio/` para que ocurra el error 500.
-2.  **Revisa los registros de la aplicación:**
+#### Paso A: Verifica que la Aplicación Esté Realmente Corriendo
+
+1.  **Ejecuta `pm2 list`**:
+    -   ¿El estado (`status`) de `qreasy` es `online`?
+    -   **Si es `online`**: ¡Perfecto! La aplicación funciona. El problema está en el servidor web. Ve al **Paso B**.
+    -   **Si es `errored`**: La aplicación no puede arrancar. Continúa con el punto 2.
+
+2.  **Si está `errored`, limpia y reinicia PM2**:
+    A veces PM2 se queda "atascado". Límpialo siguiendo estos pasos exactos:
     ```bash
-    pm2 logs qreasy
-    ```
-3.  **Busca el error detallado:** Busca en los registros una línea que comience con `[GLOBAL_ERROR_BOUNDARY]`. El texto que sigue a esa etiqueta es el error exacto que está ocurriendo en tu aplicación.
-    -   Si el error dice `Access denied for user...`, el problema son las credenciales de la base de datos.
-    -   Si dice cualquier otra cosa, el registro te dará la pista para solucionarlo.
-4.  **Verifica tu archivo `.env.local`:** Si el error está relacionado con la base de datos, asegúrate de que los valores de `DB_HOST`, `DB_USER`, `DB_PASSWORD` y `DB_NAME` sean **exactamente** los mismos que configuraste en CyberPanel.
-
-#### Error de `git pull`: "Your local changes to the following files would be overwritten"
-
-Este error ocurre porque tienes cambios en archivos de tu servidor (como `package.json` o `package-lock.json`) que no están en GitHub. La solución es descartar esos cambios locales y forzar al servidor a usar la versión de GitHub.
-
-1.  **Navega al directorio de tu proyecto:**
-    ```bash
-    cd /home/esquel.org.ar/public_html/studio
-    ```
-2.  **Resetea tus archivos locales:** Este comando descarta todos tus cambios locales y deja el directorio de trabajo limpio.
-    ```bash
-    git reset --hard HEAD
-    ```
-3.  **Descarga los cambios de GitHub:** Ahora que no hay conflictos, `git pull` funcionará. Usa el nombre de tu rama principal (`master`).
-    ```bash
-    git pull origin master
-    ```
-4.  **Continúa con el proceso de actualización normal:**
-    ```bash
-    npm install
-    npm run build
-    pm2 restart qreasy
-    ```
-
-#### Error de `git pull`: "fatal: couldn't find remote ref main"
-
-Este error significa que la rama principal en tu repositorio de GitHub se llama `master` y no `main`. Simplemente reemplaza `main` por `master` en el comando:
-```bash
-git pull origin master
-```
-
-#### Estado 'Errored' en PM2
-Si `pm2 list` muestra tu aplicación `qreasy` con el estado `errored`, significa que la aplicación no puede iniciarse. La causa más probable es que PM2 la está ejecutando desde el directorio equivocado o con un comando incorrecto.
-
-Sigue estos pasos **exactos** en la terminal de tu servidor para corregirlo:
-
-1.  **Detén y elimina el proceso antiguo:**
-    Esto limpiará la configuración incorrecta de PM2.
-    ```bash
+    # Detén y elimina el proceso dañado
     pm2 stop qreasy
     pm2 delete qreasy
-    ```
 
-2.  **Navega al directorio correcto del proyecto:**
-    Asegúrate de estar en la carpeta donde se encuentra tu archivo `package.json`.
-    ```bash
+    # Vuelve a iniciarlo desde la carpeta del proyecto
     cd /home/esquel.org.ar/public_html/studio
-    ```
-
-3.  **Inicia la aplicación nuevamente con PM2 (Comando Simplificado):**
-    Este comando le dice a PM2 que use el `npm start` de tu `package.json` actual.
-    ```bash
     pm2 start npm --name "qreasy" -- start
-    ```
 
-4.  **Verifica el estado:**
-    Ahora `pm2 list` debería mostrar el estado como `online`.
-    ```bash
-    pm2 list
+    # Guarda la nueva configuración
+    pm2 save
     ```
-    Si sigue fallando, revisa los registros para ver el error específico:
+    - Vuelve a ejecutar `pm2 list`. Si ahora está `online`, ve al **Paso B**. Si sigue `errored`, ve al punto 3.
+
+3.  **Si sigue `errored`, lee el registro de errores**:
     ```bash
+    # Borra los registros viejos para tener una vista limpia
+    pm2 flush qreasy
+
+    # Intenta reiniciar una última vez
+    pm2 restart qreasy
+
+    # Espera 5 segundos y luego revisa los registros
     pm2 logs qreasy
     ```
+    -   **Busca errores obvios**:
+        -   `Error: listen EADDRINUSE: address already in use :::3001`: Otro proceso está usando el puerto.
+            -   **Solución**: Ejecuta `sudo lsof -i :3001`, mira el `PID` del proceso y mátalo con `sudo kill -9 <PID>`. Luego `pm2 restart qreasy`.
+        -   `Error: Access denied for user...`: Las credenciales en tu `.env.local` (DB_USER, DB_PASSWORD, etc.) son incorrectas.
+            -   **Solución**: Revísalas y corrígelas. Luego `pm2 restart qreasy`.
+        -   `sh: 1: next: Permission denied`: Faltan permisos de ejecución.
+            -   **Solución**: Ejecuta de nuevo los comandos del **Paso 4: Establecer Permisos** y luego `pm2 restart qreasy`.
+        -   `[GLOBAL_ERROR_BOUNDARY]`: Este es un error de la aplicación. El mensaje que sigue te dirá qué está mal.
 
-5.  **Guarda la nueva configuración correcta:**
-    Once que el estado sea `online`, guarda la lista de procesos para que PM2 la recuerde después de un reinicio del servidor.
+#### Paso B: Verifica la Conexión Directa a la Aplicación
+
+Si `pm2 list` muestra `online`, tu aplicación está funcionando. Ahora vamos a confirmar que responde a las peticiones.
+
+1.  **Ejecuta este comando en la terminal de tu servidor**:
     ```bash
-    pm2 save
+    curl -I http://127.0.0.1:3001/studio/
+    ```
+    -   **Si obtienes una respuesta `HTTP/1.1 200 OK`**: ¡FELICIDADES! Tu aplicación funciona y responde correctamente. El problema está 100% en las reglas de tu servidor web. Ve al **Paso C**.
+    -   **Si obtienes `Connection refused` o no responde**: Es muy raro si PM2 dice `online`, pero podría indicar un firewall interno. El problema sigue siendo del servidor. Ve al **Paso C**.
+
+#### Paso C: Verifica la Configuración del Servidor Web (OpenLiteSpeed)
+
+Este es el paso final y más común.
+
+1.  **Revisa las Rewrite Rules**:
+    -   Ve a CyberPanel -> Websites -> List Websites -> Manage -> Rewrite Rules.
+    -   Asegúrate de que el contenido sea **exactamente** el del **Paso 6: Configurar Proxy Inverso** de esta guía. Un solo carácter erróneo puede hacer que falle. Copia y pega de nuevo si es necesario.
+
+2.  **Guarda y REINICIA el Servidor Web (¡EL PASO MÁS IMPORTANTE!)**:
+    -   Después de guardar las reglas en CyberPanel, ejecuta este comando en la terminal. **Sin este paso, los cambios no se aplican.**
+    ```bash
+    sudo systemctl restart lsws
     ```
 
-#### Error de Puerto en Uso (EADDRINUSE)
-Si en los registros (`pm2 logs qreasy`) ves un error como `Error: listen EADDRINUSE: address already in use :::3001`, significa que otro proceso ya está ocupando el puerto 3001 y tu aplicación no puede iniciarse.
+3.  **Prueba en el navegador**:
+    -   Abre una nueva pestaña en modo incógnito (para evitar la caché) y visita `https://esquel.org.ar/studio/`.
 
-Sigue estos pasos en la terminal de tu servidor para solucionarlo:
-
-1.  **Detén y elimina todos los procesos de PM2:**
-    Esto asegura que no haya instancias antiguas o duplicadas intentando ejecutarse.
-    ```bash
-    pm2 stop all
-    pm2 delete all
-    ```
-
-2.  **Encuentra y detén el proceso que ocupa el puerto:**
-    Averigua qué proceso está usando el puerto 3001.
-    ```bash
-    sudo lsof -i :3001
-    ```
-    Este comando te mostrará una lista de procesos. Fíjate en la columna `PID` (Process ID). Si ves algún proceso, detenlo usando su PID. Por ejemplo, si el PID es `12345`:
-    ```bash
-    sudo kill -9 12345
-    ```
-    *Nota: Si el comando `lsof` no está disponible, puedes instalarlo con `sudo yum install lsof` en CentOS/AlmaLinux o `sudo apt-get install lsof` en Debian/Ubuntu.*
-
-3.  **Reinicia la aplicación con PM2:**
-    Ahora que el puerto está libre, navega al directorio de tu proyecto y reinicia la aplicación.
-    ```bash
-    cd /home/esquel.org.ar/public_html/studio
-    pm2 start npm --name "qreasy" -- start
-    ```
-
-4.  **Verifica los registros y el estado:**
-    Comprueba que la aplicación se haya iniciado correctamente.
-    ```bash
-    pm2 logs qreasy  # Deberías ver un mensaje de que el servidor se inició en el puerto 3001
-    pm2 list         # Debería mostrar el estado como 'online'
-    ```
-
-5.  **Guarda la configuración de PM2:**
-    Una vez que todo funcione, guarda la lista de procesos para que se reinicie correctamente con el servidor.
-    ```bash
-    pm2 save
-    ```
+Si después de seguir estos tres pasos (A, B y C) al pie de la letra sigue sin funcionar, el problema es excepcionalmente raro y probablemente esté relacionado con la configuración específica de tu instancia de CyberPanel o alguna regla de firewall a nivel de proveedor.
