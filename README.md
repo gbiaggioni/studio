@@ -98,7 +98,7 @@ Sigue estos pasos para ejecutar el proyecto en tu entorno local. Esto es válido
 
 Esta guía contiene los pasos probados y definitivos para desplegar la aplicación en tu entorno específico.
 
-### Paso 1 al 4: Preparación del Servidor y Código (Si ya lo hiciste, puedes omitirlos)
+### Paso 1 al 5: Preparación del Servidor y Código (Si ya lo hiciste, puedes omitirlos)
 Asegúrate de haber completado los siguientes pasos iniciales al menos una vez:
 1.  **Conexión SSH** y **instalación de Node.js y PM2**.
 2.  **Configuración de la Base de Datos** en CyberPanel.
@@ -142,10 +142,10 @@ Este es el paso final y más importante para conectar tu dominio con la aplicaci
 
 #### 6.2 - Configurar `Rewrite Rules`
 1.  Ahora, vuelve a la página de `Manage` y, en la misma sección `Configuraciones`, haz clic en **`Rewrite Rules`**.
-2.  **Borra cualquier contenido previo** y pega el siguiente código. Esta regla le dice al servidor que todo lo que llegue a `/studio/` debe ser manejado por la aplicación `qreasy-app` que definimos antes.
+2.  **Borra cualquier contenido previo** y pega el siguiente código. Esta regla le dice al servidor que todo lo que llegue a `/studio/` debe ser manejado por la aplicación `qreasy-app` que definimos antes, **preservando la ruta completa**.
     ```
     RewriteEngine On
-    RewriteRule ^/studio/(.*)$ http://qreasy-app/$1 [P,L]
+    RewriteRule ^/studio/(.*)$ http://qreasy-app/studio/$1 [P,L]
     ```
 3.  **Guarda los cambios.**
 
@@ -195,3 +195,5 @@ Cuando realices cambios en tu código y los subas a GitHub, sigue estos pasos pa
     ```bash
     pm2 list
     ```
+
+    
