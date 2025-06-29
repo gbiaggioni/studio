@@ -107,7 +107,7 @@ Asegúrate de haber completado los siguientes pasos iniciales al menos una vez:
 5.  **Construcción de la aplicación** con `npm run build`.
 6.  **Inicio de la aplicación con PM2** usando `pm2 start npm --name "qreasy" -- start` y `pm2 save`. Verifica que esté en línea con `pm2 list`.
 
-### Paso 6: Ajustar Permisos de la Carpeta (¡Paso Crucial!)
+### Paso 6: Corregir Permisos de la Carpeta (¡Paso Crucial!)
 Este es el paso más importante para evitar errores `403` o `404`. Le da al servidor web (LiteSpeed) los permisos necesarios para acceder a los archivos de tu proyecto.
 
 1.  **Conéctate a tu servidor por SSH.**
@@ -121,29 +121,107 @@ Este es el paso más importante para evitar errores `403` o `404`. Le da al serv
     ```
     
 ### Paso 7: Configurar `vHost Conf` (La Clave Final)
-Esta configuración le dice al servidor cómo encontrar y comunicarse con tu aplicación Node.js de forma directa y sin ambigüedades, evitando conflictos con `.htaccess` u otras reglas.
+Esta configuración le dice al servidor cómo encontrar y comunicarse con tu aplicación Node.js sin invalidar la configuración de tu sitio PHP existente.
 
 1.  En tu panel de CyberPanel, ve a `Websites` -> `List Websites` -> `Manage` (para tu dominio).
 2.  En la sección `Configuraciones`, haz clic en **`Rewrite Rules`** y **asegúrate de que esté completamente vacía**. Guarda los cambios.
 3.  Ahora, en la misma sección, haz clic en **`vHost Conf`**.
-4.  **Borra todo el contenido** y pega **solamente** el siguiente bloque. Este código define tu aplicación y le dice al servidor cómo redirigir el tráfico hacia ella de forma correcta.
+4.  **Borra todo el contenido** y pega **el siguiente bloque completo**. Este bloque contiene tu configuración existente de PHP y SSL, con las adiciones necesarias para la aplicación Node.js.
 
    ```
-   extprocessor qreasy-app {
-     type                    node
-     address                 127.0.0.1:3001
-     maxConns                100
-     pcKeepAliveTimeout      60
-     initTimeout             60
-     retryTimeout            0
-     respBuffer              0
-   }
+    docRoot                   $VH_ROOT/public_html
+    vhDomain                  $VH_NAME
+    vhAliases                 www.$VH_NAME
+    adminEmails               gbiaggioni@gmail.com
+    enableGzip                1
+    enableIpGeo               1
 
-   rewrite  {
-     enable                  1
-     autoLoadHtaccess        0
-     RewriteRule ^/studio/(.*)$ http://127.0.0.1:3001/studio/$1 [P,L]
-   }
+    index  {
+      useServer               0
+      indexFiles              index.php, index.html
+    }
+
+    errorlog $VH_ROOT/logs/$VH_NAME.error_log {
+      useServer               0
+      logLevel                WARN
+      rollingSize             10M
+    }
+
+    accesslog $VH_ROOT/logs/$VH_NAME.access_log {
+      useServer               0
+      logFormat               "%h %l %u %t \"%r\" %>s %b \"%{Referer}i\" \"%{User-Agent}i\""
+      logHeaders              5
+      rollingSize             10M
+      keepDays                10
+      compressArchive         1
+    }
+
+    scripthandler  {
+      add                     lsapi:esque9858 php
+    }
+
+    extprocessor esque9858 {
+      type                    lsapi
+      address                 UDS://tmp/lshttpd/esque9858.sock
+      maxConns                10
+      env                     LSAPI_CHILDREN=10
+      initTimeout             600
+      retryTimeout            0
+      persistConn             1
+      pcKeepAliveTimeout      1
+      respBuffer              0
+      autoStart               1
+      path                    /usr/local/lsws/lsphp83/bin/lsphp
+      extUser                 esque9858
+      extGroup                esque9858
+      memSoftLimit            2047M
+      memHardLimit            2047M
+      procSoftLimit           400
+      procHardLimit           500
+    }
+
+    extprocessor qreasy-app {
+      type                    node
+      address                 127.0.0.1:3001
+      maxConns                100
+      pcKeepAliveTimeout      60
+      initTimeout             60
+      retryTimeout            0
+      respBuffer              0
+    }
+
+    rewrite  {
+      enable                  1
+      autoLoadHtaccess        0
+      RewriteRule ^/studio/(.*)$ http://127.0.0.1:3001/studio/$1 [P,L]
+    }
+
+    context /.well-known/acme-challenge {
+      location                /usr/local/lsws/Example/html/.well-known/acme-challenge
+      allowBrowse             1
+
+      rewrite  {
+        enable                  0
+      }
+      addDefaultCharset       off
+
+      phpIniOverride  {
+
+      }
+    }
+
+    vhssl  {
+      keyFile                 /etc/letsencrypt/live/esquel.org.ar/privkey.pem
+      certFile                /etc/letsencrypt/live/esquel.org.ar/fullchain.pem
+      certChain               1
+      sslProtocol             24
+      enableECDHE             1
+      renegProtection         1
+      sslSessionCache         1
+      enableSpdy              15
+      enableStapling           1
+      ocspRespMaxAge           86400
+    }
    ```
 5.  **Guarda los cambios.**
 
@@ -154,7 +232,7 @@ Abre la terminal de tu servidor y ejecuta:
 sudo systemctl restart lsws
 ```
 
-¡Y listo! Ahora, cuando visites `https://esquel.org.ar/studio/`, debería funcionar correctamente.
+¡Y listo! Ahora, cuando visites `https://esquel.org.ar/studio/`, debería funcionar correctamente, y tu sitio principal seguirá funcionando como siempre.
 
 ---
 
@@ -191,4 +269,5 @@ Cuando realices cambios en tu código y los subas a GitHub, sigue estos pasos pa
     ```bash
     pm2 list
     ```
+
     
