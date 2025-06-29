@@ -49,12 +49,8 @@ export async function generateShortId(length: number = 6): Promise<string> {
                 isUnique = true;
             }
         } catch (error) {
-            // Re-throw the specific "Database not configured" error, otherwise throw a generic one.
-            if (error instanceof Error && error.message.includes("La base de datos no está configurada")) {
-              throw error;
-            }
-            console.error("Error checking short_id uniqueness:", error);
-            throw new Error("No se pudo conectar a la base de datos para generar un ID único.");
+            // Re-throw the error to be caught by the global error boundary.
+            throw error;
         }
         attempts++;
     }
@@ -73,10 +69,9 @@ export async function getQRCodes(): Promise<QRCodeEntry[]> {
         const [rows] = await db.execute<RowDataPacket[]>('SELECT * FROM qr_codes ORDER BY created_at DESC');
         return rows as QRCodeEntry[];
     } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
-        console.error(`[QREASY_DB_ERROR] No se pudieron obtener los códigos QR: ${errorMessage}`);
-        // Return an empty array to allow the page to render without crashing.
-        return [];
+        // Re-throwing the error ensures it's caught by the global error boundary (error.tsx)
+        // This provides a better user experience and clear logs instead of silently failing.
+        throw error;
     }
 }
 
@@ -138,9 +133,8 @@ export async function getQRCodeByShortIdDB(short_id: string): Promise<QRCodeEntr
         }
         return undefined;
     } catch(error) {
-        const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
-        console.error(`[QREASY_DB_ERROR] No se pudo obtener el código QR para el ID corto "${short_id}": ${errorMessage}`);
-        // Return undefined to allow the redirect page to show a "not found" message.
-        return undefined;
+        // Re-throwing the error to be caught by the global error boundary.
+        // This distinguishes a server error from a simple "not found" case.
+        throw error;
     }
 }
