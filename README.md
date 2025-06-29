@@ -96,7 +96,7 @@ Sigue estos pasos para ejecutar el proyecto en tu entorno local. Esto es válido
 
 ## 🚀 Instrucciones Finales y Definitivas de Despliegue en DonWeb Cloud Server (con CyberPanel)
 
-Esta guía contiene los pasos finales y probados para desplegar la aplicación en tu entorno.
+Esta guía contiene los pasos finales y probados para desplegar la aplicación en tu entorno. Sigue cada paso meticulosamente.
 
 ### Paso 1 al 5: Preparación del Servidor (Si ya lo hiciste, puedes omitirlos)
 Asegúrate de haber completado los siguientes pasos iniciales al menos una vez:
@@ -143,7 +143,7 @@ Este paso es crucial para evitar errores `403` o `404`. Le da al servidor web pe
     sudo chmod -R 755 studio
     ```
 
-### Paso 8: Configurar `Rewrite Rules`
+### Paso 8: Configurar `Rewrite Rules` (La Clave Final)
 1.  Ahora, vuelve a la página de `Manage` en CyberPanel y, en la misma sección `Configuraciones`, haz clic en **`Rewrite Rules`**.
 2.  **Borra todo el contenido** y pega **solamente** el siguiente bloque de código. Esta regla es la correcta y redirige todo el tráfico de `/studio/` a tu aplicación **sin perder la ruta**.
 
