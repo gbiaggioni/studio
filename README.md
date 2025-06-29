@@ -251,38 +251,31 @@ sudo chmod +x node_modules/.bin/next
     ```
     Ejecuta el comando que te proporcione `pm2 startup` para asegurar que la app se reinicie con el servidor.
 
-### Paso 6: Configurar el Proxy en CyberPanel (¡Solución Definitiva!)
+### Paso 6: Configurar el Proxy en CyberPanel (¡La Solución Definitiva!)
 
 Este es el paso final para conectar tu dominio con la aplicación. **Vamos a usar el método correcto y más robusto para tu servidor.**
 
 1.  En tu panel de CyberPanel, ve a `Websites` -> `List Websites` -> `Manage` (para tu dominio `esquel.org.ar`).
 2.  Busca la sección `Configuraciones` y haz clic en **`vHost Conf`**.
-3.  **Borra cualquier contenido que haya** y pega el siguiente bloque de código **exactamente como está**:
+3.  **Borra cualquier contenido que haya** y pega el siguiente bloque de código **exactamente como está**, sin comentarios ni espacios extra:
 
     ```
-    # 1. DEFINE THE EXTERNAL APPLICATION
-    # This tells OpenLiteSpeed about your Node.js app running on port 3001.
-    extprocessor qreasy-app {
-      type                    node
-      address                 127.0.0.1:3001
-      maxConns                100
-      pcKeepAliveTimeout      60
-      initTimeout             60
-      retryTimeout            0
-      respBuffer              0
-    }
-    
-    # 2. CREATE A PROXY CONTEXT
-    # This is the correct way to map a subfolder to your application.
-    # It tells the server: "any request to /studio/ should be sent to qreasy-app".
-    context /studio/ {
-      type                    proxy
-      handler                 qreasy-app
-      addDefaultCharset       off
-      # ¡IMPORTANTE! Esta línea es necesaria para permitir el acceso al proxy.
-      allow                   all
-    }
-    ```
+extprocessor qreasy-app {
+  type                    node
+  address                 127.0.0.1:3001
+  maxConns                100
+  pcKeepAliveTimeout      60
+  initTimeout             60
+  retryTimeout            0
+  respBuffer              0
+}
+
+context /studio/ {
+  type                    proxy
+  handler                 qreasy-app
+  addDefaultCharset       off
+}
+```
     
 4.  Haz clic en **"Guardar"**.
 5.  **Importante**: Vuelve a la página de `Manage` de tu dominio y ve a `Rewrite Rules`. **Asegúrate de que el cuadro de texto de las reglas de reescritura esté completamente vacío** y guarda los cambios para evitar conflictos.
@@ -376,4 +369,3 @@ Este es el paso final y el más común.
     ```
 4.  **Prueba en el navegador**:
     -   Abre una nueva pestaña en modo incógnito (para evitar la caché) y visita `https://esquel.org.ar/studio/`. Si ves errores 404 en la consola, es casi seguro que el reinicio de `lsws` no se completó correctamente o las reglas no se guardaron.
-```
