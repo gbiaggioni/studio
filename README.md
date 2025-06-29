@@ -243,15 +243,15 @@ Esta configuración unificada le dice al servidor cómo encontrar y comunicarse 
 
 ### Paso 4: Iniciar la Aplicación y Finalizar (Como `root`)
 
-1.  **Como `root`, desde la carpeta de la aplicación**, inicia la aplicación con PM2, especificando que se ejecute como el usuario de tu sitio web (`esque9858`). Esto es fundamental.
+1.  **Como `root`, desde la carpeta de la aplicación**, inicia la aplicación con PM2. Esta vez, usamos la sintaxis correcta para que el flag `--uid` sea reconocido por PM2, asegurando que el proceso se ejecute como el usuario `esque9858`. Esto es fundamental.
     ```bash
-    pm2 start npm --name "qreasy" -- start --uid esque9858 --gid esque9858
+    pm2 start npm --name "qreasy" --uid esque9858 --gid esque9858 -- start
     ```
 2.  **Guarda la lista de procesos de PM2** para que se reinicie automáticamente:
     ```bash
     pm2 save
     ```
-3.  **Verifica que la aplicación está en línea** con `pm2 list`. Ahora debería mostrar a `esque9858` como el usuario y el estado `online`.
+3.  **Verifica que la aplicación está en línea** con `pm2 list`. **Ahora debería mostrar a `esque9858` como el usuario** y el estado `online`.
 4.  **Reinicia el servidor web (El Paso Final!)** Para que todos los cambios se apliquen.
     ```bash
     sudo systemctl restart lsws
@@ -292,3 +292,4 @@ Cuando realices cambios en tu código y los subas a GitHub, sigue este nuevo pro
     ```
 ¡Eso es todo! La nueva versión estará en línea.
     
+
