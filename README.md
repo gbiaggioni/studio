@@ -105,27 +105,21 @@ Asegúrate de haber completado los siguientes pasos iniciales al menos una vez:
 3.  **Despliegue del código** con `git clone`.
 4.  **Configuración de `.env.local`** para producción.
 5.  **Construcción de la aplicación** con `npm run build`.
-
-### Paso 5: Iniciar la Aplicación con PM2 (Verifica que esté corriendo)
-Asegúrate de que tu aplicación esté en línea ejecutando:
-```bash
-pm2 list
-```
-Deberías ver el estado de `qreasy` como `online`. Si no lo está, iníciala con:
-```bash
-# Desde /home/esquel.org.ar/public_html/studio
-pm2 start npm --name "qreasy" -- start -H 0.0.0.0
-pm2 save
-```
+6.  **Inicio de la aplicación con PM2** usando `pm2 start npm --name "qreasy" -- start` y `pm2 save`. Verifica que esté en línea con `pm2 list`.
 
 ### Paso 6: Configuración del Servidor Web (La Solución Definitiva)
 
-Este es el paso final y más importante para conectar tu dominio con la aplicación. Consiste en dos partes.
+Este es el paso final y más importante para conectar tu dominio con la aplicación. **Sigue estas instrucciones con precisión.**
 
-#### 6.1 - Configurar `vHost Conf`
-1.  En tu panel de CyberPanel, ve a `Websites` -> `List Websites` -> `Manage` (para `esquel.org.ar`).
-2.  En la sección `Configuraciones`, haz clic en **`vHost Conf`**.
-3.  **Borra todo el contenido** y pega **solamente** este bloque de código. Su única función es registrar tu aplicación con el nombre `qreasy-app`.
+#### 6.1 - Limpiar las `Rewrite Rules`
+1.  En tu panel de CyberPanel, ve a `Websites` -> `List Websites` -> `Manage` (para tu dominio).
+2.  En la sección `Configuraciones`, haz clic en **`Rewrite Rules`**.
+3.  **Borra todo el contenido** que haya en el cuadro de texto. Es crucial que esté completamente vacío.
+4.  **Guarda los cambios**.
+
+#### 6.2 - Configurar `vHost Conf`
+1.  Ahora, vuelve a la página de `Manage` y, en la misma sección `Configuraciones`, haz clic en **`vHost Conf`**.
+2.  **Borra todo el contenido** que haya y pega **solamente** el siguiente bloque de código.
 
    ```
    extprocessor qreasy-app {
@@ -137,17 +131,17 @@ Este es el paso final y más importante para conectar tu dominio con la aplicaci
      retryTimeout            0
      respBuffer              0
    }
-   ```
-4.  **Guarda los cambios.**
 
-#### 6.2 - Configurar `Rewrite Rules`
-1.  Ahora, vuelve a la página de `Manage` y, en la misma sección `Configuraciones`, haz clic en **`Rewrite Rules`**.
-2.  **Borra cualquier contenido previo** y pega el siguiente código. Esta regla le dice al servidor que todo lo que llegue a `/studio/` debe ser manejado por la aplicación `qreasy-app` que definimos antes, **preservando la ruta completa**.
-    ```
-    RewriteEngine On
-    RewriteRule ^/studio/(.*)$ http://qreasy-app/studio/$1 [P,L]
-    ```
-3.  **Guarda los cambios.**
+   context /studio/ {
+     type                    proxy
+     handler                 qreasy-app
+     addDefaultCharset       off
+     accessControl {
+       allow *
+     }
+   }
+   ```
+3.  **Guarda los cambios.** Este código define tu aplicación y luego crea un "contexto de proxy" que redirige todo el tráfico de `/studio/` hacia ella, permitiendo el acceso explícitamente.
 
 ### Paso 7: Reiniciar el Servidor Web (¡El Paso Final y Crucial!)
 
@@ -195,5 +189,3 @@ Cuando realices cambios en tu código y los subas a GitHub, sigue estos pasos pa
     ```bash
     pm2 list
     ```
-
-    
