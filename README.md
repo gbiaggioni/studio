@@ -106,47 +106,34 @@ Asegúrate de haber completado los siguientes pasos iniciales al menos una vez:
 4.  **Instalación de dependencias y construcción** con `npm install` y `npm run build`.
 
 ### Paso 5: Iniciar la Aplicación con PM2 (¡Como el Usuario Correcto!)
-Este paso es crucial para evitar errores de permisos entre el servidor web y tu aplicación.
+Este paso es crucial para alinear todos los permisos.
 
 1.  **Conéctate a tu servidor por SSH** como `root`.
-2.  **Si tienes una versión anterior de la app corriendo en PM2 como `root`, detenla y elimínala:**
+2.  **Si tienes una versión anterior de la app corriendo en PM2, detenla y elimínala:**
     ```bash
     pm2 stop qreasy
     pm2 delete qreasy
-    pm2 save --force
     ```
-3.  **Inicia sesión como el usuario de tu sitio web (`esque9858`):**
-    ```bash
-    su - esque9858
-    ```
-4.  **Desde la sesión de `esque9858`, navega a la carpeta de la aplicación:**
+3.  **Navega a la carpeta de la aplicación:**
     ```bash
     cd /home/esquel.org.ar/public_html/studio
     ```
-5.  **Inicia la aplicación con PM2. Esto la ejecutará como el usuario `esque9858`:**
+4.  **Inicia la aplicación con PM2, especificando que se ejecute como el usuario de tu sitio web (`esque9858`).** Esto es fundamental para evitar errores de permisos.
     ```bash
-    pm2 start npm --name "qreasy" -- start
+    pm2 start npm --name "qreasy" -- start --uid esque9858 --gid esque9858
     ```
-6.  **Guarda la lista de procesos de PM2 para que se reinicie automáticamente:**
+5.  **Guarda la lista de procesos de PM2 para que se reinicie automáticamente:**
     ```bash
     pm2 save
     ```
-7.  **Regresa a tu sesión de `root`:**
-    ```bash
-    exit
-    ```
-8.  Verifica que la aplicación está en línea con `pm2 list`. Ahora debería mostrar a `esque9858` como el usuario.
+6.  Verifica que la aplicación está en línea con `pm2 list`. Ahora debería mostrar a `esque9858` como el usuario.
 
-### Paso 6: Corregir Permisos de la Carpeta (¡Paso Crucial!)
-Este paso asegura que el servidor web pueda leer los archivos.
+### Paso 6: Corregir Permisos de la Carpeta
+Este paso asegura que el usuario del sitio web sea el propietario de todos los archivos.
 
-1.  **Como `root`, ejecuta el siguiente comando** para asegurar que el propietario de todos los archivos es el usuario de tu sitio:
+1.  **Como `root`, ejecuta el siguiente comando**:
     ```bash
     sudo chown -R esque9858:esque9858 /home/esquel.org.ar/public_html/studio
-    ```
-2.  A continuación, ejecuta este comando para asegurar que los permisos sean los correctos (lectura y ejecución para directorios, lectura para archivos):
-    ```bash
-    sudo chmod -R 755 /home/esquel.org.ar/public_html/studio
     ```
 
 ### Paso 7: Configurar `vHost Conf` (La Clave Final)
@@ -269,7 +256,7 @@ sudo systemctl restart lsws
 ### 🔄 Cómo Actualizar la Aplicación con Cambios de GitHub
 Cuando realices cambios en tu código y los subas a GitHub, sigue estos pasos para actualizar la aplicación en tu servidor:
 
-1.  **Conéctate a tu servidor por SSH** (puedes hacerlo directamente como `esque9858` si has configurado una llave SSH, o como `root` y luego `su - esque9858`).
+1.  **Conéctate a tu servidor por SSH** como `root`.
 2.  **Navega al directorio de tu proyecto:**
     ```bash
     cd /home/esquel.org.ar/public_html/studio
@@ -296,4 +283,3 @@ Cuando realices cambios en tu código y los subas a GitHub, sigue estos pasos pa
     ```
 7.  **Verifica el estado:**
     Asegúrate de que la aplicación esté `online` con `pm2 list`.
-
