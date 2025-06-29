@@ -96,7 +96,7 @@ Sigue estos pasos para ejecutar el proyecto en tu entorno local. Esto es válido
 
 ## 🚀 Instrucciones Finales y Definitivas de Despliegue en DonWeb Cloud Server (con CyberPanel)
 
-Esta guía contiene los pasos finales, consolidados y probados para desplegar la aplicación en tu entorno. Sigue cada paso meticulosamente. El objetivo es asegurar que todos los archivos y procesos pertenezcan al usuario correcto (`esque9858`) para eliminar cualquier conflicto de permisos.
+Esta guía contiene los pasos finales, consolidados y probados para desplegar la aplicación. Sigue cada paso meticulosamente. El objetivo es asegurar que todos los archivos y procesos pertenezcan al usuario correcto (`esque9858`) para eliminar cualquier conflicto de permisos.
 
 ### Paso 1: Conexión y Limpieza (Como `root`)
 
@@ -111,41 +111,28 @@ Esta guía contiene los pasos finales, consolidados y probados para desplegar la
     pm2 delete qreasy
     pm2 save --force
     ```
-4.  **Limpia los artefactos de construcción antiguos.** Esto elimina las carpetas que pudieron haber sido creadas por `root` y que causan el estado `errored`.
+4.  **Limpia los artefactos de construcción antiguos.**
     ```bash
     rm -rf node_modules .next
     ```
-5.  **Asegura que todos los archivos restantes pertenecen al usuario correcto.**
-    ```bash
-    chown -R esque9858:esque9858 /home/esquel.org.ar/public_html/studio
-    ```
 
-### Paso 2: Instalación y Construcción (Como el Usuario Correcto)
+### Paso 2: Instalación, Construcción y Corrección de Permisos (Todo como `root`)
 
-Ahora, realizaremos la instalación y construcción como el usuario `esque9858` para garantizar que todos los nuevos archivos tengan los permisos correctos desde su creación.
+**Explicación:** Ejecutaremos `npm install` y `npm run build` como `root`, ya que es el único usuario que puede. Esto creará las carpetas `node_modules` y `.next` como propiedad de `root`. Inmediatamente después, cambiaremos su propiedad a `esque9858` para evitar el estado `errored` en PM2.
 
-1.  **Cambia al usuario del sitio web:**
-    ```bash
-    su - esque9858
-    ```
-    *Nota: Tu prompt en la terminal cambiará para indicar que ahora eres el usuario `esque9858`.*
-
-2.  **Navega de nuevo a la carpeta del proyecto** (desde la sesión de `esque9858`):
-    ```bash
-    cd /home/esquel.org.ar/public_html/studio
-    ```
-3.  **Instala las dependencias.** Esto creará una nueva carpeta `node_modules` propiedad de `esque9858`.
+1.  **Instala las dependencias (como `root`):**
     ```bash
     npm install
     ```
-4.  **Construye la aplicación.** Esto creará una nueva carpeta `.next` propiedad de `esque9858`.
+2.  **Construye la aplicación (como `root`):**
     ```bash
     npm run build
     ```
-5.  **Sal de la sesión del usuario** para volver a ser `root`.
+3.  **¡Paso Crucial! Cambia la propiedad de los nuevos archivos** al usuario del sitio.
     ```bash
-    exit
+    chown -R esque9858:esque9858 /home/esquel.org.ar/public_html/studio
     ```
+    *Esto asegura que todos los archivos, incluyendo los recién creados `node_modules` y `.next`, pertenezcan al usuario correcto.*
 
 ### Paso 3: Configurar el Servidor Web (vHost Conf)
 
@@ -256,20 +243,16 @@ Esta configuración unificada le dice al servidor cómo encontrar y comunicarse 
 
 ### Paso 4: Iniciar la Aplicación y Finalizar (Como `root`)
 
-1.  **Como `root`, navega a la carpeta de la aplicación:**
-    ```bash
-    cd /home/esquel.org.ar/public_html/studio
-    ```
-2.  **Inicia la aplicación con PM2**, especificando que se ejecute como el usuario de tu sitio web (`esque9858`). Esto es fundamental para evitar errores de permisos.
+1.  **Como `root`, desde la carpeta de la aplicación**, inicia la aplicación con PM2, especificando que se ejecute como el usuario de tu sitio web (`esque9858`). Esto es fundamental.
     ```bash
     pm2 start npm --name "qreasy" -- start --uid esque9858 --gid esque9858
     ```
-3.  **Guarda la lista de procesos de PM2** para que se reinicie automáticamente:
+2.  **Guarda la lista de procesos de PM2** para que se reinicie automáticamente:
     ```bash
     pm2 save
     ```
-4.  **Verifica que la aplicación está en línea** con `pm2 list`. Ahora debería mostrar a `esque9858` como el usuario y el estado `online`.
-5.  **Reinicia el servidor web (El Paso Final!)** Para que todos los cambios se apliquen.
+3.  **Verifica que la aplicación está en línea** con `pm2 list`. Ahora debería mostrar a `esque9858` como el usuario y el estado `online`.
+4.  **Reinicia el servidor web (El Paso Final!)** Para que todos los cambios se apliquen.
     ```bash
     sudo systemctl restart lsws
     ```
@@ -279,37 +262,33 @@ Esta configuración unificada le dice al servidor cómo encontrar y comunicarse 
 ---
 
 ### 🔄 Cómo Actualizar la Aplicación con Cambios de GitHub
-Cuando realices cambios en tu código y los subas a GitHub, sigue este nuevo procedimiento simplificado:
+
+Cuando realices cambios en tu código y los subas a GitHub, sigue este nuevo procedimiento simplificado **(ejecutado siempre como `root`)**:
 
 1.  **Conéctate a tu servidor por SSH** como `root`.
-2.  **Cambia al usuario de tu sitio:**
-    ```bash
-    su - esque9858
-    ```
-3.  **Navega al directorio de tu proyecto:**
+2.  **Navega al directorio de tu proyecto:**
     ```bash
     cd /home/esquel.org.ar/public_html/studio
     ```
-4.  **Descarga los últimos cambios desde GitHub:**
+3.  **Descarga los últimos cambios desde GitHub:**
     ```bash
     git pull origin main
     ```
-5.  **Instala las dependencias (si hubo cambios en `package.json`):**
+4.  **Instala las dependencias (si hubo cambios en `package.json`):**
     ```bash
     npm install
     ```
-6.  **Reconstruye la aplicación para producción:**
+5.  **Reconstruye la aplicación para producción:**
     ```bash
     npm run build
+    ```
+6.  **Asegura que los nuevos archivos tengan los permisos correctos:**
+    ```bash
+    chown -R esque9858:esque9858 /home/esquel.org.ar/public_html/studio
     ```
 7.  **Reinicia la aplicación con PM2:**
     ```bash
     pm2 restart qreasy
     ```
-8.  **Vuelve a tu sesión de `root`:**
-    ```bash
-    exit
-    ```
 ¡Eso es todo! La nueva versión estará en línea.
-
     
