@@ -6,6 +6,8 @@ import { DeleteAllButton } from '@/components/DeleteAllButton';
 import { Separator } from '@/components/ui/separator';
 import { QrCode } from 'lucide-react';
 
+export const dynamic = 'force-dynamic';
+
 export default async function Home() {
   const qrCodes = await getQRCodes();
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:9002';
