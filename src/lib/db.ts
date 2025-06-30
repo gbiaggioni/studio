@@ -3,16 +3,6 @@ import mysql from 'mysql2/promise';
 import type { RowDataPacket, ResultSetHeader } from 'mysql2/promise';
 import type { QRCodeEntry } from './types';
 
-const dbConfig = {
-  host: process.env.DB_HOST,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME,
-  waitForConnections: true,
-  connectionLimit: 10,
-  queueLimit: 0,
-};
-
 // Singleton pool
 let pool: mysql.Pool | null = null;
 
@@ -23,17 +13,34 @@ let pool: mysql.Pool | null = null;
 function getPool(): mysql.Pool {
     if (pool) return pool;
 
-    if (!dbConfig.host || !dbConfig.user || !dbConfig.database) {
-      // Este error será capturado por las funciones que llaman a getPool.
-      throw new Error("La base de datos no está configurada. Por favor, revisa tus variables de entorno.");
+    const missingVars = [];
+    if (!process.env.DB_HOST) missingVars.push('DB_HOST');
+    if (!process.env.DB_USER) missingVars.push('DB_USER');
+    if (!process.env.DB_PASSWORD) missingVars.push('DB_PASSWORD');
+    if (!process.env.DB_NAME) missingVars.push('DB_NAME');
+
+    if (missingVars.length > 0) {
+        const errorMsg = `La configuración de la base de datos es incompleta. Falta(n) la(s) siguiente(s) variable(s) de entorno: ${missingVars.join(', ')}. Por favor, revisa tu archivo .env.local.`;
+        throw new Error(errorMsg);
     }
+
+    const dbConfig = {
+        host: process.env.DB_HOST,
+        user: process.env.DB_USER,
+        password: process.env.DB_PASSWORD,
+        database: process.env.DB_NAME,
+        waitForConnections: true,
+        connectionLimit: 10,
+        queueLimit: 0,
+    };
     
     pool = mysql.createPool(dbConfig);
     return pool;
 }
 
 /**
- * Obtiene todos los códigos QR. Es una lectura segura que devuelve un array vacío en caso de error.
+ * Obtiene todos los códigos QR. Es una operación crítica para la página principal.
+ * Lanza un error si la consulta a la base de datos falla, para ser capturado por los límites de error de Next.js.
  */
 export async function getQRCodes(): Promise<QRCodeEntry[]> {
     try {
@@ -43,7 +50,8 @@ export async function getQRCodes(): Promise<QRCodeEntry[]> {
     } catch (error) {
         const errorMessage = error instanceof Error ? error.message : "Unknown database error";
         console.error(`[QREASY_DB_ERROR] Fallo al obtener los códigos QR. ¿Está la base de datos configurada correctamente? Error: ${errorMessage}`);
-        return [];
+        // Re-lanza el error para que Next.js pueda mostrar la página de error correcta y registrar el error completo.
+        throw new Error(errorMessage);
     }
 }
 
