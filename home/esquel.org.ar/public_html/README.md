@@ -76,10 +76,14 @@ Si el comando `sudo systemctl status docker` muestra un estado `failed` o `inact
 
 1.  **Ejecuta el script de reparación:** Este script ajustará la configuración de inicio de Docker para que sea compatible con tu entorno.
     ```bash
-    # Primero, da permisos de ejecución al script
+    # Primero, asegúrate de haber clonado el proyecto en el paso 2.
+    # Navega al directorio del proyecto.
+    cd /home/qreasy 
+
+    # Luego, da permisos de ejecución al script
     sudo chmod +x fix-docker-start.sh
 
-    # Luego, ejecuta el script
+    # Finalmente, ejecuta el script
     sudo ./fix-docker-start.sh
     ```
 2.  El script intentará reiniciar Docker y al final mostrará su estado. Si ves `active (running)`, el problema está resuelto y puedes continuar con el siguiente paso.
@@ -201,4 +205,40 @@ Cuando hagas cambios en tu código y los subas a GitHub, el proceso de actualiza
       -p 3001:3001 \
       --env-file ./.env.local \
       qreasy-app
+    ```
+---
+
+## Anexo: Cómo Desinstalar Docker (Si fuera necesario)
+
+Si en algún momento necesitas revertir la instalación de Docker y empezar de cero, estos son los comandos para una desinstalación completa y limpia.
+
+**Advertencia:** Esto eliminará Docker, así como todas las imágenes, contenedores y volúmenes de Docker en tu sistema.
+
+1.  **Detener los servicios de Docker:**
+    ```bash
+    sudo systemctl stop docker.service
+    sudo systemctl stop docker.socket
+    ```
+
+2.  **Desinstalar los paquetes de Docker:**
+    ```bash
+    sudo apt-get purge -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+    ```
+
+3.  **Eliminar directorios residuales de Docker:**
+    ```bash
+    sudo rm -rf /var/lib/docker
+    sudo rm -rf /var/lib/containerd
+    ```
+
+4.  **Limpiar el sistema de paquetes:**
+    ```bash
+    sudo apt-get autoremove -y --purge
+    sudo apt-get clean
+    ```
+
+5.  **Verificar que se ha desinstalado:**
+    ```bash
+    docker --version
+    # Debería devolver un error como "command not found"
     ```
