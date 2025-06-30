@@ -207,3 +207,4 @@ Esta es la configuración final y robusta para tu `vHost Conf` en CyberPanel.
    }
    ```
 4.  **Guarda los cambios y reinicia el servidor web** (`sudo systemctl restart lsws`).
+    
