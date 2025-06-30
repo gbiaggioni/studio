@@ -46,7 +46,7 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
-# 5. Asegurar que todos los archivos tengan los permisos correctos
+# 5. ¡Paso Crucial! Asegurar que todos los archivos tengan los permisos correctos
 echo "-> Asignando propiedad de todos los archivos a 'esque9858'..."
 chown -R esque9858:esque9858 "$PROJECT_DIR"
 if [ $? -ne 0 ]; then
@@ -61,6 +61,7 @@ pm2 restart qreasy
 if [ $? -ne 0 ]; then
     echo "Advertencia: 'pm2 restart qreasy' falló. Esto puede ser normal si el proceso no existía."
     echo "Intentando iniciar el proceso desde cero..."
+    # Usamos el comando de inicio completo y correcto
     pm2 start server.js --name "qreasy" --uid esque9858 --gid esque9858
     if [ $? -ne 0 ]; then
         echo "Error: 'pm2 start' también falló. Por favor, revisa los logs de PM2 con 'pm2 logs qreasy'."
