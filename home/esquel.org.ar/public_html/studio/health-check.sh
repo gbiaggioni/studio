@@ -182,5 +182,5 @@ else
 fi
 
 echo -e "\n${C_BLUE}===============================================${C_NC}"
-echo -e "${C_BLUE}✅ Diagnóstico completado.${C_NC}"
+echo -e "✅ Diagnóstico completado.${C_NC}"
 echo -e "${C_BLUE}===============================================${C_NC}"
