@@ -56,7 +56,7 @@ Esta guía contiene los pasos finales y simplificados para desplegar y actualiza
 
 ### Primera Vez (Despliegue Inicial)
 
-Este proceso de "reinicio limpio" debe ejecutarse **como `root`** y solo es necesario la primera vez o si encuentras un error grave. Este procedimiento también sirve para actualizar la aplicación manualmente si el script `update.sh` falla.
+Este proceso de "reinicio limpio" debe ejecutarse **como `root`** y solo es necesario la primera vez o si encuentras un error grave. Este procedimiento también sirve para actualizar la aplicación manually si el script `update.sh` falla.
 
 1.  **Conéctate a tu servidor por SSH** como `root`.
 2.  **Navega al directorio de tu proyecto:**
@@ -74,7 +74,7 @@ Este proceso de "reinicio limpio" debe ejecutarse **como `root`** y solo es nece
     # 2. Descargar los últimos cambios desde GitHub.
     # Usamos fetch y reset para forzar la actualización y evitar conflictos.
     git fetch origin
-    git reset --hard origin/main
+    git reset --hard origin/master
 
     # 3. Instalar dependencias y construir la aplicación (como root)
     npm install

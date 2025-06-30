@@ -21,10 +21,10 @@ cd "$PROJECT_DIR" || { echo "Error: No se pudo encontrar el directorio del proye
 echo "-> En el directorio del proyecto: $(pwd)"
 
 # 2. Descargar los últimos cambios desde GitHub
-echo "-> Descargando últimos cambios desde la rama 'main' de GitHub..."
+echo "-> Descargando últimos cambios desde la rama 'master' de GitHub..."
 # Se usa fetch y reset para forzar la actualización y evitar conflictos. Es más robusto que 'git pull'.
 git fetch origin
-git reset --hard origin/main
+git reset --hard origin/master
 if [ $? -ne 0 ]; then
     echo "Error: 'git reset' falló. Por favor, revisa si tienes conflictos o problemas de conexión."
     exit 1

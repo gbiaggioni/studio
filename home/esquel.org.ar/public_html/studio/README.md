@@ -74,7 +74,7 @@ Este proceso de "reinicio limpio" debe ejecutarse **como `root`** y solo es nece
     # 2. Descargar los últimos cambios desde GitHub.
     # Usamos fetch y reset para forzar la actualización y evitar conflictos.
     git fetch origin
-    git reset --hard origin/main
+    git reset --hard origin/master
 
     # 3. Instalar dependencias y construir la aplicación (como root)
     npm install
