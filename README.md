@@ -19,11 +19,14 @@ QREasy es una aplicación web moderna y sencilla para crear, gestionar y compart
 
 ---
 
-## 🚀 Despliegue con Docker en CyberPanel (Guía Definitiva)
+## 🚀 Guía Definitiva de Despliegue con Docker en CyberPanel
 
-Esta es la guía recomendada y única para desplegar **QREasy** en tu servidor con CyberPanel.
+Esta es la guía recomendada y única para desplegar **QREasy** en tu servidor. Sigue estos pasos en orden.
 
-**Importante:** Los antiguos scripts (`update.sh`, `health-check.sh`, `server.js`) han sido eliminados y ya no deben usarse.
+**Introducción Importante: `root` vs. `esque9858`**
+
+-   **Usa `root` para todo:** Debes realizar todos los pasos de esta guía conectado a tu servidor por SSH como el usuario `root`.
+-   **¿Y `esque9858`?** Es el usuario que CyberPanel usa internamente para los archivos del sitio. No necesitas usarlo ni preocuparte por él para este despliegue; la configuración se encarga de conectar todo correctamente.
 
 ### Prerrequisitos
 
@@ -37,7 +40,7 @@ Esta es la guía recomendada y única para desplegar **QREasy** en tu servidor c
 
 1.  Conéctate a tu servidor a través de SSH como `root`.
 
-2.  Instala Docker con los siguientes comandos:
+2.  Instala Docker con los siguientes comandos. Es un proceso que solo harás una vez.
     ```bash
     # Actualizar repositorios e instalar paquetes necesarios
     sudo apt-get update
@@ -69,7 +72,7 @@ Si el comando `sudo systemctl status docker` muestra un estado `failed` o `inact
     ```bash
     # Primero, asegúrate de haber clonado el proyecto en el Paso 2.
     # Navega al directorio del proyecto.
-    cd /home/qreasy 
+    cd /home/esquel.org.ar/qr
 
     # Luego, da permisos de ejecución al script
     sudo chmod +x fix-docker-start.sh
@@ -83,16 +86,16 @@ Si el comando `sudo systemctl status docker` muestra un estado `failed` o `inact
 
 ### Paso 2: Clonar el Proyecto y Configurar
 
-1.  Clona tu proyecto desde GitHub en un directorio limpio. **Es recomendable usar `/home/qreasy` para evitar problemas de permisos.**
+1.  Clona tu proyecto desde GitHub en el directorio correcto.
     ```bash
     # Crea el directorio si no existe
-    mkdir -p /home/qreasy
+    mkdir -p /home/esquel.org.ar/qr
     
     # Clona tu repositorio
-    git clone https://github.com/TU_USUARIO/qreasy.git /home/qreasy # <- Reemplaza con la URL de tu repo
+    git clone https://github.com/TU_USUARIO/qreasy.git /home/esquel.org.ar/qr # <- Reemplaza con la URL de tu repo
     
     # Navega al nuevo directorio
-    cd /home/qreasy
+    cd /home/esquel.org.ar/qr
     ```
 
 2.  **Configura las Variables de Entorno (¡Paso Crítico!):**
@@ -118,7 +121,7 @@ Si el comando `sudo systemctl status docker` muestra un estado `failed` o `inact
 
 ### Paso 3: Construir y Ejecutar el Contenedor Docker
 
-1.  **Construir la imagen:** Desde la raíz del proyecto (`/home/qreasy`), ejecuta:
+1.  **Construir la imagen:** Desde la raíz del proyecto (`/home/esquel.org.ar/qr`), ejecuta:
     ```bash
     sudo docker build -t qreasy-app .
     ```
@@ -169,7 +172,7 @@ Ahora, tu aplicación corre en `http://localhost:3001`. Hay que decirle a CyberP
 
 Cuando subas cambios a GitHub, el proceso de actualización es muy sencillo:
 
-1.  Conéctate al servidor y ve al directorio del proyecto: `cd /home/qreasy`
+1.  Conéctate al servidor y ve al directorio del proyecto: `cd /home/esquel.org.ar/qr`
 2.  Detén y elimina el contenedor antiguo:
     ```bash
     sudo docker stop qreasy-container
