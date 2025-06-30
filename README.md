@@ -88,8 +88,10 @@ Si el comando `sudo systemctl status docker` muestra un estado `failed` o `inact
 
 1.  Clona tu proyecto desde GitHub en el directorio correcto.
     ```bash
-    # Crea el directorio si no existe y asegúrate de que esté vacío.
-    # Si el directorio ya existe y tiene archivos, bórralo primero con: sudo rm -rf /home/esquel.org.ar/qr
+    # Si el directorio ya existe por un intento anterior, bórralo primero para empezar de cero.
+    sudo rm -rf /home/esquel.org.ar/qr
+    
+    # Crea el directorio nuevamente (estará vacío).
     mkdir -p /home/esquel.org.ar/qr
     
     # Clona tu repositorio DENTRO del directorio /home/esquel.org.ar/qr
