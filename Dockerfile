@@ -7,33 +7,29 @@ WORKDIR /app
 # Copia los archivos de definición de paquetes
 COPY package*.json ./
 
-# Instala las dependencias de forma limpia y eficiente
+# Instala las dependencias de producción
 RUN npm ci
 
-# Copia el resto del código de la aplicación
-# Usa .dockerignore para excluir node_modules y otros archivos innecesarios
+# Copia el resto de los archivos de la aplicación
 COPY . .
 
-# Construye la aplicación Next.js para producción
+# Construye la aplicación
 RUN npm run build
 
-# Stage 2: Runner - Crea la imagen final y optimizada
-FROM node:20-alpine
+# Stage 2: Runner - Crea la imagen final de producción
+FROM node:20-alpine AS runner
 
-# Establece el directorio de trabajo
 WORKDIR /app
 
-# Copia la aplicación construida desde el "builder" stage
-# El output "standalone" de Next.js ya incluye los node_modules necesarios
+# Copia los archivos de la aplicación independiente desde la etapa de construcción.
+# La salida 'standalone' de Next.js incluye automáticamente la carpeta 'public' si existe,
+# por lo que no es necesario un paso de copia por separado para ella.
 COPY --from=builder /app/.next/standalone ./
 
-# Copia los archivos públicos (imágenes, etc.)
-COPY --from=builder /app/public ./public
-
 # Expone el puerto en el que correrá la aplicación dentro del contenedor
+# Asegúrate de que este puerto coincida con el que se define en .env.local y en el comando docker run
 EXPOSE 3001
 
-# El comando para iniciar la aplicación
-# Utiliza el server.js generado por el build "standalone"
-# El puerto se gestionará a través de variables de entorno (PORT=3001)
+# Comando para iniciar la aplicación
+# El modo 'standalone' crea un server.js optimizado.
 CMD ["node", "server.js"]
