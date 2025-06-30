@@ -4,10 +4,11 @@ FROM node:20-alpine AS builder
 # Establece el directorio de trabajo
 WORKDIR /app
 
-# Copia los archivos de definición de paquetes
+# Copia los archivos de manifiesto del paquete
 COPY package*.json ./
 
-# Instala las dependencias de producción
+# Instala las dependencias de forma limpia
+# Usamos `npm ci` para una instalación más rápida y predecible en CI/CD
 RUN npm ci
 
 # Copia el resto de los archivos de la aplicación
@@ -16,20 +17,26 @@ COPY . .
 # Construye la aplicación
 RUN npm run build
 
+
 # Stage 2: Runner - Crea la imagen final de producción
 FROM node:20-alpine AS runner
 
 WORKDIR /app
 
-# Copia los archivos de la aplicación independiente desde la etapa de construcción.
-# La salida 'standalone' de Next.js incluye automáticamente la carpeta 'public' si existe,
-# por lo que no es necesario un paso de copia por separado para ella.
+# Establece las variables de entorno para producción
+ENV NODE_ENV=production
+# Deshabilita la telemetría de Next.js
+ENV NEXT_TELEMETRY_DISABLED 1
+
+# Copia los archivos de la aplicación independiente desde la etapa de builder
+# El modo 'standalone' ya incluye la carpeta 'public' si existe,
+# por lo que no es necesario copiarla por separado.
 COPY --from=builder /app/.next/standalone ./
 
 # Expone el puerto en el que correrá la aplicación dentro del contenedor
-# Asegúrate de que este puerto coincida con el que se define en .env.local y en el comando docker run
+# El valor del puerto se definirá en el comando `docker run`
 EXPOSE 3001
 
 # Comando para iniciar la aplicación
-# El modo 'standalone' crea un server.js optimizado.
+# server.js es el servidor de Next.js en modo standalone
 CMD ["node", "server.js"]
