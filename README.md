@@ -104,7 +104,15 @@ Si el comando `sudo systemctl status docker` muestra un estado `failed` o `inact
     cd /home/esquel.org.ar/qr
     ```
 
-2.  **Configura las Variables de Entorno (¡Paso Crítico!):**
+2.  **¡Paso Crítico! Corrige los Permisos de los Archivos:**
+    *   Como clonaste el repositorio siendo `root`, los archivos ahora pertenecen a `root`. Necesitamos devolverle la propiedad al usuario que CyberPanel utiliza (`esque9858`) para que pueda gestionar el sitio correctamente.
+    *   Ejecuta este comando:
+        ```bash
+        sudo chown -R esque9858:esque9858 /home/esquel.org.ar/qr
+        ```
+    *   Este paso es **esencial** para que CyberPanel pueda escribir las reglas de reescritura más adelante.
+
+3.  **Configura las Variables de Entorno:**
     *   Copia el archivo de ejemplo:
         ```bash
         cp .env.example .env.local
@@ -207,8 +215,9 @@ Cuando subas cambios a GitHub, el proceso de actualización es muy sencillo:
     sudo docker rm qreasy-container
     ```
 3.  Trae los últimos cambios del código: `git pull origin main`
-4.  Reconstruye la imagen de Docker (no olvides iniciar sesión si es un nuevo servidor): `sudo docker build -t qreasy-app .`
-5.  Vuelve a ejecutar el contenedor con el mismo comando de siempre:
+4.  Corrige los permisos nuevamente por si `git` ha cambiado algo: `sudo chown -R esque9858:esque9858 /home/esquel.org.ar/qr`
+5.  Reconstruye la imagen de Docker (no olvides iniciar sesión si es un nuevo servidor): `sudo docker build -t qreasy-app .`
+6.  Vuelve a ejecutar el contenedor con el mismo comando de siempre:
     ```bash
     sudo docker run -d --restart unless-stopped --name qreasy-container -p 3001:3001 --env-file ./.env.local qreasy-app
     ```
