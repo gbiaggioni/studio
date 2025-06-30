@@ -1,41 +1,39 @@
-# Stage 1: Builder - Build the Next.js application
+# Stage 1: Builder - Construye la aplicación Next.js
 FROM node:20-alpine AS builder
 
-# Set working directory
+# Establece el directorio de trabajo
 WORKDIR /app
 
-# Copy package files and install dependencies
+# Copia los archivos de definición de paquetes
 COPY package*.json ./
-RUN npm install
 
-# Copy the rest of the source code
+# Instala las dependencias de forma limpia y eficiente
+RUN npm ci
+
+# Copia el resto del código de la aplicación
+# Usa .dockerignore para excluir node_modules y otros archivos innecesarios
 COPY . .
 
-# Build the application
+# Construye la aplicación Next.js para producción
 RUN npm run build
 
-# Stage 2: Runner - Create the final, lightweight image
-FROM node:20-alpine AS runner
+# Stage 2: Runner - Crea la imagen final y optimizada
+FROM node:20-alpine
+
+# Establece el directorio de trabajo
 WORKDIR /app
 
-# Set environment variables
-ENV NODE_ENV=production
-ENV PORT=3001
-
-# Copy the standalone output from the builder stage
-# This includes the server.js file needed to run the app
+# Copia la aplicación construida desde el "builder" stage
+# El output "standalone" de Next.js ya incluye los node_modules necesarios
 COPY --from=builder /app/.next/standalone ./
 
-# Copy the public and static folders
-COPY --from=builder /app/.next/static ./.next/static
-
-# Next.js with a basePath needs the public folder to be served.
-# Although this project doesn't have one, it's good practice.
+# Copia los archivos públicos (imágenes, etc.)
 COPY --from=builder /app/public ./public
 
-# Expose the port the app runs on
+# Expone el puerto en el que correrá la aplicación dentro del contenedor
 EXPOSE 3001
 
-# The standalone output creates a server.js file.
-# The command to start the app is `node server.js`
+# El comando para iniciar la aplicación
+# Utiliza el server.js generado por el build "standalone"
+# El puerto se gestionará a través de variables de entorno (PORT=3001)
 CMD ["node", "server.js"]

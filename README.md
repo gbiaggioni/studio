@@ -118,6 +118,9 @@ Si el comando `sudo systemctl status docker` muestra un estado `failed` o `inact
         DB_PASSWORD=tu_contraseña_de_bd
         DB_NAME=el_nombre_de_tu_bd
 
+        # Puerto en el que correrá la aplicación dentro de Docker
+        PORT=3001
+
         # URL pública de la aplicación
         NEXT_PUBLIC_BASE_URL=https://qr.esquel.org.ar
         ```
@@ -126,6 +129,24 @@ Si el comando `sudo systemctl status docker` muestra un estado `failed` o `inact
 ---
 
 ### Paso 3: Construir y Ejecutar el Contenedor Docker
+
+**🚨 ¡OBLIGATORIO! Solución al error "429 Too Many Requests"**
+
+Al ejecutar el comando `docker build`, podrías encontrarte con un error que dice `429 Too Many Requests` o `You have reached your unauthenticated pull rate limit`.
+
+-   **¿Qué significa?** Significa que tu servidor, al compartir una IP con otros, ha agotado el límite de descargas de imágenes gratuitas y anónimas de Docker Hub. Es muy común en servidores de hosting.
+-   **La solución (rápida y gratuita):** Necesitas autenticarte con una cuenta de Docker Hub para obtener un límite de descargas mucho mayor.
+
+**Sigue estos pasos ANTES de construir la imagen:**
+
+1.  **Crea una cuenta gratuita:** Ve a [https://hub.docker.com/signup](https://hub.docker.com/signup) y crea una cuenta.
+2.  **Inicia sesión en tu servidor:** Vuelve a tu terminal SSH y ejecuta el siguiente comando:
+    ```bash
+    sudo docker login
+    ```
+3.  **Ingresa tus credenciales:** Te pedirá tu nombre de usuario (Username) y contraseña (Password). ¡Usa las que acabas de crear!
+
+Una vez que veas el mensaje `Login Succeeded`, puedes continuar con el siguiente paso sin problemas.
 
 1.  **Construir la imagen:** Desde la raíz del proyecto (`/home/esquel.org.ar/qr`), ejecuta:
     ```bash
@@ -185,7 +206,7 @@ Cuando subas cambios a GitHub, el proceso de actualización es muy sencillo:
     sudo docker rm qreasy-container
     ```
 3.  Trae los últimos cambios del código: `git pull origin main`
-4.  Reconstruye la imagen de Docker: `sudo docker build -t qreasy-app .`
+4.  Reconstruye la imagen de Docker (no olvides iniciar sesión si es un nuevo servidor): `sudo docker build -t qreasy-app .`
 5.  Vuelve a ejecutar el contenedor con el mismo comando de siempre:
     ```bash
     sudo docker run -d --restart unless-stopped --name qreasy-container -p 3001:3001 --env-file ./.env.local qreasy-app

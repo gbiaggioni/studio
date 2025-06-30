@@ -1,28 +1,13 @@
-# Git
+# Evita que se copien archivos innecesarios a la imagen de Docker
+.dockerignore
+Dockerfile
+.env
+.env*.local
 .git
 .gitignore
-
-# Docker
-Dockerfile
-
-# Node
-node_modules
+.next/
+node_modules/
 npm-debug.log
-yarn-error.log
-
-# Archivos de Entorno (¡No incluir en la imagen!)
-.env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
-
-# Salida de Build (se genera dentro del contenedor)
-.next
-out
-
-# Documentación y scripts locales
 README.md
 CONTRIBUTING.md
-setup-and-push.sh
-fix-docker-start.sh
+.vscode/
