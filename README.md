@@ -147,8 +147,7 @@ Al ejecutar el comando `docker build`, podrías encontrarte con un error que dic
 
 **Sigue estos pasos ANTES de construir la imagen:**
 
-1.  **Crea una cuenta gratuita:** Ve a [https://hub.docker.com/signup](https://hub.docker.com/signup) 
-y crea una cuenta.
+1.  **Crea una cuenta gratuita:** Ve a [https://hub.docker.com/signup](https://hub.docker.com/signup) y crea una cuenta.
 2.  **Inicia sesión en tu servidor:** Vuelve a tu terminal SSH y ejecuta el siguiente comando:
     ```bash
     sudo docker login
