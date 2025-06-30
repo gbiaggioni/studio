@@ -57,6 +57,9 @@ Esta es la guía definitiva y recomendada para desplegar **QREasy** en tu servid
     # Añadir el repositorio de Docker
     sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
 
+    # Nota: Es normal ver una advertencia como "apt-key is deprecated". 
+    # Esto no es un error y puedes continuar de forma segura.
+
     # Actualizar de nuevo e instalar el motor de Docker
     sudo apt-get update
     sudo apt-get install -y docker-ce docker-ce-cli containerd.io
