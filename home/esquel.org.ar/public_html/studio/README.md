@@ -148,7 +148,7 @@ extprocessor esque9858 {
   type                    lsapi
   address                 UDS://tmp/lshttpd/esque9858.sock
   maxConns                10
-  env                     LSAPI_CHILDREN=10
+  env                     LSAPI_CHILD_PROCESSES=10
   initTimeout             600
   retryTimeout            0
   persistConn             1

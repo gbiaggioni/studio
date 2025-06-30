@@ -19,7 +19,7 @@ PROJECT_DIR="/home/esquel.org.ar/public_html/studio"
 cd "$PROJECT_DIR" || { echo "Error: No se pudo encontrar el directorio del proyecto en $PROJECT_DIR"; exit 1; }
 echo "-> En el directorio del proyecto: $(pwd)"
 
-# 2. Detener, eliminar y borrar la configuración antigua de PM2 para evitar estados corruptos.
+# 2. ¡Paso Crucial! Detener, eliminar y borrar la configuración antigua de PM2 para evitar estados corruptos.
 echo "-> Limpiando configuración de PM2 anterior..."
 pm2 stop qreasy || echo "Advertencia: El proceso qreasy no estaba corriendo."
 pm2 delete qreasy || echo "Advertencia: El proceso qreasy no existía."
