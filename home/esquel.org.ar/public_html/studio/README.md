@@ -36,9 +36,24 @@ Este proyecto está construido con tecnologías modernas y robustas:
 
 Esta guía contiene los pasos para desplegar, actualizar y diagnosticar la aplicación en tu servidor.
 
-### Primera Vez (Despliegue Inicial Limpio)
+### 🔄 Cómo Actualizar o Reparar la Aplicación (Método Recomendado)
 
-Este proceso de "reinicio limpio" debe ejecutarse **como `root`** y es la solución definitiva para cualquier error grave o para la configuración inicial.
+Para **todas las futuras actualizaciones** o si la aplicación deja de funcionar por cualquier motivo, simplemente ejecuta el script `update.sh`. Este script realiza un **"reinicio limpio"** que automatiza todo el proceso de forma segura.
+
+1.  **Conéctate a tu servidor por SSH** como `root`.
+2.  **Navega al directorio del proyecto:**
+    ```bash
+    cd /home/esquel.org.ar/public_html/studio
+    ```
+3.  **Ejecuta el script de actualización y reinicio limpio:**
+    ```bash
+    bash ./update.sh
+    ```
+    *¡Y eso es todo! El script se encargará de limpiar PM2, descargar los últimos cambios de GitHub, reinstalar dependencias, reconstruir la aplicación, arreglar permisos y reiniciarla correctamente.*
+
+### 🛠️ Despliegue Inicial o Reinicio Limpio Manual
+
+Este proceso debe ejecutarse **como `root`** y solo es necesario la primera vez que despliegas el proyecto o si el script `update.sh` falla por alguna razón extrema.
 
 1.  **Conéctate a tu servidor por SSH** como `root`.
 2.  **Navega al directorio de tu proyecto:**
@@ -73,21 +88,6 @@ Este proceso de "reinicio limpio" debe ejecutarse **como `root`** y es la soluci
     ```
 4.  Verifica que todo funciona con `pm2 list` y `pm2 logs qreasy`. La aplicación debería aparecer como "online" con un PID asignado.
 
-### 🔄 Cómo Actualizar la Aplicación (Automatizado)
-
-Para **todas las futuras actualizaciones**, simplemente ejecuta el script `update.sh`. Este script automatiza el proceso de reinicio limpio de forma segura.
-
-1.  **Conéctate a tu servidor por SSH** como `root`.
-2.  **Navega al directorio del proyecto:**
-    ```bash
-    cd /home/esquel.org.ar/public_html/studio
-    ```
-3.  **Ejecuta el script de actualización:**
-    ```bash
-    bash ./update.sh
-    ```
-    *¡Y eso es todo! El script se encargará de limpiar PM2, descargar cambios, reinstalar dependencias, reconstruir, arreglar permisos y reiniciar la aplicación correctamente.*
-
 ---
 
 ## 🩺 Solución de Problemas y Diagnóstico (Health Check)
@@ -102,7 +102,8 @@ Si la aplicación no funciona, antes de intentar cualquier otra cosa, ejecuta el
     ```
 4.  El script te indicará con [OK] o [ERROR] el estado de cada componente y te dará pistas sobre cómo solucionarlo.
 
-### Checklist Final del Servidor Web (LiteSpeed / CyberPanel)
+---
+## ⚙️ Configuración del Servidor Web (LiteSpeed / CyberPanel)
 
 Si el `health-check.sh` muestra que la aplicación está corriendo en el puerto 3001 pero no puedes acceder desde el dominio, el problema casi siempre está en la configuración del servidor web.
 
