@@ -110,7 +110,7 @@ Si el comando `sudo systemctl status docker` muestra un estado `failed` o `inact
         cp .env.example .env.local
         ```
     *   Abre el nuevo archivo para editarlo (por ejemplo, con `nano .env.local`).
-    *   Modifica el contenido con **tus credenciales reales**. Debería quedar así:
+    *   Modifica el contenido con **tus credenciales reales**. No es necesario usar comillas. Debería quedar así:
         ```env
         # Credenciales de la Base de Datos
         DB_HOST=127.0.0.1  # O la IP de tu BD si es externa

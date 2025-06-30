@@ -24,7 +24,17 @@ Para trabajar en el proyecto localmente, es **obligatorio** usar Docker para ase
 
 2.  **Configurar Variables de Entorno:**
     *   Copia el archivo `.env.example` a un nuevo archivo llamado `.env.local`.
-    *   Abre `.env.local` y rellena las credenciales de tu base de datos y la URL base para el desarrollo local (ej. `http://localhost:3001`).
+    *   Abre `.env.local` y rellena las credenciales de tu base de datos y la URL base para el desarrollo local. No es necesario usar comillas. Por ejemplo:
+        ```env
+        # Credenciales de la Base de Datos
+        DB_HOST=127.0.0.1
+        DB_USER=qreasy_user
+        DB_PASSWORD=secret_password
+        DB_NAME=qreasy_db
+
+        # URL para desarrollo local
+        NEXT_PUBLIC_BASE_URL=http://localhost:3001
+        ```
 
 3.  **Construir y Ejecutar el Contenedor:**
     *   Desde la raíz del proyecto, construye la imagen:
