@@ -16,30 +16,30 @@ Aceptamos contribuciones a través de Pull Requests (PRs). Aquí tienes los paso
 
 ## Configuración del Entorno de Desarrollo (con Docker)
 
-Para trabajar en el proyecto localmente, recomendamos usar Docker para asegurar un entorno consistente.
+Para trabajar en el proyecto localmente, es **obligatorio** usar Docker para asegurar un entorno consistente.
 
 1.  **Prerrequisitos:**
-    -   [Docker Desktop](https://www.docker.com/products/docker-desktop/) instalado en tu computadora.
-    -   Una base de datos MariaDB/MySQL accesible (puede estar en otro contenedor Docker o en tu máquina local).
+    *   [Docker Desktop](https://www.docker.com/products/docker-desktop/) instalado en tu computadora.
+    *   Una base de datos MariaDB/MySQL accesible (puede estar en otro contenedor Docker o en tu máquina local).
 
 2.  **Configurar Variables de Entorno:**
-    -   Copia el archivo `.env.example` a un nuevo archivo llamado `.env.local`.
-    -   Abre `.env.local` y rellena las credenciales de tu base de datos y la URL base para el desarrollo local (`http://localhost:3001`).
+    *   Copia el archivo `.env.example` a un nuevo archivo llamado `.env.local`.
+    *   Abre `.env.local` y rellena las credenciales de tu base de datos y la URL base para el desarrollo local (ej. `http://localhost:3001`).
 
 3.  **Construir y Ejecutar el Contenedor:**
-    -   Desde la raíz del proyecto, construye la imagen:
+    *   Desde la raíz del proyecto, construye la imagen:
         ```bash
         docker build -t qreasy-app .
         ```
-    -   Ejecuta el contenedor:
+    *   Ejecuta el contenedor:
         ```bash
         docker run -p 3001:3001 --env-file ./.env.local qreasy-app
         ```
-    -   La aplicación estará disponible en `http://localhost:3001`.
+    *   La aplicación estará disponible en `http://localhost:3001`.
 
 ## Proceso de Pull Request
 
-1.  **Asegúrate de que la build no falle:** Todos los Pull Requests deben pasar las comprobaciones de CI.
+1.  **Asegúrate de que la build no falle:** Todos los Pull Requests deben pasar las comprobaciones de CI (ver `.github/workflows/ci.yml`).
 2.  **Describe tus cambios:** Explica claramente qué problema resuelves o qué funcionalidad añades.
 
 ¡Gracias de nuevo por tu contribución!

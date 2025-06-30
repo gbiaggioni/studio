@@ -1,15 +1,28 @@
-.dockerignore
-Dockerfile
+# Git
 .git
 .gitignore
+
+# Docker
+Dockerfile
+
+# Node
 node_modules
-.next
-npm-debug.log*
-README.md
+npm-debug.log
+yarn-error.log
+
+# Archivos de Entorno (¡No incluir en la imagen!)
+.env
 .env.local
-.vscode
-update.sh
-health-check.sh
-setup-and-push.sh
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Salida de Build (se genera dentro del contenedor)
+.next
+out
+
+# Documentación y scripts locales
+README.md
 CONTRIBUTING.md
-apphosting.yaml
+setup-and-push.sh
+fix-docker-start.sh

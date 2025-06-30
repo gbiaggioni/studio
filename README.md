@@ -96,12 +96,12 @@ Si el comando `sudo systemctl status docker` muestra un estado `failed` o `inact
     ```
 
 2.  **Configura las Variables de Entorno (¡Paso Crítico!):**
-    -   Copia el archivo de ejemplo:
+    *   Copia el archivo de ejemplo:
         ```bash
         cp .env.example .env.local
         ```
-    -   Abre el nuevo archivo para editarlo (por ejemplo, con `nano .env.local`).
-    -   Modifica el contenido con **tus credenciales reales**. Debería quedar así:
+    *   Abre el nuevo archivo para editarlo (por ejemplo, con `nano .env.local`).
+    *   Modifica el contenido con **tus credenciales reales**. Debería quedar así:
         ```env
         # Credenciales de la Base de Datos
         DB_HOST=127.0.0.1  # O la IP de tu BD si es externa
@@ -112,7 +112,7 @@ Si el comando `sudo systemctl status docker` muestra un estado `failed` o `inact
         # URL pública de la aplicación
         NEXT_PUBLIC_BASE_URL=https://qr.esquel.org.ar
         ```
-    -   Guarda los cambios (`Ctrl+X`, luego `Y`, y `Enter`).
+    *   Guarda los cambios (`Ctrl+X`, luego `Y`, y `Enter`).
 
 ---
 
