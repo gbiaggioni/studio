@@ -43,7 +43,7 @@ print_info() {
 
 # --- INICIO DEL SCRIPT ---
 echo -e "${C_BLUE}===============================================${C_NC}"
-echo -e "${C_BLUE}🩺 Ejecutando Health Check para QREasy...${C_NC}"
+echo -e "🩺 Ejecutando Health Check para QREasy...${C_NC}"
 echo -e "${C_BLUE}===============================================${C_NC}"
 
 
@@ -119,8 +119,12 @@ if [ -z "$PM2_STATUS" ]; then
 else
     print_success "El proceso PM2 '$APP_NAME' existe."
 
+    # Usamos grep -w para buscar la palabra exacta y evitar coincidencias parciales (como 'pid path')
+    STATUS=$(echo "$PM2_STATUS" | grep -w 'status' | awk -F'│' '{print $3}' | xargs)
+    PID=$(echo "$PM2_STATUS" | grep -w 'pid' | awk -F'│' '{print $3}' | xargs)
+    USER=$(echo "$PM2_STATUS" | grep -w 'username' | awk -F'│' '{print $3}' | xargs)
+
     # Verificar estado
-    STATUS=$(echo "$PM2_STATUS" | grep 'status' | awk -F'│' '{print $3}' | xargs)
     if [ "$STATUS" == "online" ]; then
         print_success "Estado: $STATUS"
     else
@@ -128,20 +132,18 @@ else
     fi
 
     # Verificar PID
-    PID=$(echo "$PM2_STATUS" | grep 'pid' | awk -F'│' '{print $3}' | xargs)
-    if [ "$PID" != "N/A" ] && [ "$PID" -gt 0 ]; then
+    if [[ "$PID" =~ ^[0-9]+$ ]] && [ "$PID" -gt 0 ]; then
         print_success "PID: $PID (proceso en ejecución)."
     else
-        print_error "PID: $PID. La aplicación no se está ejecutando, está en un bucle de reinicio."
+        print_error "PID: $PID. La aplicación no se está ejecutando correctamente (puede estar en un bucle de reinicio)."
         print_info "Revisa los logs con: pm2 logs $APP_NAME"
     fi
 
     # Verificar usuario
-    USER=$(echo "$PM2_STATUS" | grep 'username' | awk -F'│' '{print $3}' | xargs)
     if [ "$USER" == "$APP_USER" ]; then
         print_success "Ejecutándose como usuario: $USER"
     else
-        print_error "Ejecutándose como usuario incorrecto: $USER. Debería ser '$APP_USER'."
+        print_error "Ejecutándose como usuario incorrecto: '$USER'. Debería ser '$APP_USER'."
     fi
 fi
 
@@ -173,7 +175,7 @@ if [ "$CURL_PUBLIC" == "200" ]; then
     print_success "Respuesta del dominio público ($APP_URL) es exitosa (Código: $CURL_PUBLIC)."
 elif [ "$CURL_PUBLIC" == "403" ]; then
     print_error "Respuesta del dominio público ($APP_URL) es 'Access Denied' (Código: 403)."
-    print_info "Esto suele ser un problema de configuración de LiteSpeed (vHost). Revisa la configuración del proxy."
+    print_info "Esto suele ser un problema de configuración de LiteSpeed (vHost) o que la aplicación no está respondiendo."
 elif [ "$CURL_PUBLIC" == "500" ] || [ "$CURL_PUBLIC" == "502" ] || [ "$CURL_PUBLIC" == "503" ]; then
     print_error "Respuesta del dominio público ($APP_URL) es un error de servidor (Código: $CURL_PUBLIC)."
     print_info "Esto puede ser un problema de LiteSpeed o que la aplicación se está reiniciando. Revisa los logs de LiteSpeed y PM2."
