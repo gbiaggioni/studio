@@ -16,8 +16,8 @@ C_NC='\033[0m' # No Color
 # --- Variables ---
 APP_NAME="qreasy"
 APP_PORT="3001"
-APP_URL="https://esquel.org.ar/studio/"
-LOCAL_URL="http://127.0.0.1:$APP_PORT/studio/"
+APP_URL="https://qr.esquel.org.ar/"
+LOCAL_URL="http://127.0.0.1:$APP_PORT/"
 APP_USER="esque9858"
 
 # --- Funciones de Ayuda ---

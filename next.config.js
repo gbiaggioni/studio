@@ -1,6 +1,5 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  basePath: '/studio',
   output: 'standalone',
   /* config options here */
   typescript: {

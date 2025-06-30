@@ -8,7 +8,7 @@ QREasy es una aplicación web moderna y sencilla para crear, gestionar y compart
 -   **Creación de Códigos QR:** Genera códigos QR dinámicamente a partir de cualquier URL de destino.
 -   **Etiquetado Personalizado:** Asigna un nombre o etiqueta a cada código QR para una fácil identificación.
 -   **Galería de Códigos:** Visualiza todos tus códigos QR en una interfaz de tarjeta limpia y organizada.
--   **URL Corta Única:** Cada código QR obtiene una URL corta y única (ej. `esquel.ar/r/xyz123`) para la redirección.
+-   **URL Corta Única:** Cada código QR obtiene una URL corta y única (ej. `qr.esquel.org.ar/r/xyz123`) para la redirección.
 -   **Gestión Completa:**
     -   Edita la URL de destino o el nombre de un QR sin necesidad de reimprimirlo.
     -   Copia la URL corta al portapapeles con un solo clic.
@@ -106,25 +106,23 @@ Si la aplicación no funciona, antes de intentar cualquier otra cosa, ejecuta el
 ---
 ## ⚙️ Configuración del Servidor Web (LiteSpeed / CyberPanel)
 
-Si el `health-check.sh` muestra que la aplicación está corriendo en el puerto 3001 pero no puedes acceder desde el dominio, el problema casi siempre está en la configuración del servidor web.
+Si el `health-check.sh` muestra que la aplicación está corriendo en el puerto 3001 pero no puedes acceder desde el dominio (ej. `https://qr.esquel.org.ar`), el problema casi siempre está en la configuración del servidor web.
 
 #### 1. Rewrite Rules
 Asegúrate de que la sección **`Rewrite Rules`** en la configuración de tu sitio en CyberPanel esté **completamente vacía**.
 
 #### 2. vHost Conf
-Esta es la configuración final, correcta y robusta para tu `vHost Conf`. Ve a `Websites` -> `List Websites` -> `Manage` (para tu dominio) -> `vHost Conf` y reemplaza todo el contenido con este bloque:
+Esta es la configuración final, correcta y robusta para tu `vHost Conf`. Ve a `Websites` -> `List Websites` -> `Manage` (para tu dominio `qr.esquel.org.ar`) -> `vHost Conf` y reemplaza todo el contenido con este bloque:
 
 ```
 docRoot                   $VH_ROOT/public_html
 vhDomain                  $VH_NAME
-vhAliases                 www.$VH_NAME
-adminEmails               gbiaggioni@gmail.com
+adminEmails               admin@example.com
 enableGzip                1
 enableIpGeo               1
 
 index  {
   useServer               0
-  indexFiles              index.php, index.html
 }
 
 errorlog $VH_ROOT/logs/$VH_NAME.error_log {
@@ -142,30 +140,6 @@ accesslog $VH_ROOT/logs/$VH_NAME.access_log {
   compressArchive         1
 }
 
-scripthandler  {
-  add                     lsapi:esque9858 php
-}
-
-extprocessor esque9858 {
-  type                    lsapi
-  address                 UDS://tmp/lshttpd/esque9858.sock
-  maxConns                10
-  env                     LSAPI_CHILD_PROCESSES=10
-  initTimeout             600
-  retryTimeout            0
-  persistConn             1
-  pcKeepAliveTimeout      1
-  respBuffer              0
-  autoStart               1
-  path                    /usr/local/lsws/lsphp83/bin/lsphp
-  extUser                 esque9858
-  extGroup                esque9858
-  memSoftLimit            2047M
-  memHardLimit            2047M
-  procSoftLimit           400
-  procHardLimit           500
-}
-
 extprocessor qreasy-app {
   type                    node
   address                 127.0.0.1:3001
@@ -177,7 +151,7 @@ extprocessor qreasy-app {
   autoStart               0
 }
 
-context /studio/ {
+context / {
   type                    proxy
   handler                 qreasy-app
   addDefaultCharset       off
@@ -191,15 +165,11 @@ context /.well-known/acme-challenge {
     enable                  0
   }
   addDefaultCharset       off
-
-  phpIniOverride  {
-
-  }
 }
 
 vhssl  {
-  keyFile                 /etc/letsencrypt/live/esquel.org.ar/privkey.pem
-  certFile                /etc/letsencrypt/live/esquel.org.ar/fullchain.pem
+  keyFile                 /etc/letsencrypt/live/qr.esquel.org.ar/privkey.pem
+  certFile                /etc/letsencrypt/live/qr.esquel.org.ar/fullchain.pem
   certChain               1
   sslProtocol             24
   enableECDHE             1

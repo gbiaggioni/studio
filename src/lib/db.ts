@@ -1,3 +1,4 @@
+
 import mysql from 'mysql2/promise';
 import type { RowDataPacket, ResultSetHeader } from 'mysql2/promise';
 import type { QRCodeEntry } from './types';
@@ -49,7 +50,7 @@ export async function generateShortId(length: number = 6): Promise<string> {
                 isUnique = true;
             }
         } catch (error) {
-            // Re-throw the error to be caught by the global error boundary.
+            // Re-throw the error to be caught by the server action.
             throw error;
         }
         attempts++;
@@ -69,9 +70,11 @@ export async function getQRCodes(): Promise<QRCodeEntry[]> {
         const [rows] = await db.execute<RowDataPacket[]>('SELECT * FROM qr_codes ORDER BY created_at DESC');
         return rows as QRCodeEntry[];
     } catch (error) {
-        // Re-throwing the error ensures it's caught by the global error boundary (error.tsx)
-        // This provides a better user experience and clear logs instead of silently failing.
-        throw error;
+        const errorMessage = error instanceof Error ? error.message : "Unknown database error";
+        console.error(`[QREASY_DB_ERROR] Failed to fetch QR codes. Is the database configured correctly? Error: ${errorMessage}`);
+        // Return an empty array to allow the page to render gracefully.
+        // The developer will see the error in the server logs.
+        return [];
     }
 }
 
@@ -132,9 +135,10 @@ export async function getQRCodeByShortIdDB(short_id: string): Promise<QRCodeEntr
             return rows[0] as QRCodeEntry;
         }
         return undefined;
-    } catch(error) {
-        // Re-throwing the error to be caught by the global error boundary.
-        // This distinguishes a server error from a simple "not found" case.
-        throw error;
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : "Unknown database error";
+        console.error(`[QREASY_DB_ERROR] Failed to fetch QR code by shortId '${short_id}'. Is the database configured correctly? Error: ${errorMessage}`);
+        // Return undefined to allow the redirect page to show a graceful "not found" message.
+        return undefined;
     }
 }
