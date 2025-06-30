@@ -195,14 +195,30 @@ Ahora, tu aplicación corre en `http://localhost:3001` en el servidor. Hay que d
 
 ### Paso 5: Configurar el Firewall
 
-El último paso es decirle al firewall del servidor que permita conexiones entrantes al puerto que estamos usando.
+El último paso es decirle al firewall del servidor que permita conexiones entrantes al puerto 3001. Los servidores usan diferentes sistemas de firewall. Prueba la Opción A primero. Si falla, usa la Opción B.
 
-1.  En tu terminal SSH, ejecuta el siguiente comando para permitir el tráfico en el puerto 3001:
+#### Opción A: Usando `ufw` (Común en Ubuntu/Debian)
+
+1.  Ejecuta este comando para abrir el puerto:
     ```bash
     sudo ufw allow 3001/tcp
     ```
+    Si el comando se ejecuta sin errores, ¡genial! Pasa al paso de reiniciar el servidor web. Si obtienes "ufw: command not found", tu servidor usa un firewall diferente. Pasa a la Opción B.
 
-2.  Reinicia el servidor web para asegurar que todos los cambios se apliquen correctamente:
+#### Opción B: Usando `firewall-cmd` (Común en CentOS/AlmaLinux con CyberPanel)
+
+1.  Si `ufw` no fue encontrado, prueba estos comandos en su lugar:
+    ```bash
+    # Añade la regla para el puerto 3001 de forma permanente
+    sudo firewall-cmd --zone=public --add-port=3001/tcp --permanent
+
+    # Recarga el firewall para aplicar los cambios
+    sudo firewall-cmd --reload
+    ```
+
+#### Paso Final (Después de la Opción A o B)
+
+1.  Reinicia el servidor web para asegurar que todos los cambios se apliquen correctamente:
     ```bash
     sudo systemctl restart lsws
     ```
