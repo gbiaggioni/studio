@@ -29,25 +29,6 @@ Este proyecto está construido con tecnologías modernas y robustas:
 -   **Hooks de Formularios:** [React Hook Form](https://react-hook-form.com/)
 -   **Base de Datos:** [MariaDB](https://mariadb.org/) / [MySQL](https://www.mysql.com/) con el driver `mysql2`.
 
-## 📦 Instalación y Uso Local
-
-Sigue estos pasos para ejecutar el proyecto en tu entorno local.
-
-### Prerrequisitos
-
--   [Node.js](https://nodejs.org/) (versión LTS recomendada, ej. 20.x)
--   [Git](https://git-scm.com/)
--   Una base de datos MariaDB o MySQL accesible localmente.
-
-### Pasos de Instalación
-
-1.  **Clona el repositorio.**
-2.  **Navega al directorio del proyecto.**
-3.  **Instala las dependencias:** `npm install`
-4.  **Configura la base de datos:** Crea una base de datos y ejecuta el script `sql/schema.sql`.
-5.  **Configura las variables de entorno:** Copia `.env.example` a `.env.local` y rellena los datos.
-6.  **Ejecuta el servidor de desarrollo:** `npm run dev`
-
 ---
 
 ## 🚀 Despliegue y Actualización en DonWeb Cloud Server (con CyberPanel)
@@ -56,17 +37,17 @@ Esta guía contiene los pasos finales y simplificados para desplegar y actualiza
 
 ### Primera Vez (Despliegue Inicial)
 
-Este proceso de "reinicio limpio" debe ejecutarse **como `root`** y solo es necesario la primera vez o si encuentras un error grave. Este procedimiento también sirve para actualizar la aplicación manualmente si el script `update.sh` falla.
+Este proceso de "reinicio limpio" debe ejecutarse **como `root`** y solo es necesario la primera vez o si encuentras un error grave que el script de actualización no pueda resolver. **Estos son los comandos que debes ejecutar ahora para solucionar el problema actual.**
 
 1.  **Conéctate a tu servidor por SSH** como `root`.
 2.  **Navega al directorio de tu proyecto:**
     ```bash
     cd /home/esquel.org.ar/public_html/studio
     ```
-3.  **Ejecuta los siguientes comandos uno por uno:**
+3.  **Ejecuta los siguientes comandos uno por uno, en este orden exacto:**
 
     ```bash
-    # 1. Detener y eliminar cualquier proceso de PM2 para empezar de cero
+    # 1. ¡Paso Crucial! Detener, eliminar y borrar la configuración corrupta de PM2.
     pm2 stop qreasy
     pm2 delete qreasy
     pm2 save --force
@@ -76,27 +57,27 @@ Este proceso de "reinicio limpio" debe ejecutarse **como `root`** y solo es nece
     git fetch origin
     git reset --hard origin/master
 
-    # 3. Instalar dependencias y construir la aplicación (como root)
+    # 3. Instalar dependencias y construir la aplicación.
     npm install
     npm run build
 
-    # 4. ¡Paso Crucial! Cambiar la propiedad de los archivos al usuario del sitio
+    # 4. ¡Paso Crucial! Cambiar la propiedad de todos los archivos al usuario del sitio.
     chown -R esque9858:esque9858 /home/esquel.org.ar/public_html/studio
 
-    # 5. Iniciar la aplicación con PM2, ejecutándola como el usuario correcto
+    # 5. Iniciar la aplicación desde cero con el comando correcto y limpio.
     pm2 start server.js --name "qreasy" --uid esque9858 --gid esque9858
 
-    # 6. Guardar la lista de procesos de PM2
+    # 6. Guardar la nueva y correcta configuración de PM2.
     pm2 save
 
-    # 7. Reiniciar el servidor web para aplicar cambios del vHost
+    # 7. Reiniciar el servidor web para aplicar cambios del vHost (buena práctica).
     sudo systemctl restart lsws
     ```
-4.  Verifica que todo funciona con `pm2 list` y `pm2 logs qreasy`.
+4.  Verifica que todo funciona con `pm2 list` y `pm2 logs qreasy`. La aplicación debería aparecer como "online" con un PID asignado.
 
-### 🔄 Cómo Actualizar la Aplicación con Cambios de GitHub (Automatizado)
+### 🔄 Cómo Actualizar la Aplicación (Automatizado)
 
-Para futuras actualizaciones, simplemente ejecuta el script `update.sh`. Este script automatiza todo el proceso.
+Para **todas las futuras actualizaciones**, simplemente ejecuta el script `update.sh`. Este script automatiza todo el proceso de reinicio limpio.
 
 1.  **Conéctate a tu servidor por SSH** como `root`.
 2.  **Navega al directorio de tu proyecto:**
@@ -107,7 +88,7 @@ Para futuras actualizaciones, simplemente ejecuta el script `update.sh`. Este sc
     ```bash
     bash ./update.sh
     ```
-    *¡Y eso es todo! El script se encargará de descargar cambios, reinstalar dependencias, reconstruir, arreglar permisos y reiniciar la aplicación.*
+    *¡Y eso es todo! El script se encargará de limpiar PM2, descargar cambios, reinstalar dependencias, reconstruir, arreglar permisos y reiniciar la aplicación correctamente.*
 
 ### Configuración del Servidor Web (vHost Conf)
 
