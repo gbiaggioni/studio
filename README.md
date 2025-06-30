@@ -89,6 +89,7 @@ Si el comando `sudo systemctl status docker` muestra un estado `failed` o `inact
 1.  Clona tu proyecto desde GitHub en el directorio correcto.
     ```bash
     # Si el directorio ya existe por un intento anterior, bórralo primero para empezar de cero.
+    # Es seguro hacerlo porque CyberPanel no lo usará para servir archivos en este despliegue.
     sudo rm -rf /home/esquel.org.ar/qr
     
     # Crea el directorio nuevamente (estará vacío).
