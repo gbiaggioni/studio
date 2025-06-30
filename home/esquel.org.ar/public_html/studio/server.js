@@ -1,4 +1,3 @@
-
 // server.js
 // Este servidor personalizado nos da un control explícito sobre el arranque
 // y nos permite registrar cualquier error fatal que ocurra durante el inicio.
