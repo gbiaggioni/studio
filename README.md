@@ -109,6 +109,18 @@ Para futuras actualizaciones, simplemente ejecuta el script `update.sh`. Este sc
     ```
     *¡Y eso es todo! El script se encargará de descargar cambios, reinstalar dependencias, reconstruir, arreglar permisos y reiniciar la aplicación.*
 
+### 🩺 Solución de Problemas y Diagnóstico (Health Check)
+
+Si la aplicación no funciona, antes de intentar cualquier otra cosa, ejecuta el script de diagnóstico. Te dará un informe detallado de qué componente está fallando.
+
+1.  **Conéctate a tu servidor por SSH** como `root`.
+2.  **Navega al directorio del proyecto.**
+3.  **Ejecuta el script:**
+    ```bash
+    bash ./health-check.sh
+    ```
+4.  El script te indicará con [OK] o [ERROR] el estado de cada componente y te dará pistas sobre cómo solucionarlo.
+
 ### Configuración del Servidor Web (vHost Conf)
 
 Esta es la configuración final y robusta para tu `vHost Conf` en CyberPanel.
