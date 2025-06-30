@@ -56,36 +56,43 @@ Esta guía contiene los pasos finales y simplificados para desplegar y actualiza
 
 ### Primera Vez (Despliegue Inicial)
 
-Este proceso de "reinicio limpio" debe ejecutarse **como `root`** y solo es necesario la primera vez o si encuentras un error grave.
+Este proceso de "reinicio limpio" debe ejecutarse **como `root`** y solo es necesario la primera vez o si encuentras un error grave. Este procedimiento también sirve para actualizar la aplicación manualmente si el script `update.sh` falla.
 
 1.  **Conéctate a tu servidor por SSH** como `root`.
-2.  **Clona tu repositorio** en la carpeta deseada (ej. `/home/esquel.org.ar/public_html/studio`).
-3.  **Configura tu archivo `.env.local`** con las credenciales de la base de datos y la URL de producción.
-4.  **Configura el `vHost Conf` en CyberPanel** (como se detalla en la sección más abajo).
-5.  **Ejecuta los siguientes comandos uno por uno desde la carpeta del proyecto:**
+2.  **Navega al directorio de tu proyecto:**
+    ```bash
+    cd /home/esquel.org.ar/public_html/studio
+    ```
+3.  **Ejecuta los siguientes comandos uno por uno:**
 
     ```bash
-    # Detener y eliminar cualquier proceso de PM2 para empezar de cero
+    # 1. Detener y eliminar cualquier proceso de PM2 para empezar de cero
     pm2 stop qreasy
     pm2 delete qreasy
     pm2 save --force
 
-    # Instalar dependencias y construir la aplicación (como root)
+    # 2. Descargar los últimos cambios desde GitHub.
+    # Usamos fetch y reset para forzar la actualización y evitar conflictos.
+    git fetch origin
+    git reset --hard origin/main
+
+    # 3. Instalar dependencias y construir la aplicación (como root)
     npm install
     npm run build
 
-    # ¡Paso Crucial! Cambiar la propiedad de los archivos al usuario del sitio
+    # 4. ¡Paso Crucial! Cambiar la propiedad de los archivos al usuario del sitio
     chown -R esque9858:esque9858 /home/esquel.org.ar/public_html/studio
 
-    # Iniciar la aplicación con PM2, ejecutándola como el usuario correcto
+    # 5. Iniciar la aplicación con PM2, ejecutándola como el usuario correcto
     pm2 start server.js --name "qreasy" --uid esque9858 --gid esque9858
 
-    # Guardar la lista de procesos de PM2
+    # 6. Guardar la lista de procesos de PM2
     pm2 save
 
-    # Reiniciar el servidor web para aplicar cambios del vHost
+    # 7. Reiniciar el servidor web para aplicar cambios del vHost
     sudo systemctl restart lsws
     ```
+4.  Verifica que todo funciona con `pm2 list` y `pm2 logs qreasy`.
 
 ### 🔄 Cómo Actualizar la Aplicación con Cambios de GitHub (Automatizado)
 
@@ -207,4 +214,3 @@ Esta es la configuración final y robusta para tu `vHost Conf` en CyberPanel.
    }
    ```
 4.  **Guarda los cambios y reinicia el servidor web** (`sudo systemctl restart lsws`).
-    
