@@ -22,9 +22,11 @@ echo "-> En el directorio del proyecto: $(pwd)"
 
 # 2. Descargar los últimos cambios desde GitHub
 echo "-> Descargando últimos cambios desde la rama 'main' de GitHub..."
-git pull origin main
+# Se usa fetch y reset para forzar la actualización y evitar conflictos. Es más robusto que 'git pull'.
+git fetch origin
+git reset --hard origin/main
 if [ $? -ne 0 ]; then
-    echo "Error: 'git pull' falló. Por favor, revisa si tienes conflictos o problemas de conexión."
+    echo "Error: 'git reset' falló. Por favor, revisa si tienes conflictos o problemas de conexión."
     exit 1
 fi
 
@@ -54,6 +56,7 @@ fi
 
 # 6. Reiniciar la aplicación con PM2
 echo "-> Reiniciando la aplicación 'qreasy' con PM2..."
+# Usamos 'restart' que es más seguro. Si el proceso no existe, pm2 lo indica pero no falla.
 pm2 restart qreasy
 if [ $? -ne 0 ]; then
     echo "Advertencia: 'pm2 restart qreasy' falló. Esto puede ser normal si el proceso no existía."
