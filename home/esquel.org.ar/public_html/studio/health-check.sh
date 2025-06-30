@@ -93,21 +93,11 @@ else
     print_info "Ejecuta 'npm run build' para construir la aplicación."
 fi
 
-# server.js
-if [ -f "server.js" ]; then
-    print_success "El script 'server.js' existe."
-    # Verificar permisos de server.js
-    OWNER=$(stat -c '%U:%G' server.js)
-    TARGET_OWNER="$APP_USER:$APP_USER"
-    if [ "$OWNER" = "$TARGET_OWNER" ]; then
-        print_success "Permisos de 'server.js' son correctos ($OWNER)."
-    else
-        print_error "Permisos de 'server.js' son incorrectos. Propietario: $OWNER."
-        print_info "Debe ser '$TARGET_OWNER'. Ejecuta: chown $TARGET_OWNER server.js"
-    fi
+# package.json
+if [ -f "package.json" ]; then
+    print_success "El archivo 'package.json' existe."
 else
-    print_error "El script 'server.js' no existe."
-    print_info "Este archivo es crucial. Asegúrate de tener la última versión desde GitHub ejecutando 'sh ./update.sh'."
+    print_error "El archivo 'package.json' no existe."
 fi
 
 

@@ -1,11 +1,11 @@
 
-#!/bin/bash
+#!/bin/sh
 
 # --- Script de Actualización y Reinicio Limpio para QREasy ---
 # Este script es la solución definitiva para actualizar la aplicación o para
 # repararla si deja de funcionar. Realiza un "reinicio limpio" completo.
 # DEBE EJECUTARSE COMO ROOT.
-# Uso: sudo bash ./update.sh
+# Uso: sh ./update.sh
 
 echo "### Iniciando proceso de actualización y reinicio limpio de QREasy... ###"
 
@@ -23,8 +23,8 @@ echo "-> En el directorio del proyecto: $(pwd)"
 # 2. ¡Paso Crucial! Detener, eliminar y borrar la configuración antigua de PM2.
 # Esto erradica cualquier "configuración fantasma" o estado corrupto.
 echo "-> Limpiando configuración de PM2 anterior..."
-pm2 stop qreasy || echo "Info: El proceso 'qreasy' no estaba corriendo (esto es normal)."
-pm2 delete qreasy || echo "Info: El proceso 'qreasy' no existía (esto es normal)."
+pm2 stop qreasy >/dev/null 2>&1 || echo "Info: El proceso 'qreasy' no estaba corriendo (esto es normal)."
+pm2 delete qreasy >/dev/null 2>&1 || echo "Info: El proceso 'qreasy' no existía (esto es normal)."
 pm2 save --force
 echo "-> Configuración de PM2 limpiada."
 
@@ -64,7 +64,9 @@ fi
 
 # 7. Iniciar la aplicación desde cero con el comando limpio y correcto.
 echo "-> Iniciando la aplicación con PM2 como usuario 'esque9858'..."
-pm2 start server.js --name "qreasy" --uid esque9858 --gid esque9858
+# Se usa 'npm' para ejecutar el script 'start' del package.json.
+# Esto es más robusto que llamar a un script de servidor directamente.
+pm2 start npm --name "qreasy" --uid esque9858 --gid esque9858 -- run start
 if [ $? -ne 0 ]; then
     echo "Error: 'pm2 start' falló. Revisa los logs con 'pm2 logs qreasy'."
     exit 1

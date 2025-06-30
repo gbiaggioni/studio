@@ -47,7 +47,7 @@ Para **todas las futuras actualizaciones** o si la aplicación deja de funcionar
     ```
 3.  **Ejecuta el script de actualización y reinicio limpio:**
     ```bash
-    bash ./update.sh
+    sh ./update.sh
     ```
     *¡Y eso es todo! El script se encargará de limpiar PM2, descargar los últimos cambios de GitHub, reinstalar dependencias, reconstruir la aplicación, arreglar permisos y reiniciarla correctamente.*
 
@@ -81,7 +81,8 @@ Este proceso debe ejecutarse **como `root`** y solo es necesario la primera vez 
     chown -R esque9858:esque9858 /home/esquel.org.ar/public_html/studio
 
     # 5. Iniciar la aplicación desde cero con el comando correcto y limpio.
-    pm2 start server.js --name "qreasy" --uid esque9858 --gid esque9858
+    # Se usa 'npm' para ejecutar el script 'start' definido en package.json.
+    pm2 start npm --name "qreasy" --uid esque9858 --gid esque9858 -- run start
 
     # 6. Guardar la nueva y correcta configuración de PM2.
     pm2 save
@@ -98,7 +99,7 @@ Si la aplicación no funciona, antes de intentar cualquier otra cosa, ejecuta el
 2.  **Navega al directorio del proyecto.**
 3.  **Ejecuta el script:**
     ```bash
-    bash ./health-check.sh
+    sh ./health-check.sh
     ```
 4.  El script te indicará con [OK] o [ERROR] el estado de cada componente y te dará pistas sobre cómo solucionarlo.
 
