@@ -28,13 +28,53 @@ Este proyecto está construido con tecnologías modernas y robustas:
 -   **Validación de Formularios:** [Zod](https://zod.dev/) para una validación de esquemas segura y tipada.
 -   **Hooks de Formularios:** [React Hook Form](https://react-hook-form.com/)
 -   **Base de Datos:** [MariaDB](https://mariadb.org/) / [MySQL](https://www.mysql.com/) con el driver `mysql2`.
--   **Gestor de Procesos:** [PM2](https://pm2.keymetrics.io/)
+-   **Contenerización:** [Docker](https://www.docker.com/)
 
 ---
 
-## 🚀 Despliegue y Mantenimiento en Servidor
+## 🐳 Dockerizando QREasy
 
-Esta guía contiene los pasos para desplegar, actualizar y diagnosticar la aplicación en tu servidor.
+La forma recomendada de desplegar esta aplicación es a través de Docker. Esto garantiza un entorno consistente y un despliegue robusto.
+
+### 1. Construir la Imagen de Docker
+
+Desde la raíz del proyecto (donde se encuentra el `Dockerfile`), ejecuta el siguiente comando. Esto creará una imagen llamada `qreasy`.
+
+```bash
+docker build -t qreasy .
+```
+
+### 2. Ejecutar el Contenedor
+
+Una vez construida la imagen, puedes iniciar un contenedor. Es **crucial** pasar las variables de entorno necesarias para la conexión a la base de datos y la configuración de la URL base.
+
+```bash
+docker run -p 3001:3001 \
+  -e DB_HOST='la_ip_o_host_de_tu_db' \
+  -e DB_USER='tu_usuario_de_db' \
+  -e DB_PASSWORD='tu_contraseña_de_db' \
+  -e DB_NAME='el_nombre_de_tu_db' \
+  -e NEXT_PUBLIC_BASE_URL='https://esquel.org.ar/studio' \
+  --name qreasy-container \
+  -d --restart unless-stopped \
+  qreasy
+```
+
+**Desglose del comando:**
+-   `-p 3001:3001`: Mapea el puerto 3001 de tu servidor al puerto 3001 dentro del contenedor.
+-   `-e VARIABLE='valor'`: Pasa cada variable de entorno necesaria.
+-   `--name qreasy-container`: Le da un nombre fácil de recordar a tu contenedor.
+-   `-d`: Ejecuta el contenedor en segundo plano (detached mode).
+-   `--restart unless-stopped`: Configura el contenedor para que se reinicie automáticamente si se detiene, excepto si lo detienes tú manualmente.
+-   `qreasy`: El nombre de la imagen que quieres usar.
+
+Con esto, la aplicación estará corriendo dentro de un contenedor Docker y accesible a través del puerto 3001 de tu servidor.
+
+---
+
+## 🚀 Despliegue y Mantenimiento en Servidor (Método Alternativo sin Docker)
+
+Esta guía contiene los pasos para desplegar la aplicación directamente en el servidor usando PM2.
 
 ### 🔄 Cómo Actualizar o Reparar la Aplicación (Método Recomendado)
 
