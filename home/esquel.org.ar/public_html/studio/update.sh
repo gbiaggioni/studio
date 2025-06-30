@@ -1,3 +1,4 @@
+
 #!/bin/bash
 
 # --- Script de Actualización Automática para QREasy ---
