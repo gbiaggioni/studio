@@ -1,51 +1,43 @@
+# QREasy - Gestor de Códigos QR con Docker
 
-# QREasy - Gestor de Códigos QR
-
-QREasy es una aplicación web moderna y sencilla para crear, gestionar y compartir códigos QR. Ha sido desarrollada con un stack tecnológico actual, enfocándose en el rendimiento, la escalabilidad y una experiencia de usuario fluida.
+QREasy es una aplicación web moderna y sencilla para crear, gestionar y compartir códigos QR. Esta versión está configurada para un despliegue robusto y simplificado usando Docker.
 
 ## ✨ Características Principales
 
--   **Creación de Códigos QR:** Genera códigos QR dinámicamente a partir de cualquier URL de destino.
--   **Etiquetado Personalizado:** Asigna un nombre o etiqueta a cada código QR para una fácil identificación.
--   **Galería de Códigos:** Visualiza todos tus códigos QR en una interfaz de tarjeta limpia y organizada.
--   **URL Corta Única:** Cada código QR obtiene una URL corta y única (ej. `qr.esquel.org.ar/r/xyz123`) para la redirección.
--   **Gestión Completa:**
-    -   Edita la URL de destino o el nombre de un QR sin necesidad de reimprimirlo.
-    -   Copia la URL corta al portapapeles con un solo clic.
-    -   Imprime códigos QR individuales directamente desde la aplicación, optimizados para A4.
-    -   Elimina códigos QR específicos o todos a la vez con diálogos de confirmación.
--   **Responsivo:** Diseño completamente adaptable para funcionar en computadoras de escritorio, tabletas y dispositivos móviles.
--   **Listo para Producción:** Conexión a base de datos MariaDB/MySQL y despliegue con Docker.
+-   **Creación de Códigos QR:** Genera códigos QR dinámicamente a partir de cualquier URL.
+-   **Gestión Completa:** Edita, copia, imprime y elimina tus códigos QR fácilmente.
+-   **URL Corta Única:** Cada QR obtiene una URL única para redirección (ej. `qr.esquel.org.ar/r/xyz123`).
+-   **Responsivo y Moderno:** Interfaz adaptable a cualquier dispositivo.
 
 ## 🚀 Stack Tecnológico
 
--   **Framework:** [Next.js](https://nextjs.org/) (App Router)
--   **Lenguaje:** [TypeScript](https://www.typescriptlang.org/)
--   **Estilo:** [Tailwind CSS](https://tailwindcss.com/)
--   **Componentes UI:** [ShadCN UI](https://ui.shadcn.com/)
--   **Base de Datos:** [MariaDB](https://mariadb.org/) / [MySQL](https://www.mysql.com/)
--   **Contenerización:** [Docker](https://www.docker.com/)
+-   **Framework:** Next.js (App Router)
+-   **Lenguaje:** TypeScript
+-   **Estilo:** Tailwind CSS & ShadCN UI
+-   **Base de Datos:** MariaDB / MySQL
+-   **Contenerización:** Docker
 
 ---
 
-## 🚀 Despliegue con Docker en CyberPanel (Método Recomendado)
+## 🚀 Despliegue con Docker en CyberPanel (Guía Definitiva)
 
-Esta es la guía definitiva y recomendada para desplegar **QREasy** en tu servidor con CyberPanel. Docker simplifica el proceso, garantiza un entorno consistente y es mucho más robusto que los métodos manuales.
+Esta es la guía recomendada y única para desplegar **QREasy** en tu servidor con CyberPanel.
 
-**Importante:** Los antiguos scripts (`update.sh`, `health-check.sh`) y el archivo `server.js` quedan **obsoletos** con este método y no deben usarse.
+**Importante:** Los antiguos scripts (`update.sh`, `health-check.sh`, `server.js`) han sido eliminados y ya no deben usarse.
 
 ### Prerrequisitos
 
-*   **Acceso SSH a tu servidor:** Necesitas poder conectarte como `root` o un usuario con privilegios `sudo`.
+*   **Acceso SSH a tu servidor:** Necesitas poder conectarte como `root`.
 *   **Dominio Configurado:** Tu dominio `qr.esquel.org.ar` debe estar creado en CyberPanel y apuntando a la IP de tu servidor.
+*   **Repositorio Git:** Debes tener este proyecto en un repositorio de GitHub.
 
 ---
 
 ### Paso 1: Conectarse al Servidor e Instalar Docker
 
-1.  Conéctate a tu servidor a través de SSH.
+1.  Conéctate a tu servidor a través de SSH como `root`.
 
-2.  Instala Docker. Estos comandos funcionan para la mayoría de sistemas basados en Debian/Ubuntu:
+2.  Instala Docker con los siguientes comandos:
     ```bash
     # Actualizar repositorios e instalar paquetes necesarios
     sudo apt-get update
@@ -57,8 +49,7 @@ Esta es la guía definitiva y recomendada para desplegar **QREasy** en tu servid
     # Añadir el repositorio de Docker
     sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
 
-    # Nota: Es normal ver una advertencia como "apt-key is deprecated". 
-    # Esto no es un error y puedes continuar de forma segura.
+    # Nota: Es normal ver una advertencia como "apt-key is deprecated". Puedes continuar de forma segura.
 
     # Actualizar de nuevo e instalar el motor de Docker
     sudo apt-get update
@@ -72,11 +63,11 @@ Esta es la guía definitiva y recomendada para desplegar **QREasy** en tu servid
 
 ### 🚨 Paso 1.5: Solución de Problemas (Si Docker no se inicia)
 
-Si el comando `sudo systemctl status docker` muestra un estado `failed` o `inactive`, es probable que tengas un conflicto con la configuración de `systemd` en tu VPS.
+Si el comando `sudo systemctl status docker` muestra un estado `failed` o `inactive`, es muy probable que tengas un conflicto con la configuración de `systemd` en tu VPS.
 
 1.  **Ejecuta el script de reparación:** Este script ajustará la configuración de inicio de Docker para que sea compatible con tu entorno.
     ```bash
-    # Primero, asegúrate de haber clonado el proyecto en el paso 2.
+    # Primero, asegúrate de haber clonado el proyecto en el Paso 2.
     # Navega al directorio del proyecto.
     cd /home/qreasy 
 
@@ -86,57 +77,52 @@ Si el comando `sudo systemctl status docker` muestra un estado `failed` o `inact
     # Finalmente, ejecuta el script
     sudo ./fix-docker-start.sh
     ```
-2.  El script intentará reiniciar Docker y al final mostrará su estado. Si ves `active (running)`, el problema está resuelto y puedes continuar con el siguiente paso.
+2.  El script intentará reiniciar Docker y al final mostrará su estado. Si ves `active (running)`, el problema está resuelto y puedes continuar.
 
 ---
 
-### Paso 2: Clonar el Proyecto
+### Paso 2: Clonar el Proyecto y Configurar
 
-1.  Navega a un directorio adecuado, como `/home`. Clona tu proyecto desde GitHub:
+1.  Clona tu proyecto desde GitHub en un directorio limpio. **Es recomendable usar `/home/qreasy` para evitar problemas de permisos.**
     ```bash
-    cd /home
-    git clone https://github.com/TU_USUARIO/qreasy.git # <- Reemplaza esto con la URL de tu repo
-    cd qreasy
+    # Crea el directorio si no existe
+    mkdir -p /home/qreasy
+    
+    # Clona tu repositorio
+    git clone https://github.com/TU_USUARIO/qreasy.git /home/qreasy # <- Reemplaza con la URL de tu repo
+    
+    # Navega al nuevo directorio
+    cd /home/qreasy
     ```
+
+2.  **Configura las Variables de Entorno (¡Paso Crítico!):**
+    -   Copia el archivo de ejemplo:
+        ```bash
+        cp .env.example .env.local
+        ```
+    -   Abre el nuevo archivo para editarlo (por ejemplo, con `nano .env.local`).
+    -   Modifica el contenido con **tus credenciales reales**. Debería quedar así:
+        ```env
+        # Credenciales de la Base de Datos
+        DB_HOST=127.0.0.1  # O la IP de tu BD si es externa
+        DB_USER=tu_usuario_de_bd
+        DB_PASSWORD=tu_contraseña_de_bd
+        DB_NAME=el_nombre_de_tu_bd
+
+        # URL pública de la aplicación
+        NEXT_PUBLIC_BASE_URL=https://qr.esquel.org.ar
+        ```
+    -   Guarda los cambios (`Ctrl+X`, luego `Y`, y `Enter`).
 
 ---
 
-### Paso 3: Configurar las Variables de Entorno
-
-Este es un paso crítico. La aplicación necesita saber cómo conectarse a tu base de datos.
-
-1.  Dentro del directorio del proyecto (`/home/qreasy`), copia el archivo de ejemplo:
-    ```bash
-    cp .env.example .env.local
-    ```
-
-2.  Abre el nuevo archivo `.env.local` para editarlo (por ejemplo, con `nano`):
-    ```bash
-    nano .env.local
-    ```
-
-3.  Modifica el contenido con **tus credenciales reales**. Debería quedar así:
-    ```env
-    # Credenciales de la Base de Datos
-    DB_HOST=127.0.0.1  # O la IP/host de tu base de datos si es externa
-    DB_USER=tu_usuario_de_bd
-    DB_PASSWORD=tu_contraseña_de_bd
-    DB_NAME=el_nombre_de_tu_bd
-
-    # URL pública de la aplicación
-    NEXT_PUBLIC_BASE_URL=https://qr.esquel.org.ar
-    ```
-    *   **Importante:** Guarda los cambios (`Ctrl+X`, luego `Y`, y `Enter`).
-
----
-
-### Paso 4: Construir y Ejecutar el Contenedor Docker
+### Paso 3: Construir y Ejecutar el Contenedor Docker
 
 1.  **Construir la imagen:** Desde la raíz del proyecto (`/home/qreasy`), ejecuta:
     ```bash
     sudo docker build -t qreasy-app .
     ```
-    *(Esto puede tardar unos minutos la primera vez que se ejecuta).*
+    *(Esto puede tardar unos minutos la primera vez).*
 
 2.  **Ejecutar el contenedor:** Este comando inicia tu aplicación.
     ```bash
@@ -146,99 +132,78 @@ Este es un paso crítico. La aplicación necesita saber cómo conectarse a tu ba
       --env-file ./.env.local \
       qreasy-app
     ```
-    *   `-d`: Ejecuta en segundo plano.
-    *   `--restart unless-stopped`: Reinicia el contenedor automáticamente si se detiene.
-    *   `--name qreasy-container`: Le da un nombre fácil de recordar al contenedor.
-    *   `-p 3001:3001`: Mapea el puerto 3001 del servidor al puerto 3001 del contenedor.
-    *   `--env-file ./.env.local`: **Pasa todas las variables de tu archivo `.env.local` al contenedor de forma segura.**
+    -   `-d`: Ejecuta en segundo plano.
+    -   `--restart unless-stopped`: Reinicia el contenedor automáticamente.
+    -   `--name qreasy-container`: Le da un nombre fácil de recordar.
+    -   `-p 3001:3001`: Mapea el puerto 3001 del servidor al puerto 3001 del contenedor.
+    -   `--env-file ./.env.local`: Pasa tus credenciales de forma segura al contenedor.
 
 3.  **Verificar que está corriendo:**
-    ```bash
-    sudo docker ps
-    ```
-    Deberías ver `qreasy-container` en la lista. Para ver los logs de la aplicación en cualquier momento:
-    ```bash
-    sudo docker logs qreasy-container
-    ```
+    -   Para ver los contenedores activos: `sudo docker ps` (Deberías ver `qreasy-container`).
+    -   Para ver los logs de la aplicación: `sudo docker logs qreasy-container`.
 
 ---
 
-### Paso 5: Configurar CyberPanel como Reverse Proxy
+### Paso 4: Configurar CyberPanel como Reverse Proxy
 
-Ahora mismo, tu aplicación está corriendo en `http://localhost:3001`. Necesitamos decirle a CyberPanel que cuando alguien visite `https://qr.esquel.org.ar`, debe redirigir el tráfico a ese puerto.
+Ahora, tu aplicación corre en `http://localhost:3001`. Hay que decirle a CyberPanel que redirija el tráfico de `https://qr.esquel.org.ar` a ese puerto.
 
 1.  Entra en tu panel de CyberPanel.
 2.  Ve a `Websites` -> `List Websites` y busca `qr.esquel.org.ar`. Haz clic en `Manage`.
-3.  Desplázate hacia abajo hasta la sección **Rewrite Rules** y haz clic en el desplegable para seleccionar la plantilla `Proxy`.
-4.  En el campo `Address` escribe `127.0.0.1:3001`.
+3.  Desplázate hacia abajo hasta la sección **Rewrite Rules**.
+4.  En el campo de texto, borra todo lo que haya y pega esto:
+    ```
+    RewriteEngine On
+    RewriteCond %{HTTPS} off
+    RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+    RewriteRule ^(.*)$ http://127.0.0.1:3001/$1 [P,L]
+    ```
 5.  Haz clic en **"Save Rewrite Rules"**.
 
-¡Y listo! Ahora `https://qr.esquel.org.ar` debería mostrar tu aplicación QREasy corriendo desde Docker.
+¡Listo! `https://qr.esquel.org.ar` debería mostrar tu aplicación.
 
 ---
 
 ### Mantenimiento: Cómo Actualizar la Aplicación
 
-Cuando hagas cambios en tu código y los subas a GitHub, el proceso de actualización es muy sencillo:
+Cuando subas cambios a GitHub, el proceso de actualización es muy sencillo:
 
-1.  Conéctate al servidor y ve al directorio del proyecto:
-    ```bash
-    cd /home/qreasy
-    ```
+1.  Conéctate al servidor y ve al directorio del proyecto: `cd /home/qreasy`
 2.  Detén y elimina el contenedor antiguo:
     ```bash
     sudo docker stop qreasy-container
     sudo docker rm qreasy-container
     ```
-3.  Trae los últimos cambios del código desde GitHub:
+3.  Trae los últimos cambios del código: `git pull origin main`
+4.  Reconstruye la imagen de Docker: `sudo docker build -t qreasy-app .`
+5.  Vuelve a ejecutar el contenedor con el mismo comando de siempre:
     ```bash
-    git pull origin main
+    sudo docker run -d --restart unless-stopped --name qreasy-container -p 3001:3001 --env-file ./.env.local qreasy-app
     ```
-4.  Reconstruye la imagen de Docker con los nuevos cambios:
-    ```bash
-    sudo docker build -t qreasy-app .
-    ```
-5.  Vuelve a ejecutar el contenedor con el mismo comando que usaste para el despliegue inicial:
-    ```bash
-    sudo docker run -d --restart unless-stopped \
-      --name qreasy-container \
-      -p 3001:3001 \
-      --env-file ./.env.local \
-      qreasy-app
-    ```
+
 ---
 
 ## Anexo: Cómo Desinstalar Docker (Si fuera necesario)
 
-Si en algún momento necesitas revertir la instalación de Docker y empezar de cero, estos son los comandos para una desinstalación completa y limpia.
+**Advertencia:** Esto eliminará Docker y todos sus datos (imágenes, contenedores).
 
-**Advertencia:** Esto eliminará Docker, así como todas las imágenes, contenedores y volúmenes de Docker en tu sistema.
-
-1.  **Detener los servicios de Docker:**
+1.  **Detener servicios:**
     ```bash
     sudo systemctl stop docker.service
     sudo systemctl stop docker.socket
     ```
-
-2.  **Desinstalar los paquetes de Docker:**
+2.  **Desinstalar paquetes:**
     ```bash
     sudo apt-get purge -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
     ```
-
-3.  **Eliminar directorios residuales de Docker:**
+3.  **Eliminar directorios residuales:**
     ```bash
     sudo rm -rf /var/lib/docker
     sudo rm -rf /var/lib/containerd
     ```
-
-4.  **Limpiar el sistema de paquetes:**
+4.  **Limpiar sistema:**
     ```bash
     sudo apt-get autoremove -y --purge
     sudo apt-get clean
-    ```
-
-5.  **Verificar que se ha desinstalado:**
-    ```bash
-    docker --version
-    # Debería devolver un error como "command not found"
     ```
