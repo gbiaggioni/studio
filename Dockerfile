@@ -4,39 +4,42 @@ FROM node:20-alpine AS builder
 # Establece el directorio de trabajo
 WORKDIR /app
 
-# Copia los archivos de manifiesto del paquete
+# Copia los archivos de definición de paquetes
 COPY package*.json ./
 
-# Instala las dependencias de forma limpia
-# Usamos `npm ci` para una instalación más rápida y predecible en CI/CD
+# Instala las dependencias de producción de forma limpia
 RUN npm ci
 
-# Copia el resto de los archivos de la aplicación
+# Copia el resto del código fuente
 COPY . .
 
-# Construye la aplicación
+# Construye la aplicación para producción
 RUN npm run build
 
-
-# Stage 2: Runner - Crea la imagen final de producción
+# Stage 2: Runner - Imagen de producción ligera
 FROM node:20-alpine AS runner
-
 WORKDIR /app
 
-# Establece las variables de entorno para producción
+# Establece el entorno a producción
 ENV NODE_ENV=production
-# Deshabilita la telemetría de Next.js
-ENV NEXT_TELEMETRY_DISABLED 1
+# Descomenta la siguiente línea si quieres deshabilitar la telemetría en tiempo de ejecución.
+# ENV NEXT_TELEMETRY_DISABLED 1
 
-# Copia los archivos de la aplicación independiente desde la etapa de builder
-# El modo 'standalone' ya incluye la carpeta 'public' si existe,
-# por lo que no es necesario copiarla por separado.
-COPY --from=builder /app/.next/standalone ./
+# Crea un usuario y grupo no-root para mayor seguridad
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nextjs
 
-# Expone el puerto en el que correrá la aplicación dentro del contenedor
-# El valor del puerto se definirá en el comando `docker run`
-EXPOSE 3001
+# Copia los archivos del build standalone desde la etapa anterior
+# Esto incluye solo lo necesario para ejecutar la aplicación
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 
-# Comando para iniciar la aplicación
-# server.js es el servidor de Next.js en modo standalone
+# El modo standalone ya maneja la copia de la carpeta `public` si existe.
+
+# Cambia al usuario no-root
+USER nextjs
+
+# Expone el puerto en el que correrá la aplicación dentro del contenedor (por defecto de Next.js)
+EXPOSE 3000
+
+# Inicia la aplicación
 CMD ["node", "server.js"]

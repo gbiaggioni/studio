@@ -104,15 +104,7 @@ Si el comando `sudo systemctl status docker` muestra un estado `failed` o `inact
     cd /home/esquel.org.ar/qr
     ```
 
-2.  **¡Paso Crítico! Corrige los Permisos de los Archivos:**
-    *   Como clonaste el repositorio siendo `root`, los archivos ahora pertenecen a `root`. Necesitamos devolverle la propiedad al usuario que CyberPanel utiliza (`esque9858`) para que pueda gestionar el sitio correctamente.
-    *   Ejecuta este comando:
-        ```bash
-        sudo chown -R esque9858:esque9858 /home/esquel.org.ar/qr
-        ```
-    *   Este paso es **esencial** para que CyberPanel pueda escribir las reglas de reescritura más adelante.
-
-3.  **Configura las Variables de Entorno:**
+2.  **Configura las Variables de Entorno:**
     *   Copia el archivo de ejemplo:
         ```bash
         cp .env.example .env.local
@@ -126,57 +118,57 @@ Si el comando `sudo systemctl status docker` muestra un estado `failed` o `inact
         DB_PASSWORD=tu_contraseña_de_bd
         DB_NAME=el_nombre_de_tu_bd
 
-        # Puerto en el que correrá la aplicación dentro de Docker
-        PORT=3001
-
         # URL pública de la aplicación
         NEXT_PUBLIC_BASE_URL=https://qr.esquel.org.ar
         ```
     *   Guarda los cambios (`Ctrl+X`, luego `Y`, y `Enter`).
 
+3.  **¡Paso Crítico! Corrige los Permisos de los Archivos:**
+    *   Como clonaste el repositorio siendo `root`, los archivos ahora pertenecen a `root`. Necesitamos devolverle la propiedad al usuario que CyberPanel utiliza (`esque9858`) para que pueda gestionar el sitio correctamente.
+    *   Ejecuta este comando:
+        ```bash
+        sudo chown -R esque9858:esque9858 /home/esquel.org.ar/qr
+        ```
+    *   Este paso es **esencial** para que CyberPanel pueda escribir las reglas de reescritura más adelante.
+
 ---
 
 ### Paso 3: Construir y Ejecutar el Contenedor Docker
 
-**🚨 ¡OBLIGATORIO! Solución al error "429 Too Many Requests"**
+1.  **🚨 ¡OBLIGATORIO! Iniciar sesión en Docker Hub (Solución al error "429 Too Many Requests")**
+    *   **Problema:** Al intentar construir la imagen, podrías ver un error `429 Too Many Requests`. Esto significa que tu servidor ha agotado el límite de descargas anónimas de Docker Hub.
+    *   **Solución:** Inicia sesión con una cuenta gratuita de Docker Hub para obtener un límite mucho mayor.
+    *   **Acciones:**
+        1.  Crea una cuenta gratuita en [https://hub.docker.com/signup](https://hub.docker.com/signup).
+        2.  En tu terminal SSH, ejecuta:
+            ```bash
+            sudo docker login
+            ```
+        3.  Ingresa tu nombre de usuario y contraseña cuando te lo pida. Una vez que veas `Login Succeeded`, puedes continuar.
 
-Al ejecutar el comando `docker build`, podrías encontrarte con un error que dice `429 Too Many Requests` o `You have reached your unauthenticated pull rate limit`.
-
--   **¿Qué significa?** Significa que tu servidor, al compartir una IP con otros, ha agotado el límite de descargas de imágenes gratuitas y anónimas de Docker Hub. Es muy común en servidores de hosting.
--   **La solución (rápida y gratuita):** Necesitas autenticarte con una cuenta de Docker Hub para obtener un límite de descargas mucho mayor.
-
-**Sigue estos pasos ANTES de construir la imagen:**
-
-1.  **Crea una cuenta gratuita:** Ve a [https://hub.docker.com/signup](https://hub.docker.com/signup) y crea una cuenta.
-2.  **Inicia sesión en tu servidor:** Vuelve a tu terminal SSH y ejecuta el siguiente comando:
-    ```bash
-    sudo docker login
-    ```
-3.  **Ingresa tus credenciales:** Te pedirá tu nombre de usuario (Username) y contraseña (Password). ¡Usa las que acabas de crear!
-
-Una vez que veas el mensaje `Login Succeeded`, puedes continuar con el siguiente paso sin problemas.
-
-1.  **Construir la imagen:** Desde la raíz del proyecto (`/home/esquel.org.ar/qr`), ejecuta:
+2.  **Construir la imagen:** Desde la raíz del proyecto (`/home/esquel.org.ar/qr`), ejecuta:
     ```bash
     sudo docker build -t qreasy-app .
     ```
     *(Esto puede tardar unos minutos la primera vez).*
 
-2.  **Ejecutar el contenedor:** Este comando inicia tu aplicación.
+3.  **Ejecutar el contenedor:** Este comando inicia tu aplicación.
     ```bash
+    # El mapeo -p 3001:3000 significa:
+    # Puerto 3001 del SERVIDOR -> Puerto 3000 del CONTENEDOR
     sudo docker run -d --restart unless-stopped \
       --name qreasy-container \
-      -p 3001:3001 \
+      -p 3001:3000 \
       --env-file ./.env.local \
       qreasy-app
     ```
     -   `-d`: Ejecuta en segundo plano.
     -   `--restart unless-stopped`: Reinicia el contenedor automáticamente.
     -   `--name qreasy-container`: Le da un nombre fácil de recordar.
-    -   `-p 3001:3001`: Mapea el puerto 3001 del servidor al puerto 3001 del contenedor.
+    -   `-p 3001:3000`: **Mapea el puerto 3001 del servidor al puerto 3000 del contenedor (donde corre Next.js).**
     -   `--env-file ./.env.local`: Pasa tus credenciales de forma segura al contenedor.
 
-3.  **Verificar que está corriendo:**
+4.  **Verificar que está corriendo:**
     -   Para ver los contenedores activos: `sudo docker ps` (Deberías ver `qreasy-container`).
     -   Para ver los logs de la aplicación: `sudo docker logs qreasy-container`.
 
@@ -184,7 +176,7 @@ Una vez que veas el mensaje `Login Succeeded`, puedes continuar con el siguiente
 
 ### Paso 4: Configurar CyberPanel como Reverse Proxy
 
-Ahora, tu aplicación corre en `http://localhost:3001`. Hay que decirle a CyberPanel que redirija el tráfico de `https://qr.esquel.org.ar` a ese puerto.
+Ahora, tu aplicación corre en `http://localhost:3001` en el servidor. Hay que decirle a CyberPanel que redirija el tráfico de `https://qr.esquel.org.ar` a ese puerto.
 
 1.  Entra en tu panel de CyberPanel.
 2.  Ve a `Websites` -> `List Websites` y busca `qr.esquel.org.ar`. Haz clic en `Manage`.
@@ -214,12 +206,12 @@ Cuando subas cambios a GitHub, el proceso de actualización es muy sencillo:
     sudo docker rm qreasy-container
     ```
 3.  Trae los últimos cambios del código: `git pull origin main`
-4.  Corrige los permisos nuevamente por si `git` ha cambiado algo: `sudo chown -R esque9858:esque9858 /home/esquel.org.ar/qr`
-5.  Reconstruye la imagen de Docker (no olvides iniciar sesión si es un nuevo servidor): `sudo docker build -t qreasy-app .`
-6.  Vuelve a ejecutar el contenedor con el mismo comando de siempre:
+4.  Reconstruye la imagen de Docker con los nuevos cambios: `sudo docker build -t qreasy-app .`
+5.  Vuelve a ejecutar el contenedor con el mismo comando de siempre (¡con el puerto correcto!):
     ```bash
-    sudo docker run -d --restart unless-stopped --name qreasy-container -p 3001:3001 --env-file ./.env.local qreasy-app
+    sudo docker run -d --restart unless-stopped --name qreasy-container -p 3001:3000 --env-file ./.env.local qreasy-app
     ```
+6.  **Opcional pero recomendado:** Limpia imágenes de Docker antiguas que ya no se usan: `sudo docker image prune -a`
 
 ---
 
