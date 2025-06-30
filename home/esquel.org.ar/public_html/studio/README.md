@@ -1,4 +1,3 @@
-
 # QREasy - Gestor de Códigos QR
 
 QREasy es una aplicación web moderna y sencilla para crear, gestionar y compartir códigos QR. Ha sido desarrollada con un stack tecnológico actual, enfocándose en el rendimiento, la escalabilidad y una experiencia de usuario fluida.
