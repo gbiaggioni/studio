@@ -13,22 +13,58 @@ const dbConfig = {
   queueLimit: 0,
 };
 
-let pool: mysql.Pool;
+// Singleton pool
+let pool: mysql.Pool | null = null;
 
+/**
+ * Obtiene el pool de conexiones. Si no existe, lo crea.
+ * Lanza un error si la configuración de la base de datos es incompleta.
+ */
 function getPool(): mysql.Pool {
-  if (!pool || pool.pool.ended) {
+    if (pool) return pool;
+
     if (!dbConfig.host || !dbConfig.user || !dbConfig.database) {
-      // Return a mock pool that will reject promises. This will be handled by callers.
-      return {
-        // @ts-ignore
-        execute: () => Promise.reject(new Error("La base de datos no está configurada. Por favor, revisa tu archivo .env.local."))
-      }
+      // Este error será capturado por las funciones que llaman a getPool.
+      throw new Error("La base de datos no está configurada. Por favor, revisa tus variables de entorno.");
     }
+    
     pool = mysql.createPool(dbConfig);
-  }
-  return pool;
+    return pool;
 }
 
+/**
+ * Obtiene todos los códigos QR. Es una lectura segura que devuelve un array vacío en caso de error.
+ */
+export async function getQRCodes(): Promise<QRCodeEntry[]> {
+    try {
+        const db = getPool();
+        const [rows] = await db.execute<RowDataPacket[]>('SELECT * FROM qr_codes ORDER BY created_at DESC');
+        return rows as QRCodeEntry[];
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : "Unknown database error";
+        console.error(`[QREASY_DB_ERROR] Fallo al obtener los códigos QR. ¿Está la base de datos configurada correctamente? Error: ${errorMessage}`);
+        return [];
+    }
+}
+
+/**
+ * Obtiene un código QR por su short_id. Es una lectura segura que devuelve null en caso de error.
+ */
+export async function getQRCodeByShortIdDB(short_id: string): Promise<QRCodeEntry | null> {
+    try {
+        const db = getPool();
+        const [rows] = await db.execute<RowDataPacket[]>('SELECT * FROM qr_codes WHERE short_id = ?', [short_id]);
+        return (rows[0] as QRCodeEntry) || null;
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : "Unknown database error";
+        console.error(`[QREASY_DB_ERROR] Fallo al obtener el código QR por shortId '${short_id}'. Error: ${errorMessage}`);
+        return null;
+    }
+}
+
+/**
+ * Genera un ID corto único. Es parte de una operación de escritura, por lo que lanza un error si falla.
+ */
 export async function generateShortId(length: number = 6): Promise<string> {
     const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
     let result = '';
@@ -36,7 +72,7 @@ export async function generateShortId(length: number = 6): Promise<string> {
     let attempts = 0;
     const maxAttempts = 100;
 
-    const db = getPool();
+    const db = getPool(); // Lanza error si no está configurada
 
     while (!isUnique && attempts < maxAttempts) {
         result = '';
@@ -44,14 +80,9 @@ export async function generateShortId(length: number = 6): Promise<string> {
             result += characters.charAt(Math.floor(Math.random() * characters.length));
         }
         
-        try {
-            const [rows] = await db.execute<RowDataPacket[]>('SELECT short_id FROM qr_codes WHERE short_id = ?', [result]);
-            if (rows.length === 0) {
-                isUnique = true;
-            }
-        } catch (error) {
-            // Re-throw the error to be caught by the server action.
-            throw error;
+        const [rows] = await db.execute<RowDataPacket[]>('SELECT short_id FROM qr_codes WHERE short_id = ?', [result]);
+        if (rows.length === 0) {
+            isUnique = true;
         }
         attempts++;
     }
@@ -63,22 +94,9 @@ export async function generateShortId(length: number = 6): Promise<string> {
     return result;
 }
 
-
-export async function getQRCodes(): Promise<QRCodeEntry[]> {
-    try {
-        const db = getPool();
-        const [rows] = await db.execute<RowDataPacket[]>('SELECT * FROM qr_codes ORDER BY created_at DESC');
-        return rows as QRCodeEntry[];
-    } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : "Unknown database error";
-        console.error(`[QREASY_DB_ERROR] Failed to fetch QR codes. Is the database configured correctly? Error: ${errorMessage}`);
-        // Return an empty array to allow the page to render gracefully.
-        // The developer will see the error in the server logs.
-        return [];
-    }
-}
-
-
+/**
+ * Añade un nuevo código QR. Es una operación de escritura que lanza un error si falla.
+ */
 export async function addQRCodeDB(label: string, url_destino: string): Promise<QRCodeEntry> {
     const db = getPool();
     const newQRCode: QRCodeEntry = {
@@ -97,7 +115,9 @@ export async function addQRCodeDB(label: string, url_destino: string): Promise<Q
     return newQRCode;
 }
 
-
+/**
+ * Actualiza un código QR. Es una operación de escritura que lanza un error si falla.
+ */
 export async function updateQRCodeDB(id_db: string, label: string, url_destino: string): Promise<QRCodeEntry | undefined> {
     const db = getPool();
     const [result] = await db.execute<ResultSetHeader>(
@@ -112,33 +132,27 @@ export async function updateQRCodeDB(id_db: string, label: string, url_destino: 
     return undefined;
 }
 
-
+/**
+ * Elimina un código QR. Es una operación de escritura que lanza un error si falla.
+ */
 export async function deleteQRCodeDB(id_db: string): Promise<boolean> {
     const db = getPool();
     const [result] = await db.execute<ResultSetHeader>('DELETE FROM qr_codes WHERE id_db = ?', [id_db]);
     return result.affectedRows > 0;
 }
 
-
+/**
+ * Elimina todos los códigos QR. Es una operación de escritura que lanza un error si falla.
+ */
 export async function deleteAllQRCodesDB(): Promise<boolean> {
     const db = getPool();
     await db.execute<ResultSetHeader>('TRUNCATE TABLE qr_codes');
     return true;
 }
 
-
-export async function getQRCodeByShortIdDB(short_id: string): Promise<QRCodeEntry | undefined> {
-    try {
-        const db = getPool();
-        const [rows] = await db.execute<RowDataPacket[]>('SELECT * FROM qr_codes WHERE short_id = ?', [short_id]);
-        if (rows.length > 0) {
-            return rows[0] as QRCodeEntry;
-        }
-        return undefined;
-    } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : "Unknown database error";
-        console.error(`[QREASY_DB_ERROR] Failed to fetch QR code by shortId '${short_id}'. Is the database configured correctly? Error: ${errorMessage}`);
-        // Return undefined to allow the redirect page to show a graceful "not found" message.
-        return undefined;
-    }
+/**
+ * Función de conveniencia para la página de redirección, que usa la función de lectura segura.
+ */
+export async function getQRCodeByShortId(shortId: string): Promise<QRCodeEntry | null> {
+  return await getQRCodeByShortIdDB(shortId);
 }
