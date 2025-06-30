@@ -215,6 +215,12 @@ El último paso es decirle al firewall del servidor que permita conexiones entra
     # Recarga el firewall para aplicar los cambios
     sudo firewall-cmd --reload
     ```
+    **Nota:** Si obtienes un error que dice `FirewallD is not running`, significa que el servicio de firewall está instalado pero no activo. Primero, inícialo y habilítalo con estos comandos:
+    ```bash
+    sudo systemctl start firewalld
+    sudo systemctl enable firewalld
+    ```
+    Después de activarlo, vuelve a ejecutar los comandos `firewall-cmd` de arriba.
 
 #### Paso Final (Después de la Opción A o B)
 
