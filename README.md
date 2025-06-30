@@ -191,11 +191,27 @@ Ahora, tu aplicación corre en `http://localhost:3001` en el servidor. Hay que d
     ```
 5.  Haz clic en **"Save Rewrite Rules"**.
 
+---
+
+### Paso 5: Configurar el Firewall
+
+El último paso es decirle al firewall del servidor que permita conexiones entrantes al puerto que estamos usando.
+
+1.  En tu terminal SSH, ejecuta el siguiente comando para permitir el tráfico en el puerto 3001:
+    ```bash
+    sudo ufw allow 3001/tcp
+    ```
+
+2.  Reinicia el servidor web para asegurar que todos los cambios se apliquen correctamente:
+    ```bash
+    sudo systemctl restart lsws
+    ```
+
 ¡Listo! `https://qr.esquel.org.ar` debería mostrar tu aplicación.
 
 ---
 
-### Mantenimiento: Cómo Actualizar la Aplicación
+### Paso 6: Mantenimiento - Cómo Actualizar la Aplicación
 
 Cuando subas cambios a GitHub, el proceso de actualización es muy sencillo:
 
