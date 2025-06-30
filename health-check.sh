@@ -120,10 +120,10 @@ if [ -z "$PM2_STATUS" ]; then
 else
     print_success "El proceso PM2 '$APP_NAME' existe."
 
-    # Usamos grep -w para buscar la palabra exacta y evitar coincidencias parciales (como 'pid path')
-    STATUS=$(echo "$PM2_STATUS" | grep -w 'status' | awk -F'│' '{print $3}' | xargs)
-    PID=$(echo "$PM2_STATUS" | grep -w 'pid' | awk -F'│' '{print $3}' | xargs)
-    USER=$(echo "$PM2_STATUS" | grep -w 'username' | awk -F'│' '{print $3}' | xargs)
+    # Usamos grep con expresiones regulares para asegurar que tomamos la línea correcta
+    STATUS=$(echo "$PM2_STATUS" | grep -E '│\s*status\s*│' | awk -F'│' '{print $3}' | xargs)
+    PID=$(echo "$PM2_STATUS" | grep -E '│\s*pid\s*│' | awk -F'│' '{print $3}' | xargs)
+    USER=$(echo "$PM2_STATUS" | grep -E '│\s*username\s*│' | awk -F'│' '{print $3}' | xargs)
 
     # Verificar estado
     if [ "$STATUS" == "online" ]; then
@@ -187,3 +187,5 @@ fi
 echo -e "\n${C_BLUE}===============================================${C_NC}"
 echo -e "✅ Diagnóstico completado.${C_NC}"
 echo -e "${C_BLUE}===============================================${C_NC}"
+
+    
