@@ -1,6 +1,11 @@
 
 #!/bin/sh
 
+# --- AVISO DE OBSOLESCENCIA ---
+# Este script está obsoleto y solo es relevante para el antiguo método de despliegue sin Docker.
+# Para el método de despliegue recomendado con Docker, por favor, sigue las instrucciones en el archivo README.md.
+# --- FIN DEL AVISO ---
+
 # --- Script de Actualización y Reinicio Limpio para QREasy ---
 # Este script es la solución definitiva para actualizar la aplicación o para
 # repararla si deja de funcionar. Realiza un "reinicio limpio" completo.
@@ -16,7 +21,7 @@ if [ "$(id -u)" != "0" ]; then
 fi
 
 # 1. Navegar al directorio del proyecto.
-PROJECT_DIR="/home/esquel.org.ar/public_html/studio"
+PROJECT_DIR="/home/esquel.org.ar/public_html/qreasy"
 cd "$PROJECT_DIR" || { echo "Error: No se pudo encontrar el directorio del proyecto en $PROJECT_DIR"; exit 1; }
 echo "-> En el directorio del proyecto: $(pwd)"
 
@@ -30,9 +35,9 @@ echo "-> Configuración de PM2 limpiada."
 
 # 3. Descargar los últimos cambios desde GitHub.
 # Se usa fetch y reset --hard para forzar la actualización y evitar conflictos.
-echo "-> Descargando últimos cambios desde la rama 'master' de GitHub..."
+echo "-> Descargando últimos cambios desde la rama 'main' de GitHub..."
 git fetch origin
-git reset --hard origin/master
+git reset --hard origin/main
 if [ $? -ne 0 ]; then
     echo "Error: Falló la descarga desde GitHub. Revisa conflictos o conexión."
     exit 1

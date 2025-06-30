@@ -1,6 +1,12 @@
 
 #!/bin/sh
 
+# --- AVISO DE OBSOLESCENCIA ---
+# Este script está obsoleto y solo es relevante para el antiguo método de despliegue sin Docker.
+# Para el método de despliegue recomendado con Docker, por favor, sigue las instrucciones en el archivo README.md.
+# Para verificar el estado del contenedor Docker, usa los comandos 'sudo docker ps' y 'sudo docker logs qreasy-container'.
+# --- FIN DEL AVISO ---
+
 # --- Script de Diagnóstico (Health Check) para QREasy ---
 # Este script verifica el estado de todos los componentes críticos de la aplicación.
 # Ejecútalo para identificar rápidamente la causa de un problema.

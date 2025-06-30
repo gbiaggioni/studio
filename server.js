@@ -1,4 +1,10 @@
 
+// --- AVISO DE OBSOLESCENCIA ---
+// Este script está obsoleto y solo es relevante para el antiguo método de despliegue sin Docker.
+// Para el método de despliegue recomendado con Docker, este archivo no se utiliza.
+// Por favor, sigue las instrucciones en el archivo README.md.
+// --- FIN DEL AVISO ---
+
 // server.js
 // Este servidor personalizado nos da un control explícito sobre el arranque
 // y nos permite registrar cualquier error fatal que ocurra durante el inicio.
