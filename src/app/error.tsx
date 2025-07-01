@@ -7,6 +7,11 @@ import { AlertTriangle, Database, FileCheck, Terminal } from 'lucide-react'
 
 // Componente especializado para el error de configuración de la base de datos
 function DatabaseConfigError({ error, reset }: { error: Error, reset: () => void }) {
+  useEffect(() => {
+    // Este log es crítico para la depuración en el servidor.
+    console.error("[QREASY_DB_CONFIG_ERROR]", error);
+  }, [error]);
+
   return (
     <Card className="w-full max-w-3xl text-left shadow-xl border-destructive/50">
       <CardHeader>

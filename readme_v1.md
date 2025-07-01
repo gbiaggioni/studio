@@ -1,11 +1,12 @@
-# 🆘 ¡ATENCIÓN! LA SOLUCIÓN ESTÁ AQUÍ 🆘
-## Si ves un error de "Configuración de la base de datos incompleta", LEE ESTA SECCIÓN PRIMERO.
+# QREasy - Gestor de Códigos QR con Docker
 
-**El código de la aplicación funciona correctamente.** El error que ves es una **confirmación** de que el problema está en la configuración de tu servidor. No se necesitan más cambios de código.
-
-La solución es seguir **exactamente** estos 3 pasos en la terminal de tu servidor.
+QREasy es una aplicación web moderna y sencilla para crear, gestionar y compartir códigos QR. Esta versión está configurada para un despliegue robusto y simplificado usando Docker.
 
 ---
+
+## 🆘 Solución de Errores Comunes
+
+Si tienes problemas, revisa esta sección primero. Es la guía definitiva.
 
 ### Error: Veo "Internal Server Error" o la página de error "Configuración Detectada".
 
@@ -17,7 +18,7 @@ Este es el error más común y **casi siempre está relacionado con el archivo `
         ```bash
         # Entra a la terminal de tu servidor y ejecuta esto:
         cd /home/esquel.org.ar/qr
-        pwd
+        pwd 
         # La salida DEBE ser /home/esquel.org.ar/qr
         ```
     *   **Paso B: Verifica que el archivo `.env.local` existe y tiene contenido.**
@@ -39,7 +40,7 @@ Este es el error más común y **casi siempre está relacionado con el archivo `
         # Detén y elimina el contenedor antiguo
         sudo docker stop qreasy-container
         sudo docker rm qreasy-container
-
+        
         # Inicia el nuevo contenedor (asegúrate de estar en /home/esquel.org.ar/qr)
         sudo docker run -d --restart unless-stopped --name qreasy-container -p 3001:3000 --env-file ./.env.local qreasy-app
         ```
@@ -68,10 +69,6 @@ Esto significa que el **Reverse Proxy no está funcionando**. LiteSpeed está in
     *   Limpia la caché de tu navegador o prueba en modo incógnito. Si sigues estos 3 pasos, el problema del reverse proxy se solucionará.
 
 ---
-
-# QREasy - Gestor de Códigos QR con Docker
-
-QREasy es una aplicación web moderna y sencilla para crear, gestionar y compartir códigos QR. Esta versión está configurada para un despliegue robusto y simplificado usando Docker.
 
 ## ✨ Características Principales
 
@@ -140,7 +137,7 @@ Esta es la guía recomendada y única para desplegar **QREasy** en tu servidor. 
     # Navega al directorio padre y elimina la carpeta antigua si existe
     cd /home/esquel.org.ar
     sudo rm -rf qr
-
+    
     # Clona tu repositorio. Git creará la carpeta 'qr' automáticamente.
     # Asegúrate de usar la URL de TU repositorio.
     git clone https://github.com/gbiaggioni/studio.git qr
@@ -227,7 +224,7 @@ El último paso es decirle al firewall del servidor que permita conexiones entra
 Cuando subas cambios a GitHub, el proceso de actualización es muy sencillo:
 
 1.  Conéctate al servidor y ve al directorio del proyecto: `cd /home/esquel.org.ar/qr`
-
+    
 2.  Trae los últimos cambios del código. **La rama principal de este proyecto es `main`**. Si tu rama se llama `master`, usa `git pull origin master`.
     ```bash
     git pull origin main
