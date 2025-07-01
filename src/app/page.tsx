@@ -10,7 +10,7 @@ export const dynamic = 'force-dynamic';
 
 export default async function Home() {
   const qrCodes = await getQRCodes();
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://qr.esquel.org.ar';
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://qr.esquel.ar';
 
   return (
     <div className="min-h-screen flex flex-col items-center p-4 md:p-8 bg-gradient-to-br from-background to-secondary/30">

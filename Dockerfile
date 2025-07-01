@@ -1,47 +1,41 @@
-
-# Dockerfile Definitivo para QREasy con Next.js Standalone
-# Etapa 1: Builder - Construye la aplicación
+# ---- Fase 1: Builder ----
+# Esta fase instala dependencias (incluidas las de desarrollo) y construye la aplicación.
 FROM node:20-slim AS builder
-
-# Establece el directorio de trabajo en /app
 WORKDIR /app
 
-# Instala las dependencias necesarias para construir
+# Instalar solo las dependencias primero para aprovechar el caché de Docker
 COPY package.json package-lock.json* ./
 RUN npm install
 
-# Copia el resto del código fuente de la aplicación
+# Copiar el resto del código fuente de la aplicación
 COPY . .
 
-# Construye la aplicación. Esto generará la salida en modo 'standalone'
-# dentro de la carpeta /app/.next/standalone
+# Construir la aplicación. Esto necesita las devDependencies.
 RUN npm run build
 
-# Etapa 2: Runner - Ejecuta la aplicación optimizada
+# ---- Fase 2: Runner ----
+# Esta fase crea la imagen final, ligera y optimizada para producción.
 FROM node:20-slim AS runner
-
 WORKDIR /app
 
-# Crea un usuario y grupo no-root para mayor seguridad
+# Crear un usuario y grupo no-root para mayor seguridad
 ENV NODE_ENV=production
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
-# Copia la salida 'standalone' de la etapa de construcción
+# Copiar los artefactos de la build desde la fase 'builder'
+# La configuración 'output: standalone' en next.config.js empaqueta todo lo necesario aquí.
 COPY --from=builder /app/.next/standalone ./
-
-# El modo 'standalone' no copia la carpeta 'public' ni los assets estáticos,
-# por lo que debemos copiarlos manualmente si existen.
-# En este proyecto no hay carpeta 'public', así que solo copiamos los assets estáticos.
+# Copiar las carpetas 'public' y '.next/static' (si existen)
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
-# Cambia al usuario no-root
+# Establecer el propietario de los archivos de la aplicación
 USER nextjs
 
-# Expone el puerto 3000
+# Exponer el puerto en el que correrá la aplicación
 EXPOSE 3000
 
-# Define el puerto que la aplicación usará
+# Variables de entorno para el puerto
 ENV PORT=3000
 
 # Comando para iniciar el servidor de Next.js

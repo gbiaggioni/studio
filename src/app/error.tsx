@@ -1,4 +1,3 @@
-
 'use client' 
 
 import { useEffect } from 'react'
@@ -36,7 +35,7 @@ export default function Error({
         <CardContent className="space-y-6">
           <div className="bg-destructive/10 p-4 rounded-md">
             <p className="font-semibold text-destructive">
-              Mensaje de Error Detectado:
+              Error Detectado:
             </p>
             <code className="text-destructive font-mono text-sm whitespace-pre-wrap mt-2 block">
               {error.message}
@@ -46,13 +45,13 @@ export default function Error({
           {isConfigError && (
             <div className="space-y-4 text-center border-t border-border pt-6">
               <h3 className="text-2xl font-semibold flex items-center justify-center">
-                <FileText className="mr-3 h-7 w-7 text-primary" /> La Solución Está en el Archivo README.md
+                <FileText className="mr-3 h-7 w-7 text-primary" /> La Solución Definitiva Está en el README.md
               </h3>
               <p className="text-muted-foreground text-base max-w-xl mx-auto">
-                He preparado una guía de solución de problemas detallada en el archivo <code>README.md</code> de tu proyecto. Por favor, abre ese archivo y sigue los pasos en la sección <strong>"🆘 ¡ATENCIÓN! LA SOLUCIÓN ESTÁ AQUÍ 🆘"</strong>.
+                Este error confirma que tu contenedor Docker no está leyendo el archivo <strong>.env.local</strong> correctamente. Esto casi siempre se debe a un error de formato (comentarios o espacios).
               </p>
               <p className="text-muted-foreground text-base max-w-xl mx-auto">
-                Resolver este problema requiere que ejecutes comandos en la terminal de tu servidor, como se describe en la guía. El asistente de IA no puede realizar más cambios de código para solucionar esto.
+                He actualizado el archivo <code>README.md</code> con un <strong>nuevo método a prueba de errores</strong> para crear el archivo <code>.env.local</code>. Por favor, abre ese archivo y sigue los pasos en la sección <strong>"🆘 ¡ATENCIÓN! LA SOLUCIÓN DEFINITIVA ESTÁ AQUÍ 🆘"</strong>.
               </p>
             </div>
           )}

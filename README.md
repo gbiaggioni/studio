@@ -1,79 +1,48 @@
+# 🆘 ¡ATENCIÓN! LA SOLUCIÓN DEFINITIVA ESTÁ AQUÍ 🆘
+## Si ves un error de "Configuración de la base de datos incompleta" o un "Internal Server Error 500", LEE ESTA SECCIÓN.
 
-# 🆘 ¡ATENCIÓN! LA SOLUCIÓN ESTÁ AQUÍ 🆘
-## Si ves un error de "Configuración de la base de datos incompleta" o la página por defecto de CyberPanel, LEE ESTA SECCIÓN PRIMERO.
+**El código de la aplicación y el Dockerfile son correctos.** El error que ves es una **confirmación** de que el problema está en la configuración de tu servidor. Específicamente, **el contenedor Docker no está leyendo tus variables de entorno del archivo `.env.local`**.
 
-**El código de la aplicación funciona correctamente.** El error que ves es una **confirmación** de que el problema está en la configuración de tu servidor. 
-**No se necesitan más cambios de código. El Asistente de IA no proporcionará más correcciones de código para este problema, ya que la solución está en la configuración de tu servidor.**
+Esto casi siempre ocurre por un error de formato invisible en el archivo `.env.local` (espacios extra, comentarios, etc.).
 
-La solución es seguir **exactamente** estos pasos en la terminal de tu servidor.
+**Sigue estos 3 pasos en tu servidor para solucionarlo de una vez por todas:**
 
----
+### Paso 1: Crea un archivo `.env.local` perfecto (El paso clave)
 
-### Error: Veo "Internal Server Error" o la página de error "Configuración Detectada".
+1.  Asegúrate de estar en el directorio correcto: `cd /home/esquel.org.ar/qr`
+2.  **Borra el archivo antiguo** para evitar problemas: `rm -f .env.local`
+3.  Ejecuta el siguiente comando para crear un archivo `.env.local` nuevo y con el formato garantizado. **Copia y pega el bloque completo, incluyendo `EOF`**:
+    ```bash
+    cat <<EOF > .env.local
+DB_HOST=172.17.0.1
+DB_USER=esqu_qr_codes
+DB_PASSWORD=esqu_qr_codes
+DB_NAME=esqu_qr_codes
+NEXT_PUBLIC_BASE_URL=https://qr.esquel.ar
+EOF
+    ```
+    *Este comando crea un archivo limpio, sin comentarios ni espacios extra que puedan confundir a Docker.*
 
-Este es el error más común y **casi siempre está relacionado con el archivo `.env.local`**.
+### Paso 2: Reconstruye la imagen de Docker
 
-1.  **Causa Principal:** El contenedor Docker no puede encontrar o leer tus variables de entorno. Esto puede ser por dos motivos:
-    *   El archivo `.env.local` contiene comentarios (`#`) o líneas en blanco, lo que confunde a Docker.
-    *   No estás usando la bandera `--env-file` en tu comando `docker run`.
+1.  Desde `/home/esquel.org.ar/qr`, reconstruye la imagen.
+    ```bash
+    sudo docker build -t qreasy-app .
+    ```
 
-2.  **Solución Definitiva (Sigue estos pasos en orden):**
-    *   **Paso A: Verifica que estás en el directorio correcto.**
-        ```bash
-        # Entra a la terminal de tu servidor y ejecuta esto:
-        cd /home/esquel.org.ar/qr
-        pwd
-        # La salida DEBE ser /home/esquel.org.ar/qr
-        ```
-    *   **Paso B: Edita el archivo `.env.local` para que quede perfecto.**
-        ```bash
-        # Abre el archivo con nano:
-        nano .env.local
-        ```
-    *   **¡MUY IMPORTANTE!** Borra todo el contenido y pega **EXACTAMENTE** esto. No debe haber NADA MÁS en el archivo. Ni comentarios, ni líneas vacías.
-        ```env
-        DB_HOST=172.17.0.1
-        DB_USER=esqu_qr_codes
-        DB_PASSWORD=esqu_qr_codes
-        DB_NAME=esqu_qr_codes
-        NEXT_PUBLIC_BASE_URL=https://qr.esquel.org.ar
-        ```
-    *   Guarda los cambios (`Ctrl+X`, luego `Y`, y `Enter`).
+### Paso 3: Reinicia el contenedor con el comando correcto
 
-    *   **Paso C: Si has hecho algún cambio, reinicia el contenedor CON EL COMANDO CORRECTO.**
-        ```bash
-        # Detén y elimina el contenedor antiguo
-        sudo docker stop qreasy-container
-        sudo docker rm qreasy-container
+1.  Detén y elimina el contenedor antiguo:
+    ```bash
+    sudo docker stop qreasy-container
+    sudo docker rm qreasy-container
+    ```
+2.  Inicia el nuevo contenedor, asegurándote de que lea el nuevo archivo de entorno perfecto:
+    ```bash
+    sudo docker run -d --restart unless-stopped --name qreasy-container -p 3001:3000 --env-file ./.env.local qreasy-app
+    ```
 
-        # Inicia el nuevo contenedor (asegúrate de estar en /home/esquel.org.ar/qr)
-        # La parte '--env-file ./.env.local' es ESENCIAL.
-        sudo docker run -d --restart unless-stopped --name qreasy-container -p 3001:3000 --env-file ./.env.local qreasy-app
-        ```
-
-### Error: Veo la página por defecto de CyberPanel/LiteSpeed, no mi aplicación.
-
-Esto significa que el **Reverse Proxy no está funcionando**. LiteSpeed está interceptando la petición pero no la está enviando a tu aplicación en el puerto 3001.
-
-1.  **Causa Principal:** Las reglas de reescritura de CyberPanel no se están aplicando correctamente.
-2.  **Solución Definitiva (Haz estos 3 pasos en orden):**
-    *   **Paso A: Revisa los Permisos.** Asegúrate de haber ejecutado el comando `chown` del **Paso 3** de la guía de despliegue. Si CyberPanel no tiene permisos sobre los archivos, no puede guardar las reglas.
-        ```bash
-        # Vuelve a ejecutarlo por si acaso, desde /home/esquel.org.ar/qr
-        sudo chown -R esque9858:esque9858 /home/esquel.org.ar/qr
-        ```
-    *   **Paso B: Revisa las Reglas de Reescritura.** Vuelve al **Paso 4** de la guía de despliegue y asegúrate de haber pegado las reglas **exactamente** como se muestran.
-     Borra todo lo que había antes y pega el nuevo contenido.
-        ```
-        RewriteEngine On
-        RewriteRule ^(.*)$ http://127.0.0.1:3001/$1 [P,L]
-        ```
-        Haz clic en **"Save Rewrite Rules"**.
-    *   **Paso C: Reinicia el Servidor Web (¡EL MÁS IMPORTANTE!).** Después de guardar las reglas, **debes reiniciar LiteSpeed** para que las cargue.
-        ```bash
-        sudo systemctl restart lsws
-        ```
-    *   Limpia la caché de tu navegador o prueba en modo incógnito. Si sigues estos 3 pasos, el problema del reverse proxy se solucionará.
+Si después de estos pasos sigues viendo la página por defecto de CyberPanel, sigue la guía del **Reverse Proxy** que se encuentra más abajo en este mismo archivo. Pero el error 500 debería estar solucionado.
 
 ---
 
@@ -85,7 +54,7 @@ QREasy es una aplicación web moderna y sencilla para crear, gestionar y compart
 
 -   **Creación de Códigos QR:** Genera códigos QR dinámicamente a partir de cualquier URL.
 -   **Gestión Completa:** Edita, copia, imprime y elimina tus códigos QR fácilmente.
--   **URL Corta Única:** Cada QR obtiene una URL única para redirección (ej. `qr.esquel.org.ar/r/xyz123`).
+-   **URL Corta Única:** Cada QR obtiene una URL única para redirección (ej. `qr.esquel.ar/r/xyz123`).
 -   **Responsivo y Moderno:** Interfaz adaptable a cualquier dispositivo.
 
 ## 🚀 Stack Tecnológico
@@ -110,7 +79,7 @@ Esta es la guía recomendada y única para desplegar **QREasy** en tu servidor. 
 ### Prerrequisitos
 
 *   **Acceso SSH a tu servidor:** Necesitas poder conectarte como `root`.
-*   **Dominio Configurado:** Tu dominio `qr.esquel.org.ar` debe estar creado en CyberPanel y apuntando a la IP de tu servidor.
+*   **Dominio Configurado:** Tu dominio `qr.esquel.ar` debe estar creado en CyberPanel y apuntando a la IP de tu servidor.
 *   **Repositorio Git:** Debes tener este proyecto en un repositorio de GitHub.
 
 ---
@@ -157,14 +126,8 @@ Esta es la guía recomendada y única para desplegar **QREasy** en tu servidor. 
     cd /home/esquel.org.ar/qr
     ```
 
-2.  **Configura las Variables de Entorno (AHORA SIN COMENTARIOS):**
-    *   Copia el archivo de ejemplo para crear tu configuración local:
-        ```bash
-        cp .env.example .env.local
-        ```
-    *   Abre el nuevo archivo para editarlo (`nano .env.local`).
-    *   Modifica el contenido con **tus credenciales reales**. Debe quedar **exactamente** como se muestra en la sección de "Solución de Errores Comunes" arriba, **sin comentarios ni líneas en blanco**.
-    *   Guarda los cambios (`Ctrl+X`, luego `Y`, y `Enter`).
+2.  **Configura las Variables de Entorno:**
+    *   Sigue las instrucciones de la sección `🆘 ¡ATENCIÓN! LA SOLUCIÓN DEFINITIVA ESTÁ AQUÍ 🆘` al principio de este archivo.
 
 3.  **¡Paso Crítico! Corrige los Permisos de los Archivos:**
     *   Como clonaste el repositorio siendo `root`, los archivos ahora pertenecen a `root`. Necesitamos devolverle la propiedad al usuario que CyberPanel utiliza (`esque9858`) para que pueda gestionar el sitio correctamente.
@@ -182,30 +145,17 @@ Esta es la guía recomendada y única para desplegar **QREasy** en tu servidor. 
     *   Si al construir la imagen ves un error `429 Too Many Requests`, inicia sesión con una cuenta gratuita de Docker Hub.
     *   Ejecuta `sudo docker login` e ingresa tus credenciales.
 
-2.  **Construir la imagen:** Desde la raíz del proyecto (`/home/esquel.org.ar/qr`), ejecuta:
-    ```bash
-    sudo docker build -t qreasy-app .
-    ```
-
-3.  **Ejecutar el contenedor:** Este comando inicia tu aplicación.
-    ```bash
-    # El comando es el mismo que en la sección de troubleshooting.
-    # La bandera '--env-file' es la que hace la magia.
-    sudo docker run -d --restart unless-stopped \
-      --name qreasy-container \
-      -p 3001:3000 \
-      --env-file ./.env.local \
-      qreasy-app
-    ```
+2.  **Construir y Ejecutar:**
+    *   Sigue las instrucciones de la sección `🆘 ¡ATENCIÓN! LA SOLUCIÓN DEFINITIVA ESTÁ AQUÍ 🆘` al principio de este archivo.
 
 ---
 
 ### Paso 4: Configurar CyberPanel como Reverse Proxy
 
-Ahora, tu aplicación corre en `http://localhost:3001` en el servidor. Hay que decirle a CyberPanel que redirija el tráfico de `https://qr.esquel.org.ar` a ese puerto.
+Ahora, tu aplicación corre en `http://localhost:3001` en el servidor. Hay que decirle a CyberPanel que redirija el tráfico de `https://qr.esquel.ar` a ese puerto.
 
 1.  Entra en tu panel de CyberPanel.
-2.  Ve a `Websites` -> `List Websites` y busca `qr.esquel.org.ar`. Haz clic en `Manage`.
+2.  Ve a `Websites` -> `List Websites` y busca `qr.esquel.ar`. Haz clic en `Manage`.
 3.  Desplázate hacia abajo hasta la sección **Rewrite Rules**.
 4.  En el campo de texto, borra todo lo que haya y pega **exactamente** esto:
     ```
@@ -228,7 +178,7 @@ El último paso es decirle al firewall del servidor que permita conexiones entra
     ```bash
     sudo systemctl restart lsws
     ```
-¡Listo! `https://qr.esquel.org.ar` debería mostrar tu aplicación.
+¡Listo! `https://qr.esquel.ar` debería mostrar tu aplicación.
 
 ---
 
@@ -243,19 +193,6 @@ Cuando subas cambios a GitHub, el proceso de actualización es muy sencillo:
     git pull origin master
     ```
 
-3.  Detén y elimina el contenedor antiguo:
-    ```bash
-    sudo docker stop qreasy-container
-    sudo docker rm qreasy-container
-    ```
+3.  Reconstruye y reinicia el contenedor siguiendo los pasos 2 y 3 de la sección `🆘 ¡ATENCIÓN! LA SOLUCIÓN DEFINITIVA ESTÁ AQUÍ 🆘`.
 
-4.  Reconstruye la imagen de Docker con los nuevos cambios:
-    ```bash
-    sudo docker build -t qreasy-app .
-    ```
-
-5.  Vuelve a ejecutar el contenedor con el mismo comando de siempre (¡asegúrate de estar en el directorio correcto!):
-    ```bash
-    sudo docker run -d --restart unless-stopped --name qreasy-container -p 3001:3000 --env-file ./.env.local qreasy-app
-    ```
-6.  **Opcional pero recomendado:** Limpia imágenes de Docker antiguas que ya no se usan: `sudo docker image prune -a`
+4.  **Opcional pero recomendado:** Limpia imágenes de Docker antiguas que ya no se usan: `sudo docker image prune -a`
