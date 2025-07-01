@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Printer, Trash2, Copy, Pencil } from 'lucide-react';
-import type { QRCodeEntry } from '@/lib/types';
+import type { QRCodeEntry } from '@/lib/db';
 import { QRCodeFormSchema, type QRCodeFormValues } from '@/lib/schemas';
 import { deleteQRCodeAction, updateQRCodeAction } from '@/app/actions';
 import { useToast } from '@/hooks/use-toast';

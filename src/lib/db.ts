@@ -1,6 +1,13 @@
 import mysql from 'mysql2/promise';
 import type { RowDataPacket, ResultSetHeader } from 'mysql2/promise';
-import type { QRCodeEntry } from './types';
+
+export interface QRCodeEntry {
+  id_db: string;
+  label: string;
+  url_destino: string;
+  short_id: string;
+  created_at: Date;
+}
 
 // Singleton pool
 let pool: mysql.Pool | null = null;

@@ -4,12 +4,12 @@
 
 El problema casi siempre es uno de estos dos, en este orden de probabilidad:
 1.  **Error de `bind-address` en la Base de Datos (Error `ECONNREFUSED` en los logs).**
-2.  Un error en el archivo de entorno `.env.local` (generalmente, usar `localhost` en vez de `172.17.0.1` como `DB_HOST`).
+2.  Un error durante la construcción de la imagen porque el archivo `.env.local` no existía.
 
 ---
 
 ### 🚨 Solución para el error `connect ECONNREFUSED 172.17.0.1:3306` 🚨
-Si en tus logs de Docker (`sudo docker logs qreasy-container`) ves este error, significa que **el código y la configuración de Docker son correctos**. El problema es que tu servidor de base de datos (MariaDB/MySQL) está configurado por seguridad para **rechazar** conexiones que no vengan de `localhost`. Debes cambiar esto.
+Si en tus logs de Docker (`sudo docker logs qreasy-container`) ves este error, significa que **el código y la configuración de la aplicación son correctos**. El problema es que tu servidor de base de datos (MariaDB/MySQL) está configurado por seguridad para **rechazar** conexiones que no vengan de `localhost`. Debes cambiar esto.
 
 1.  **Conéctate a tu servidor** y abre el archivo de configuración de MariaDB/MySQL. La ubicación puede variar, pero suele estar en `/etc/mysql/mariadb.conf.d/50-server.cnf`.
     ```bash
@@ -57,7 +57,7 @@ sudo docker rm qreasy-container
 *(Es normal si estos comandos dan un error de "No such container", significa que no había uno corriendo).*
 
 ### Paso 2: Genera un archivo `.env.local` Perfecto
-Este script evita cualquier error manual.
+Este script evita cualquier error manual. **DEBES** ejecutarlo antes de construir la imagen.
 1.  Asegúrate de estar en el directorio correcto: `cd /home/esquel.org.ar/qr`
 2.  **Dale permisos de ejecución al script:**
     ```bash
@@ -69,16 +69,16 @@ Este script evita cualquier error manual.
     ```
     El script te pedirá los datos de tu base de datos y la URL de tu sitio. **RECUERDA USAR `172.17.0.1` COMO HOST DE LA BASE DE DATOS.**
 
-### Paso 3: Reconstruye la Imagen de Docker
-Este comando empaqueta la aplicación con tu configuración.
+### Paso 3: Reconstruye la Imagen de Docker (Ahora con la configuración)
+Este comando empaqueta la aplicación **y tu archivo `.env.local`** dentro de la imagen.
 ```bash
 sudo docker build -t qreasy-app .
 ```
 
-### Paso 4: Inicia el Nuevo Contenedor
-Con todo listo, inicia el nuevo contenedor.
+### Paso 4: Inicia el Nuevo Contenedor (Comando más simple)
+Con todo listo, inicia el nuevo contenedor. Nota que ya **no** se necesita `--env-file`.
 ```bash
-sudo docker run -d --restart unless-stopped --name qreasy-container -p 3001:3000 --env-file ./.env.local qreasy-app
+sudo docker run -d --restart unless-stopped --name qreasy-container -p 3001:3000 qreasy-app
 ```
 Después de estos 4 pasos, la aplicación en `https://qr.esquel.org.ar` debería funcionar.
 
