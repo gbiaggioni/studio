@@ -1,3 +1,4 @@
+
 # 🆘 ¡ATENCIÓN! LA SOLUCIÓN ESTÁ AQUÍ 🆘
 ## Si ves un error de "Configuración de la base de datos incompleta" o la página por defecto de CyberPanel, LEE ESTA SECCIÓN PRIMERO.
 
@@ -12,7 +13,10 @@ La solución es seguir **exactamente** estos pasos en la terminal de tu servidor
 
 Este es el error más común y **casi siempre está relacionado con el archivo `.env.local`**.
 
-1.  **Causa Principal:** El contenedor Docker no puede encontrar o leer tus variables de entorno.
+1.  **Causa Principal:** El contenedor Docker no puede encontrar o leer tus variables de entorno. Esto puede ser por dos motivos:
+    *   El archivo `.env.local` contiene comentarios (`#`) o líneas en blanco, lo que confunde a Docker.
+    *   No estás usando la bandera `--env-file` en tu comando `docker run`.
+
 2.  **Solución Definitiva (Sigue estos pasos en orden):**
     *   **Paso A: Verifica que estás en el directorio correcto.**
         ```bash
@@ -21,27 +25,29 @@ Este es el error más común y **casi siempre está relacionado con el archivo `
         pwd
         # La salida DEBE ser /home/esquel.org.ar/qr
         ```
-    *   **Paso B: Verifica que el archivo `.env.local` existe y tiene contenido.**
+    *   **Paso B: Edita el archivo `.env.local` para que quede perfecto.**
         ```bash
-        # Desde el directorio anterior, ejecuta:
-        ls -l .env.local
-        cat .env.local
+        # Abre el archivo con nano:
+        nano .env.local
         ```
-    *   El contenido debe ser **exactamente** así, sin comillas, sin espacios extra, y con tus credenciales reales:
+    *   **¡MUY IMPORTANTE!** Borra todo el contenido y pega **EXACTAMENTE** esto. No debe haber NADA MÁS en el archivo. Ni comentarios, ni líneas vacías.
         ```env
         DB_HOST=172.17.0.1
-        DB_USER=tu_usuario_de_bd
-        DB_PASSWORD=tu_contraseña_de_bd
-        DB_NAME=el_nombre_de_tu_bd
+        DB_USER=esqu_qr_codes
+        DB_PASSWORD=esqu_qr_codes
+        DB_NAME=esqu_qr_codes
         NEXT_PUBLIC_BASE_URL=https://qr.esquel.org.ar
         ```
-    *   **Paso C: Si has hecho algún cambio, reinicia el contenedor.**
+    *   Guarda los cambios (`Ctrl+X`, luego `Y`, y `Enter`).
+
+    *   **Paso C: Si has hecho algún cambio, reinicia el contenedor CON EL COMANDO CORRECTO.**
         ```bash
         # Detén y elimina el contenedor antiguo
         sudo docker stop qreasy-container
         sudo docker rm qreasy-container
 
         # Inicia el nuevo contenedor (asegúrate de estar en /home/esquel.org.ar/qr)
+        # La parte '--env-file ./.env.local' es ESENCIAL.
         sudo docker run -d --restart unless-stopped --name qreasy-container -p 3001:3000 --env-file ./.env.local qreasy-app
         ```
 
@@ -151,13 +157,13 @@ Esta es la guía recomendada y única para desplegar **QREasy** en tu servidor. 
     cd /home/esquel.org.ar/qr
     ```
 
-2.  **Configura las Variables de Entorno:**
+2.  **Configura las Variables de Entorno (AHORA SIN COMENTARIOS):**
     *   Copia el archivo de ejemplo para crear tu configuración local:
         ```bash
         cp .env.example .env.local
         ```
     *   Abre el nuevo archivo para editarlo (`nano .env.local`).
-    *   Modifica el contenido con **tus credenciales reales**. Debe quedar **exactamente** como se muestra en la sección de "Solución de Errores Comunes" arriba.
+    *   Modifica el contenido con **tus credenciales reales**. Debe quedar **exactamente** como se muestra en la sección de "Solución de Errores Comunes" arriba, **sin comentarios ni líneas en blanco**.
     *   Guarda los cambios (`Ctrl+X`, luego `Y`, y `Enter`).
 
 3.  **¡Paso Crítico! Corrige los Permisos de los Archivos:**
@@ -183,6 +189,8 @@ Esta es la guía recomendada y única para desplegar **QREasy** en tu servidor. 
 
 3.  **Ejecutar el contenedor:** Este comando inicia tu aplicación.
     ```bash
+    # El comando es el mismo que en la sección de troubleshooting.
+    # La bandera '--env-file' es la que hace la magia.
     sudo docker run -d --restart unless-stopped \
       --name qreasy-container \
       -p 3001:3000 \
@@ -230,9 +238,9 @@ Cuando subas cambios a GitHub, el proceso de actualización es muy sencillo:
 
 1.  Conéctate al servidor y ve al directorio del proyecto: `cd /home/esquel.org.ar/qr`
 
-2.  Trae los últimos cambios del código. **La rama principal de este proyecto es `main`**. Si tu rama se llama `master`, usa `git pull origin master`.
+2.  Trae los últimos cambios del código. **La rama principal de este proyecto es `master`**. Si tu rama se llama de otra forma, úsala aquí.
     ```bash
-    git pull origin main
+    git pull origin master
     ```
 
 3.  Detén y elimina el contenedor antiguo:
@@ -251,5 +259,3 @@ Cuando subas cambios a GitHub, el proceso de actualización es muy sencillo:
     sudo docker run -d --restart unless-stopped --name qreasy-container -p 3001:3000 --env-file ./.env.local qreasy-app
     ```
 6.  **Opcional pero recomendado:** Limpia imágenes de Docker antiguas que ya no se usan: `sudo docker image prune -a`
-
-    
