@@ -1,9 +1,10 @@
 # 🆘 ¡ATENCIÓN! LA SOLUCIÓN ESTÁ AQUÍ 🆘
-## Si ves un error de "Configuración de la base de datos incompleta", LEE ESTA SECCIÓN PRIMERO.
+## Si ves un error de "Configuración de la base de datos incompleta" o la página por defecto de CyberPanel, LEE ESTA SECCIÓN PRIMERO.
 
-**El código de la aplicación funciona correctamente.** El error que ves es una **confirmación** de que el problema está en la configuración de tu servidor. No se necesitan más cambios de código.
+**El código de la aplicación funciona correctamente.** El error que ves es una **confirmación** de que el problema está en la configuración de tu servidor. 
+**No se necesitan más cambios de código. El Asistente de IA no proporcionará más correcciones de código para este problema, ya que la solución está en la configuración de tu servidor.**
 
-La solución es seguir **exactamente** estos 3 pasos en la terminal de tu servidor.
+La solución es seguir **exactamente** estos pasos en la terminal de tu servidor.
 
 ---
 
@@ -55,7 +56,8 @@ Esto significa que el **Reverse Proxy no está funcionando**. LiteSpeed está in
         # Vuelve a ejecutarlo por si acaso, desde /home/esquel.org.ar/qr
         sudo chown -R esque9858:esque9858 /home/esquel.org.ar/qr
         ```
-    *   **Paso B: Revisa las Reglas de Reescritura.** Vuelve al **Paso 4** de la guía de despliegue y asegúrate de haber pegado las reglas **exactamente** como se muestran. Borra todo lo que había antes y pega el nuevo contenido.
+    *   **Paso B: Revisa las Reglas de Reescritura.** Vuelve al **Paso 4** de la guía de despliegue y asegúrate de haber pegado las reglas **exactamente** como se muestran.
+     Borra todo lo que había antes y pega el nuevo contenido.
         ```
         RewriteEngine On
         RewriteRule ^(.*)$ http://127.0.0.1:3001/$1 [P,L]
