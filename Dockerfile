@@ -1,42 +1,32 @@
 # Dockerfile
 
-# Stage 1: Builder
-# ----------------
+# 1. Builder Stage
 FROM node:20-slim AS builder
 WORKDIR /app
-
-# Copia los archivos de manifiesto del paquete e instala las dependencias
 COPY package.json package-lock.json* ./
 RUN npm install
-
-# Copia el resto del código fuente
 COPY . .
-
-# Construye la aplicación
 RUN npm run build
 
-# Stage 2: Runner
-# --------------
+# 2. Runner Stage
 FROM node:20-slim AS runner
 WORKDIR /app
 
-# Crea un usuario y grupo no-root para mayor seguridad
+# Set up non-root user
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
-# Copia solo los artefactos de build necesarios desde la etapa 'builder'
-# Esto crea una imagen final mucho más pequeña y segura.
+# Copy standalone output
 COPY --from=builder /app/.next/standalone ./
+# Copy static assets
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
-# Establece el usuario no-root
+# Expose port and set user
+EXPOSE 3000
 USER nextjs
 
-# Expone el puerto en el que se ejecutará la aplicación
-ENV PORT=3000
-EXPOSE 3000
-
-# El comando para iniciar la aplicación.
-# Se ha añadido un paso de depuración para imprimir todas las variables de entorno
-# que el contenedor está viendo. Esto es para diagnosticar el problema de las credenciales.
-CMD ["sh", "-c", "echo '--- [QREASY_DOCKER_DEBUG] Imprimiendo variables de entorno ---' && printenv && echo '--- [QREASY_DOCKER_DEBUG] Iniciando servidor Next.js ---' && node server.js"]
+# Start the app with environment variable debugging
+# This command will first print all environment variables visible to the container,
+# then start the Next.js application. This is the definitive test to see if
+# the --env-file flag is working as expected.
+CMD ["sh", "-c", "echo '--- [QREASY_DOCKER_DEBUG] Printing environment variables at container startup ---' && printenv && echo '--- Starting Next.js app ---' && exec node server.js"]

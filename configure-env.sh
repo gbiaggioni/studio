@@ -8,7 +8,7 @@ echo "Por favor, introduce los valores para tu entorno. Presiona Enter para usar
 echo ""
 
 # DB_HOST
-printf "Introduce el Host de la Base de Datos [Default: 172.17.0.1]: "
+printf "Introduce el Host de la Base de Datos (¡MUY IMPORTANTE! Para Docker, casi siempre es 172.17.0.1) [Default: 172.17.0.1]: "
 read DB_HOST
 DB_HOST=${DB_HOST:-172.17.0.1}
 

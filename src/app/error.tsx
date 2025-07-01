@@ -25,10 +25,10 @@ export default function Error({
           <CardHeader>
             <CardTitle className="flex items-center text-3xl font-headline text-destructive">
               <AlertOctagon className="mr-4 h-10 w-10" />
-              ¡ACCIÓN REQUERIDA! Error de Configuración
+              ¡ACCIÓN REQUERIDA! Error de Configuración del Entorno
             </CardTitle>
             <CardDescription className="text-lg pt-2">
-              <strong>El código de la aplicación es correcto.</strong> El problema está en la configuración de tu servidor, y ahora podemos diagnosticarlo con certeza.
+              <strong>El código de la aplicación es correcto.</strong> El problema está en la configuración de tu servidor, y ahora tenemos la prueba definitiva.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
@@ -55,7 +55,7 @@ export default function Error({
                 </code>
               </div>
               <p className="text-muted-foreground text-base max-w-2xl mx-auto">
-                Busca una sección que empiece con <code className="bg-muted px-1.5 py-0.5 rounded-sm">--- [QREASY_DOCKER_DEBUG] Imprimiendo variables de entorno ---</code>. Si tus variables <code className="bg-muted px-1.5 py-0.5 rounded-sm">DB_HOST</code>, <code className="bg-muted px-1.5 py-0.5 rounded-sm">DB_USER</code>, etc., aparecen como **'NO CARGADO'**, el problema está en tu archivo <code className="bg-muted px-1.5 py-0.5 rounded-sm">.env.local</code> o en el comando `docker run`. Usa el script <code className="bg-muted px-1.5 py-0.5 rounded-sm">./configure-env.sh</code> para crearlo correctamente y reinicia el contenedor como se indica en el archivo <code className="bg-muted px-1.5 py-0.5 rounded-sm">README.md</code>.
+                Gracias a la última actualización, ahora lo primero que verás en los logs es una sección que empieza con <code className="bg-muted px-1.5 py-0.5 rounded-sm">--- [QREASY_DOCKER_DEBUG] Printing environment variables... ---</code>. Revisa esa lista. Si tus variables <code className="bg-muted px-1.5 py-0.5 rounded-sm">DB_HOST</code>, <code className="bg-muted px-1.5 py-0.5 rounded-sm">DB_USER</code>, etc., **NO APARECEN EN ESA LISTA**, el problema es 100% que tu archivo <code className="bg-muted px-1.5 py-0.5 rounded-sm">.env.local</code> no se está leyendo correctamente. Sigue la guía del `README.md` para crearlo con el script <code className="bg-muted px-1.5 py-0.5 rounded-sm">./configure-env.sh</code> y reinicia el contenedor.
               </p>
             </div>
           </CardContent>
@@ -88,5 +88,3 @@ export default function Error({
     </div>
   )
 }
-
-    

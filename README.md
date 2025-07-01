@@ -2,7 +2,7 @@
 ## Si ves un error de "Configuración de la base de datos incompleta" o "Internal Server Error", LEE ESTA SECCIÓN.
 
 El problema casi siempre es doble:
-1.  Un error en el archivo de entorno `.env.local` (causado por un script incompatible que ya corregimos).
+1.  Un error en el archivo de entorno `.env.local` (generalmente, usar `localhost` en vez de `172.17.0.1` como `DB_HOST`).
 2.  Un conflicto con un contenedor Docker antiguo que no se eliminó.
 
 **Sigue estos 4 pasos en orden en tu servidor para solucionarlo de una vez por todas:**
@@ -30,7 +30,7 @@ Hemos creado un script que evita cualquier error manual.
     ```bash
     ./configure-env.sh
     ```
-    El script te pedirá los datos de tu base de datos y la URL de tu sitio, y creará un archivo `.env.local` limpio y sin errores.
+    El script te pedirá los datos de tu base de datos y la URL de tu sitio, y creará un archivo `.env.local` limpio y sin errores. **ASEGÚRATE DE USAR `172.17.0.1` COMO HOST DE LA BASE DE DATOS.**
 
 ### Paso 3: Reconstruye la imagen de Docker
 
@@ -46,7 +46,7 @@ Hemos creado un script que evita cualquier error manual.
     sudo docker run -d --restart unless-stopped --name qreasy-container -p 3001:3000 --env-file ./.env.local qreasy-app
     ```
 
-Después de estos pasos, la aplicación en `https://qr.esquel.ar` debería funcionar. Si no, revisa los logs con `sudo docker logs qreasy-container` y comprueba la configuración del Reverse Proxy en el Paso 4 de la guía de despliegue más abajo.
+Después de estos pasos, la aplicación en `https://qr.esquel.ar` debería funcionar. Si no, **ejecuta el script de diagnóstico `node check-db.js`**. Este script ahora es a prueba de errores y te dirá exactamente qué está mal.
 
 ---
 
@@ -74,18 +74,16 @@ QREasy es una aplicación web moderna y sencilla para crear, gestionar y compart
 
 Si sigues teniendo problemas después de seguir los 4 pasos principales, puedes verificar la conexión a la base de datos directamente desde la terminal de tu servidor.
 
-1.  **Asegúrate de tener las credenciales correctas** en el archivo `.env.local` ejecutando el Paso 2 de la guía principal de nuevo.
-
-2.  **Instala las dependencias necesarias** para el script de prueba (solo necesitas hacerlo una vez):
+1.  **Instala las dependencias necesarias** para el script de prueba (solo necesitas hacerlo una vez):
     ```bash
     npm install
     ```
 
-3.  **Ejecuta el script de prueba:**
+2.  **Ejecuta el script de prueba:**
     ```bash
     node check-db.js
     ```
-    El script usará las credenciales de tu archivo `.env.local` e intentará conectarse. Te dará un mensaje de **¡ÉXITO!** o te mostrará un **ERROR** detallado que nos ayudará a encontrar el problema exacto (IP incorrecta, contraseña inválida, firewall, etc.).
+    El script usará las credenciales de tu archivo `.env.local` e intentará conectarse. Te dará un mensaje de **¡ÉXITO!** o te mostrará un **ERROR** detallado que te dirá exactamente cuál es el problema (IP incorrecta, contraseña inválida, firewall, etc.).
 
 ---
 

@@ -12,16 +12,6 @@ let pool: mysql.Pool | null = null;
 function getPool(): mysql.Pool {
     if (pool) return pool;
 
-    // Log environment variables for debugging purposes inside the container.
-    // This will help diagnose if the .env.local file is being loaded correctly.
-    console.log("--- [QREASY_DOCKER_DEBUG] Imprimiendo variables de entorno ---");
-    console.log(`DB_HOST: ${process.env.DB_HOST ? 'Cargado' : 'NO CARGADO'}`);
-    console.log(`DB_USER: ${process.env.DB_USER ? 'Cargado' : 'NO CARGADO'}`);
-    console.log(`DB_PASSWORD: ${process.env.DB_PASSWORD ? 'Cargado (longitud: ' + process.env.DB_PASSWORD.length + ')' : 'NO CARGADO'}`);
-    console.log(`DB_NAME: ${process.env.DB_NAME ? 'Cargado' : 'NO CARGADO'}`);
-    console.log(`NEXT_PUBLIC_BASE_URL: ${process.env.NEXT_PUBLIC_BASE_URL ? 'Cargado' : 'NO CARGADO'}`);
-    console.log("----------------------------------------------------------");
-
     const missingVars = [];
     if (!process.env.DB_HOST) missingVars.push('DB_HOST');
     if (!process.env.DB_USER) missingVars.push('DB_USER');
@@ -175,5 +165,3 @@ export async function deleteAllQRCodesDB(): Promise<boolean> {
 export async function getQRCodeByShortId(shortId: string): Promise<QRCodeEntry | null> {
   return await getQRCodeByShortIdDB(shortId);
 }
-
-    
