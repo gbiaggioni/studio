@@ -1,11 +1,25 @@
 # 🆘 ¡ATENCIÓN! LA SOLUCIÓN DEFINITIVA ESTÁ AQUÍ 🆘
-## Si ves un error de "Configuración de la base de datos incompleta" o un "Internal Server Error 500", LEE ESTA SECCIÓN.
+## Si ves un error de "Configuración de la base de datos incompleta" o "Internal Server Error", LEE ESTA SECCIÓN.
 
-El problema casi siempre es que el contenedor Docker no está leyendo correctamente las credenciales del archivo `.env.local`. Para solucionarlo de una vez por todas, he creado un script que lo hace por ti y he mejorado el diagnóstico.
+El problema casi siempre es doble:
+1.  Un error en el archivo de entorno `.env.local` (causado por un script incompatible que ya corregimos).
+2.  Un conflicto con un contenedor Docker antiguo que no se eliminó.
 
-**Sigue estos 4 pasos en tu servidor para solucionarlo:**
+**Sigue estos 4 pasos en orden en tu servidor para solucionarlo de una vez por todas:**
 
-### Paso 1: Genera un archivo `.env.local` perfecto
+### Paso 1: Detén y Elimina el Contenedor Antiguo (¡MUY IMPORTANTE!)
+
+Cada vez que quieras actualizar, **DEBES** ejecutar esto primero para evitar conflictos de nombres.
+
+```bash
+sudo docker stop qreasy-container
+sudo docker rm qreasy-container
+```
+*(Es normal si estos comandos dan un error de "No such container", significa que no había uno corriendo).*
+
+### Paso 2: Genera un archivo `.env.local` perfecto
+
+Hemos creado un script que evita cualquier error manual.
 
 1.  Asegúrate de estar en el directorio correcto: `cd /home/esquel.org.ar/qr`
 2.  **Dale permisos de ejecución al script:**
@@ -18,35 +32,21 @@ El problema casi siempre es que el contenedor Docker no está leyendo correctame
     ```
     El script te pedirá los datos de tu base de datos y la URL de tu sitio, y creará un archivo `.env.local` limpio y sin errores.
 
-### Paso 2: Reconstruye la imagen de Docker
+### Paso 3: Reconstruye la imagen de Docker
 
-1.  Desde `/home/esquel.org.ar/qr`, reconstruye la imagen para asegurarte de que tiene el último código de diagnóstico.
+1.  Desde `/home/esquel.org.ar/qr`, reconstruye la imagen para asegurarte de que tiene el último código.
     ```bash
     sudo docker build -t qreasy-app .
     ```
 
-### Paso 3: Reinicia el contenedor con el comando correcto
+### Paso 4: Inicia el Nuevo Contenedor
 
-1.  Detén y elimina el contenedor antiguo:
-    ```bash
-    sudo docker stop qreasy-container
-    sudo docker rm qreasy-container
-    ```
-2.  Inicia el nuevo contenedor, asegurándote de que lea el nuevo archivo de entorno perfecto:
+1.  Con el archivo `.env.local` perfecto y la imagen reconstruida, inicia el nuevo contenedor:
     ```bash
     sudo docker run -d --restart unless-stopped --name qreasy-container -p 3001:3000 --env-file ./.env.local qreasy-app
     ```
 
-### Paso 4: Revisa los logs para la prueba definitiva
-
-1.  Espera unos segundos y luego revisa los logs del contenedor:
-    ```bash
-    sudo docker logs qreasy-container
-    ```
-2.  **Busca una sección que empiece con `--- [QREASY_DOCKER_DEBUG] Imprimiendo variables de entorno ---`**.
-3.  **Comprueba si tus variables `DB_HOST`, `DB_USER`, `DB_PASSWORD`, y `DB_NAME` aparecen en esa lista.**
-    *   **Si NO aparecen**, el problema sigue siendo el archivo `.env.local` o los permisos. Vuelve al Paso 1.
-    *   **Si SÍ aparecen**, el problema está en otro lugar (muy improbable), pero ahora tenemos la prueba.
+Después de estos pasos, la aplicación en `https://qr.esquel.ar` debería funcionar. Si no, revisa los logs con `sudo docker logs qreasy-container` y comprueba la configuración del Reverse Proxy en el Paso 4 de la guía de despliegue más abajo.
 
 ---
 
@@ -167,6 +167,6 @@ Esta es la guía recomendada para desplegar **QREasy** en tu servidor.
 ### Paso 6: Mantenimiento - Cómo Actualizar la Aplicación
 
 1.  Conéctate al servidor: `cd /home/esquel.org.ar/qr`
-2.  Trae los últimos cambios: `git pull origin master`
-3.  Reconstruye y reinicia el contenedor siguiendo los pasos 2 y 3 de la sección `🆘 ¡ATENCIÓN! ... 🆘`.
+2.  Trae los últimos cambios: `git pull origin main` (o `master` si es tu rama principal)
+3.  Reconstruye y reinicia el contenedor siguiendo los pasos 1, 3 y 4 de la sección `🆘 ¡ATENCIÓN! ... 🆘`.
 4.  Opcional: Limpia imágenes de Docker antiguas: `sudo docker image prune -a`

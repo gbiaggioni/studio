@@ -55,7 +55,7 @@ export default function Error({
                 </code>
               </div>
               <p className="text-muted-foreground text-base max-w-2xl mx-auto">
-                Busca una sección que empiece con <code className="bg-muted px-1.5 py-0.5 rounded-sm">--- [QREASY_DOCKER_DEBUG] Imprimiendo variables de entorno ---</code>. Si tus variables <code className="bg-muted px-1.5 py-0.5 rounded-sm">DB_HOST</code>, <code className="bg-muted px-1.5 py-0.5 rounded-sm">DB_USER</code>, etc., **NO aparecen en esa lista**, el problema está en tu archivo <code className="bg-muted px-1.5 py-0.5 rounded-sm">.env.local</code> o en el comando `docker run`. Usa el script <code className="bg-muted px-1.5 py-0.5 rounded-sm">./configure-env.sh</code> para crearlo correctamente y reinicia el contenedor como se indica en el archivo <code className="bg-muted px-1.5 py-0.5 rounded-sm">README.md</code>.
+                Busca una sección que empiece con <code className="bg-muted px-1.5 py-0.5 rounded-sm">--- [QREASY_DOCKER_DEBUG] Imprimiendo variables de entorno ---</code>. Si tus variables <code className="bg-muted px-1.5 py-0.5 rounded-sm">DB_HOST</code>, <code className="bg-muted px-1.5 py-0.5 rounded-sm">DB_USER</code>, etc., aparecen como **'NO CARGADO'**, el problema está en tu archivo <code className="bg-muted px-1.5 py-0.5 rounded-sm">.env.local</code> o en el comando `docker run`. Usa el script <code className="bg-muted px-1.5 py-0.5 rounded-sm">./configure-env.sh</code> para crearlo correctamente y reinicia el contenedor como se indica en el archivo <code className="bg-muted px-1.5 py-0.5 rounded-sm">README.md</code>.
               </p>
             </div>
           </CardContent>
@@ -88,3 +88,5 @@ export default function Error({
     </div>
   )
 }
+
+    
