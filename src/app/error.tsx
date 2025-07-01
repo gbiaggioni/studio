@@ -1,4 +1,4 @@
-'use client' // Error components must be Client Components
+'use client' // Los componentes de error deben ser componentes de cliente
 
 import { useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card'
@@ -12,7 +12,7 @@ function DatabaseConfigError({ error, reset }: { error: Error, reset: () => void
       <CardHeader>
         <CardTitle className="flex items-center text-2xl font-headline text-destructive">
           <Database className="mr-3 h-7 w-7" />
-          ¡Error de Configuración Detectado!
+          ¡Acción Requerida! Error de Configuración Detectado
         </CardTitle>
         <CardDescription>
           Tu aplicación no puede conectarse a la base de datos. Esto es un problema con el archivo <strong>.env.local</strong>. Sigue estas instrucciones para solucionarlo.
