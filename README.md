@@ -68,6 +68,24 @@ QREasy es una aplicación web moderna y sencilla para crear, gestionar y compart
 -   **Estilo:** Tailwind CSS & ShadCN UI
 -   **Base de Datos:** MariaDB / MySQL
 -   **Contenerización:** Docker
+---
+
+## 🧪 Diagnóstico de la Base de Datos
+
+Si sigues teniendo problemas después de seguir los 4 pasos principales, puedes verificar la conexión a la base de datos directamente desde la terminal de tu servidor.
+
+1.  **Asegúrate de tener las credenciales correctas** en el archivo `.env.local` ejecutando el Paso 2 de la guía principal de nuevo.
+
+2.  **Instala las dependencias necesarias** para el script de prueba (solo necesitas hacerlo una vez):
+    ```bash
+    npm install
+    ```
+
+3.  **Ejecuta el script de prueba:**
+    ```bash
+    node check-db.js
+    ```
+    El script usará las credenciales de tu archivo `.env.local` e intentará conectarse. Te dará un mensaje de **¡ÉXITO!** o te mostrará un **ERROR** detallado que nos ayudará a encontrar el problema exacto (IP incorrecta, contraseña inválida, firewall, etc.).
 
 ---
 
