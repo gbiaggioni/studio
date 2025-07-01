@@ -1,7 +1,7 @@
 import mysql from 'mysql2/promise';
 import type { RowDataPacket, ResultSetHeader } from 'mysql2/promise';
 
-// The QRCodeEntry interface is now defined here to centralize the data structure.
+// La interfaz QRCodeEntry se ha movido aquí para resolver un problema de compilación en Docker.
 export interface QRCodeEntry {
   id_db: string;
   label: string;
