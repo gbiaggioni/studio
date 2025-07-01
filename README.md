@@ -1,3 +1,4 @@
+
 # 🆘 ¡ATENCIÓN! LA SOLUCIÓN DEFINITIVA ESTÁ AQUÍ 🆘
 ## Si ves un error de "Internal Server Error" o la página no carga, LEE ESTA SECCIÓN.
 

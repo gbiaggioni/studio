@@ -8,3 +8,4 @@ export interface QRCodeEntry {
 }
 
 // QRCodeFormSchema type is now inferred and exported from @/lib/schemas.ts as QRCodeFormValues
+
