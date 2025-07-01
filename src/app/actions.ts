@@ -1,4 +1,3 @@
-
 "use server";
 
 import { revalidatePath } from 'next/cache';
@@ -86,7 +85,6 @@ export async function deleteAllQRCodesAction() {
 }
 
 export async function getQRCodeByShortId(shortId: string): Promise<QRCodeEntry | null> {
-  // getQRCodeByShortIdDB now safely returns undefined on error, which is handled by the redirect page.
   const qrCode = await getQRCodeByShortIdDB(shortId);
   return qrCode || null;
 }

@@ -1,12 +1,11 @@
-
 # 🆘 ¡ATENCIÓN! SI TIENES PROBLEMAS, LEE ESTA SECCIÓN PRIMERO 🆘
 ## Error `git pull`: "Your local changes would be overwritten"
 
-Si al ejecutar `git pull origin master` en tu servidor ves un error que dice `error: Your local changes... would be overwritten by merge`, significa que no puedes descargar las últimas correcciones.
+Si al ejecutar `git pull origin master` en tu servidor ves un error que dice `error: Your local changes... would be overwritten by merge`, significa que **NO ESTÁS DESCARGANDO LAS CORRECCIONES**.
 
-**SOLUCIÓN:** Ejecuta estos dos comandos en tu servidor para forzar la actualización:
+**SOLUCIÓN DEFINITIVA:** Ejecuta estos dos comandos en tu servidor para forzar la actualización:
 
-1.  **Descarta los cambios locales:**
+1.  **Descarta los cambios locales conflictivos:**
     ```bash
     git reset --hard HEAD
     ```
@@ -14,7 +13,7 @@ Si al ejecutar `git pull origin master` en tu servidor ves un error que dice `er
     ```bash
     git pull origin master
     ```
-Una vez que el `git pull` funcione, sigue la "Guía Definitiva de Despliegue" de abajo.
+Una vez que el `git pull` funcione, y **SOLO ENTONCES**, sigue la "Guía Definitiva de Despliegue" de abajo.
 
 ---
 ## Error `connect ECONNREFUSED 172.17.0.1:3306` 🚨
@@ -79,13 +78,13 @@ Este script evita cualquier error manual. **DEBES** ejecutarlo antes de construi
     El script te pedirá los datos de tu base de datos y la URL de tu sitio. **RECUERDA USAR `172.17.0.1` COMO HOST DE LA BASE DE DATOS.**
 
 ### Paso 3: Reconstruye la Imagen de Docker
-Este comando empaqueta la aplicación para producción.
+Este comando empaqueta la aplicación para producción. La nueva configuración del `Dockerfile` se encarga de todo automáticamente.
 ```bash
 sudo docker build -t qreasy-app .
 ```
 
 ### Paso 4: Inicia el Nuevo Contenedor con la Configuración
-Con todo listo, inicia el nuevo contenedor. 
+Con todo listo, inicia el nuevo contenedor. Este comando es más simple ahora.
 ```bash
 sudo docker run -d --restart unless-stopped --name qreasy-container -p 3001:3000 qreasy-app
 ```

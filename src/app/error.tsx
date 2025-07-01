@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card'
-import { AlertOctagon, Terminal, Database, ServerCrash, GitPullRequest } from 'lucide-react'
+import { AlertOctagon, Terminal, ServerCrash, GitPullRequest } from 'lucide-react'
 import { Button } from '@/components/ui/button';
 
 export default function Error({
