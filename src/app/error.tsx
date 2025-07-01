@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { AlertOctagon, Terminal } from 'lucide-react'
+import { AlertOctagon, Terminal, FileWarning } from 'lucide-react'
 import { Button } from '@/components/ui/button';
 
 export default function Error({
@@ -17,46 +17,65 @@ export default function Error({
   }, [error])
 
   const isConfigError = error.message.includes("La configuración de la base de datos es incompleta");
+  const isConnectionRefused = error.message.includes("ECONNREFUSED");
 
-  if (isConfigError) {
+  if (isConfigError || isConnectionRefused) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-gradient-to-br from-destructive/10 to-background">
-        <Card className="w-full max-w-3xl text-left shadow-2xl border-2 border-destructive">
+        <Card className="w-full max-w-4xl text-left shadow-2xl border-2 border-destructive">
           <CardHeader>
             <CardTitle className="flex items-center text-3xl font-headline text-destructive">
               <AlertOctagon className="mr-4 h-10 w-10" />
-              ¡ACCIÓN REQUERIDA! Error de Configuración del Entorno
+              ¡ACCIÓN REQUERIDA! Error Crítico de Entorno
             </CardTitle>
             <CardDescription className="text-lg pt-2">
-              <strong>El código de la aplicación es correcto.</strong> El problema está en la configuración de tu servidor, y ahora tenemos la prueba definitiva.
+              <strong>El código de la aplicación es correcto.</strong> El problema está en la configuración de tu servidor. Hemos detectado la causa exacta.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            <div className="bg-destructive/10 p-4 rounded-md">
-              <p className="font-semibold text-destructive">
-                Error Detectado:
-              </p>
-              <code className="text-destructive font-mono text-sm whitespace-pre-wrap mt-2 block">
-                {error.message}
-              </code>
-            </div>
             
-            <div className="space-y-4 text-center border-t border-border pt-6">
-              <h3 className="text-2xl font-semibold flex items-center justify-center">
-                <Terminal className="mr-3 h-7 w-7 text-primary" />
-                La Prueba Definitiva está en los Logs
+            {isConnectionRefused && (
+              <div className="bg-destructive/10 p-6 rounded-lg border border-destructive">
+                <h3 className="text-2xl font-semibold flex items-center text-destructive">
+                  <Terminal className="mr-3 h-7 w-7" />
+                  Causa del Problema: `ECONNREFUSED`
+                </h3>
+                <p className="mt-2 text-base text-destructive-foreground/90">
+                  Este error significa que tu servidor de base de datos está **rechazando activamente** la conexión desde Docker. Es una medida de seguridad.
+                </p>
+                <p className="mt-4 font-semibold text-lg">
+                  Solución: Sigue la guía en el archivo `README.md` para editar el archivo de configuración de tu base de datos y cambiar la directiva `bind-address`.
+                </p>
+              </div>
+            )}
+
+            {isConfigError && (
+               <div className="bg-destructive/10 p-6 rounded-lg border border-destructive">
+                <h3 className="text-2xl font-semibold flex items-center text-destructive">
+                  <FileWarning className="mr-3 h-7 w-7" />
+                  Causa del Problema: Variables de Entorno Faltantes
+                </h3>
+                <p className="mt-2 text-base text-destructive-foreground/90">
+                  Este error significa que el archivo `.env.local` con las credenciales **no se está cargando** en el contenedor Docker.
+                </p>
+                <p className="mt-4 font-semibold text-lg">
+                  Solución: Sigue la "Guía Definitiva de Despliegue en 4 Pasos" del archivo `README.md`. Asegúrate de ejecutar el script `./configure-env.sh` en el directorio correcto.
+                </p>
+              </div>
+            )}
+            
+            <div className="text-center border-t border-border pt-6">
+              <h3 className="text-xl font-semibold">
+                ¿Necesitas más pistas?
               </h3>
-              <p className="text-muted-foreground text-base max-w-2xl mx-auto">
-                Para encontrar la causa raíz, conéctate a tu servidor y ejecuta este comando para ver qué está pasando dentro del contenedor:
+              <p className="text-muted-foreground text-base max-w-2xl mx-auto mt-2">
+                Conéctate a tu servidor y ejecuta este comando para ver los logs detallados del contenedor:
               </p>
-              <div className="bg-muted p-3 rounded-md text-left">
+              <div className="bg-muted p-3 rounded-md text-left mt-3">
                 <code className="font-mono text-sm text-foreground">
                   sudo docker logs qreasy-container
                 </code>
               </div>
-              <p className="text-muted-foreground text-base max-w-2xl mx-auto">
-                Gracias a la última actualización, ahora lo primero que verás en los logs es una sección que empieza con <code className="bg-muted px-1.5 py-0.5 rounded-sm">--- [QREASY_DOCKER_DEBUG] Printing environment variables... ---</code>. Revisa esa lista. Si tus variables <code className="bg-muted px-1.5 py-0.5 rounded-sm">DB_HOST</code>, <code className="bg-muted px-1.5 py-0.5 rounded-sm">DB_USER</code>, etc., **NO APARECEN EN ESA LISTA**, el problema es 100% que tu archivo <code className="bg-muted px-1.5 py-0.5 rounded-sm">.env.local</code> no se está leyendo correctamente. Sigue la guía del `README.md` para crearlo con el script <code className="bg-muted px-1.5 py-0.5 rounded-sm">./configure-env.sh</code> y reinicia el contenedor.
-              </p>
             </div>
           </CardContent>
         </Card>
@@ -64,7 +83,7 @@ export default function Error({
     )
   }
 
-  // Fallback for other types of errors
+  // Fallback para otros tipos de errores
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-background">
       <Card className="w-full max-w-md text-center shadow-xl">
