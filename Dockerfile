@@ -1,32 +1,45 @@
-# Dockerfile
-
-# 1. Builder Stage
+# ------------------ BUILDER ------------------
+# Etapa 1: Construir la aplicación
 FROM node:20-slim AS builder
+
+# Establecer el directorio de trabajo
 WORKDIR /app
+
+# Copiar los archivos de definición de dependencias
 COPY package.json package-lock.json* ./
+
+# Instalar las dependencias
 RUN npm install
+
+# Copiar el resto de los archivos del proyecto
 COPY . .
+
+# Construir la aplicación para producción
 RUN npm run build
 
-# 2. Runner Stage
+# ------------------ RUNNER ------------------
+# Etapa 2: Crear la imagen final de producción
 FROM node:20-slim AS runner
 WORKDIR /app
 
-# Set up non-root user
+# Crear un usuario y grupo no-root para mayor seguridad
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
-# Copy standalone output
+# Copiar los archivos de la aplicación construida desde la etapa 'builder'
+# La build 'standalone' de Next.js incluye solo lo necesario para correr
 COPY --from=builder /app/.next/standalone ./
-# Copy static assets
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
-# Expose port and set user
-EXPOSE 3000
+# Establecer el usuario no-root
 USER nextjs
 
-# Start the app with environment variable debugging
-# This command will first print all environment variables visible to the container,
-# then start the Next.js application. This is the definitive test to see if
-# the --env-file flag is working as expected.
-CMD ["sh", "-c", "echo '--- [QREASY_DOCKER_DEBUG] Printing environment variables at container startup ---' && printenv && echo '--- Starting Next.js app ---' && exec node server.js"]
+# Exponer el puerto en el que corre la aplicación
+EXPOSE 3000
+
+# Variable de entorno para indicar el puerto
+ENV PORT 3000
+
+# Comando para iniciar la aplicación
+# La salida 'standalone' crea un server.js optimizado
+CMD ["node", "server.js"]
