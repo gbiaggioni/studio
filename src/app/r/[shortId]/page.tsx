@@ -1,6 +1,5 @@
-
 import { redirect, notFound } from 'next/navigation';
-import { getQRCodeByShortId } from '@/app/actions';
+import { getQRCodeByShortId } from '@/lib/db'; // Actualizado para importar directamente desde db
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';

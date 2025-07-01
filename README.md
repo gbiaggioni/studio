@@ -1,19 +1,23 @@
-# 🆘 ¡ATENCIÓN! SI TIENES PROBLEMAS, LEE ESTA SECCIÓN PRIMERO 🆘
-## Error `git pull`: "Your local changes would be overwritten"
+# 🆘 ¡ATENCIÓN! SI ESTÁS EN UN BUCLE DE ERRORES, LEE ESTA SECCIÓN PRIMERO 🆘
+## El problema es un error de `git pull` en tu servidor.
 
-Si al ejecutar `git pull origin master` en tu servidor ves un error que dice `error: Your local changes... would be overwritten by merge`, significa que **NO ESTÁS DESCARGANDO LAS CORRECCIONES**.
+Has estado viendo el mismo error una y otra vez (`La configuración de la base de datos es incompleta` o `Cannot find module './types'`) porque tu servidor **NO ESTÁ DESCARGANDO LAS CORRECCIONES**.
 
-**SOLUCIÓN DEFINITIVA:** Ejecuta estos dos comandos en tu servidor para forzar la actualización:
+El log de tu servidor lo confirma con este error:
+`error: Your local changes to the following files would be overwritten by merge`
 
-1.  **Descarta los cambios locales conflictivos:**
+**SOLUCIÓN DEFINITIVA (ejecutar en tu servidor):**
+Sigue estos dos comandos en orden para forzar la actualización y romper el bucle.
+
+1.  **Descarta los cambios locales conflictivos que están bloqueando todo:**
     ```bash
     git reset --hard HEAD
     ```
-2.  **Vuelve a intentar la descarga:**
+2.  **Vuelve a intentar la descarga del código bueno:**
     ```bash
     git pull origin master
     ```
-Una vez que el `git pull` funcione, y **SOLO ENTONCES**, sigue la "Guía Definitiva de Despliegue" de abajo.
+Una vez que el comando `git pull` funcione **sin errores**, y **SOLO ENTONCES**, sigue la "Guía Definitiva de Despliegue" de 4 pasos que está justo debajo.
 
 ---
 ## Error `connect ECONNREFUSED 172.17.0.1:3306` 🚨

@@ -84,7 +84,9 @@ export async function deleteAllQRCodesAction() {
   }
 }
 
-export async function getQRCodeByShortId(shortId: string): Promise<QRCodeEntry | null> {
+// Esta función ya no necesita ser exportada desde aquí para la redirección.
+// La página de redirección usará la importación directa desde lib/db.
+async function getQRCodeByShortId(shortId: string): Promise<QRCodeEntry | null> {
   const qrCode = await getQRCodeByShortIdDB(shortId);
   return qrCode || null;
 }
