@@ -1,14 +1,6 @@
 import mysql from 'mysql2/promise';
 import type { RowDataPacket, ResultSetHeader } from 'mysql2/promise';
-
-// La interfaz QRCodeEntry se ha movido aquí para resolver un problema de compilación en Docker.
-export interface QRCodeEntry {
-  id_db: string;
-  label: string;
-  url_destino: string;
-  short_id: string;
-  created_at: Date;
-}
+import type { QRCodeEntry } from '@/lib/types';
 
 // Singleton pool
 let pool: mysql.Pool | null = null;

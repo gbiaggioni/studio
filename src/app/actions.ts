@@ -2,7 +2,8 @@
 
 import { revalidatePath } from 'next/cache';
 import { QRCodeFormSchema } from '@/lib/schemas';
-import { addQRCodeDB, deleteQRCodeDB, deleteAllQRCodesDB, updateQRCodeDB, type QRCodeEntry } from '@/lib/db';
+import { addQRCodeDB, deleteQRCodeDB, deleteAllQRCodesDB, updateQRCodeDB } from '@/lib/db';
+import type { QRCodeEntry } from '@/lib/types';
 
 const getErrorMessage = (error: unknown): string => {
   if (error instanceof Error) return error.message;

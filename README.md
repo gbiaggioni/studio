@@ -88,7 +88,7 @@ sudo docker build -t qreasy-app .
 ```
 
 ### Paso 4: Inicia el Nuevo Contenedor con la Configuración
-Con todo listo, inicia el nuevo contenedor. Este comando es más simple ahora.
+Con todo listo, inicia el nuevo contenedor. Este comando ahora incluye la bandera `--env-file` que es crucial para que la aplicación lea las credenciales de la base de datos.
 ```bash
 sudo docker run -d --restart unless-stopped --name qreasy-container -p 3001:3000 --env-file ./.env.local qreasy-app
 ```

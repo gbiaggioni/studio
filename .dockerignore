@@ -1,19 +1,33 @@
-# Ignorar dependencias locales y logs
-node_modules
+# Archivos de configuración y logs
+.env
+.env*.local
+.env.local.backup
 npm-debug.log*
+yarn-debug.log*
 yarn-error.log*
-.DS_Store
+*.log
+logs
+**/*.log
 
-# Ignorar la carpeta de build de Next.js
+# Directorios de dependencias y builds locales
+node_modules
 .next
+dist
+build
 
-# Ignorar configuraciones de entorno que no sean .env.local
-# .env.local es necesario durante la fase de build para las variables NEXT_PUBLIC_*
-.env.development
-.env.production
-.env.test
+# Metadatos del sistema operativo
+.DS_Store
+Thumbs.db
 
-# Ignorar configuraciones de Git y VSCode
+# Configuración de Git
 .git
-.github
+.gitignore
+
+# Configuración de Docker
+Dockerfile
+
+# Configuración de editores
 .vscode
+.idea
+*.sublime-project
+*.sublime-workspace

@@ -1,44 +1,45 @@
-# Dockerfile Definitivo para QREasy
-
 # ------------------ BUILDER ------------------
+# Usa una imagen base de Node.js delgada para la etapa de construcción
 FROM node:20-slim AS builder
+
+# Establece el directorio de trabajo dentro del contenedor
 WORKDIR /app
 
-# Copia los archivos de manifiesto para cachear la instalación de dependencias
+# Instala las dependencias antes de copiar el código para aprovechar el caché de Docker
 COPY package.json package-lock.json* ./
-
-# Instala todas las dependencias (incluidas las de desarrollo para la build)
 RUN npm ci
 
-# Copia el resto del código de la aplicación.
-# .dockerignore se encargará de excluir node_modules, .git, etc.
+# Copia el resto del código fuente de la aplicación
 COPY . .
 
-# *** IMPORTANTE ***
-# La build de Next.js necesita que las variables públicas (NEXT_PUBLIC_*) estén
-# definidas. El script `configure-env.sh` crea el archivo .env.local,
-# que `next build` lee automáticamente cuando está presente en el contexto de build.
+# Asegúrate de que el archivo .env.local no se necesita para el build
+# Las variables de entorno se proporcionarán en tiempo de ejecución
 RUN npm run build
 
 # ------------------ RUNNER ------------------
+# Usa la misma imagen base delgada para la etapa de ejecución
 FROM node:20-slim AS runner
+
+# Establece el directorio de trabajo
 WORKDIR /app
 
-# Crear un usuario y grupo no-root para seguridad
+# Crea un usuario y grupo no-root para mejorar la seguridad
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
-# Copiar solo los artefactos necesarios de la build para una imagen ligera
-# gracias a la configuración `output: 'standalone'` en next.config.js
-COPY --from=builder --chown=nextjs:nodejs /app/public ./public
+# Copia los artefactos de construcción de la etapa 'builder'
+# La configuración 'output: standalone' en next.config.js agrupa todo lo necesario
+COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
-# Cambiar al usuario no-root
+# Cambia al usuario no-root
 USER nextjs
 
+# Expone el puerto en el que la aplicación Next.js se ejecutará
 EXPOSE 3000
 
-# Comando para iniciar la aplicación.
-# Las variables de entorno del servidor (DB_*) se deben pasar en el comando `docker run`.
+# El comando para iniciar el servidor de Next.js en modo producción
+# Las variables de entorno para la base de datos se deben pasar al comando `docker run`
+# usando la bandera --env-file ./.env.local
 CMD ["node", "server.js"]

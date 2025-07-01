@@ -1,3 +1,8 @@
-// Este archivo se deja vacío intencionadamente.
-// La interfaz QRCodeEntry se ha movido a src/lib/db.ts para simplificar las dependencias
-// y resolver un problema de compilación en el entorno de Docker.
+// Este archivo es la fuente única de verdad para las interfaces de datos.
+export interface QRCodeEntry {
+  id_db: string;
+  label: string;
+  url_destino: string;
+  short_id: string;
+  created_at: Date;
+}
