@@ -1,4 +1,3 @@
-
 import mysql from 'mysql2/promise';
 import type { RowDataPacket, ResultSetHeader } from 'mysql2/promise';
 import type { QRCodeEntry } from './types';
@@ -20,7 +19,9 @@ function getPool(): mysql.Pool {
     if (!process.env.DB_NAME) missingVars.push('DB_NAME');
 
     if (missingVars.length > 0) {
-        const errorMsg = `La configuración de la base de datos es incompleta. Falta(n) la(s) siguiente(s) variable(s) de entorno: ${missingVars.join(', ')}. Por favor, revisa tu archivo .env.local.`;
+        const errorMsg = `La configuración de la base de datos es incompleta. Falta(n) la(s) siguiente(s) variable(s) de entorno: ${missingVars.join(', ')}. Por favor, revisa tus logs de contenedor y el archivo .env.local.`;
+        // Log the error before throwing, so it appears in container logs
+        console.error(`[QREASY_DB_ERROR] ${errorMsg}`);
         throw new Error(errorMsg);
     }
 
