@@ -120,8 +120,8 @@ export default function Error({
   reset: () => void
 }) {
   useEffect(() => {
-    // Log the error to the console, which will be captured by Docker logs
-    console.error("[GLOBAL_ERROR_BOUNDARY]", error)
+    // Log the error to an error reporting service
+    console.error("[GLOBAL_ERROR_BOUNDARY_CLIENT]", error)
   }, [error])
 
   // Comprueba si es el error específico de configuración de la base de datos
