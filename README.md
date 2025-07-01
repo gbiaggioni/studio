@@ -97,23 +97,23 @@ Si el comando `sudo systemctl status docker` muestra un estado `failed` o `inact
     
     # Clona tu repositorio DENTRO del directorio /home/esquel.org.ar/qr
     # Al añadir la ruta al final, le dices a Git que clone el contenido ahí,
-    # en lugar de crear una nueva carpeta "studio".
-    git clone https://gbiaggioni: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@github.com/gbiaggioni/studio.git /home/esquel.org.ar/qr
+    # en lugar de crear una nueva carpeta.
+    git clone https://github.com/gbiaggioni/studio.git /home/esquel.org.ar/qr
 
     # Navega al nuevo directorio
     cd /home/esquel.org.ar/qr
     ```
 
 2.  **Configura las Variables de Entorno:**
-    *   Copia el archivo de ejemplo:
+    *   Copia el archivo de ejemplo para crear tu configuración local:
         ```bash
         cp .env.example .env.local
         ```
     *   Abre el nuevo archivo para editarlo (por ejemplo, con `nano .env.local`).
-    *   Modifica el contenido con **tus credenciales reales**. No es necesario usar comillas. Debería quedar así:
+    *   Modifica el contenido con **tus credenciales reales**. Sigue las instrucciones dentro del archivo. Debería quedar similar a esto:
         ```env
         # Credenciales de la Base de Datos
-        DB_HOST=127.0.0.1  # O la IP de tu BD si es externa
+        DB_HOST=172.17.0.1
         DB_USER=tu_usuario_de_bd
         DB_PASSWORD=tu_contraseña_de_bd
         DB_NAME=el_nombre_de_tu_bd
@@ -195,40 +195,16 @@ Ahora, tu aplicación corre en `http://localhost:3001` en el servidor. Hay que d
 
 ### Paso 5: Configurar el Firewall
 
-El último paso es decirle al firewall del servidor que permita conexiones entrantes al puerto 3001. Los servidores usan diferentes sistemas de firewall. Prueba la Opción A primero. Si falla, usa la Opción B.
+El último paso es decirle al firewall del servidor que permita conexiones entrantes al puerto 3001.
 
-#### Opción A: Usando `ufw` (Común en Ubuntu/Debian)
-
-1.  Ejecuta este comando para abrir el puerto:
-    ```bash
-    sudo ufw allow 3001/tcp
-    ```
-    Si el comando se ejecuta sin errores, ¡genial! Pasa al paso de reiniciar el servidor web. Si obtienes "ufw: command not found", tu servidor usa un firewall diferente. Pasa a la Opción B.
-
-#### Opción B: Usando `firewall-cmd` (Común en CentOS/AlmaLinux con CyberPanel)
-
-1.  Si `ufw` no fue encontrado, prueba estos comandos en su lugar:
-    ```bash
-    # Añade la regla para el puerto 3001 de forma permanente
-    sudo firewall-cmd --zone=public --add-port=3001/tcp --permanent
-
-    # Recarga el firewall para aplicar los cambios
-    sudo firewall-cmd --reload
-    ```
-    **Nota:** Si obtienes un error que dice `FirewallD is not running`, significa que el servicio de firewall está instalado pero no activo. Primero, inícialo y habilítalo con estos comandos:
-    ```bash
-    sudo systemctl start firewalld
-    sudo systemctl enable firewalld
-    ```
-    Después de activarlo, vuelve a ejecutar los comandos `firewall-cmd` de arriba.
-
-#### Paso Final (Después de la Opción A o B)
-
-1.  Reinicia el servidor web para asegurar que todos los cambios se apliquen correctamente:
-    ```bash
-    sudo systemctl restart lsws
-    ```
-
+```bash
+# Abre el puerto 3001 en el firewall de tu servidor (ejemplo para UFW en Ubuntu)
+sudo ufw allow 3001/tcp
+```
+Si usas otro firewall, consulta su documentación. Después, reinicia el servidor web:
+```bash
+sudo systemctl restart lsws
+```
 ¡Listo! `https://qr.esquel.org.ar` debería mostrar tu aplicación.
 
 ---
@@ -238,14 +214,25 @@ El último paso es decirle al firewall del servidor que permita conexiones entra
 Cuando subas cambios a GitHub, el proceso de actualización es muy sencillo:
 
 1.  Conéctate al servidor y ve al directorio del proyecto: `cd /home/esquel.org.ar/qr`
-2.  Detén y elimina el contenedor antiguo:
+    
+2.  Trae los últimos cambios del código. **La rama principal de este proyecto es `main`**.
+    ```bash
+    git pull origin main
+    ```
+    > **Nota:** Si `git` dice que ya estás actualizado, pero sabes que hay cambios, puede que estés en la rama `master`. Intenta con `git pull origin master`.
+
+3.  Detén y elimina el contenedor antiguo:
     ```bash
     sudo docker stop qreasy-container
     sudo docker rm qreasy-container
     ```
-3.  Trae los últimos cambios del código: `git pull origin main`
-4.  Reconstruye la imagen de Docker con los nuevos cambios: `sudo docker build -t qreasy-app .`
-5.  Vuelve a ejecutar el contenedor con el mismo comando de siempre (¡con el puerto correcto!):
+
+4.  Reconstruye la imagen de Docker con los nuevos cambios:
+    ```bash
+    sudo docker build -t qreasy-app .
+    ```
+
+5.  Vuelve a ejecutar el contenedor con el mismo comando de siempre (¡asegúrate de estar en el directorio correcto!):
     ```bash
     sudo docker run -d --restart unless-stopped --name qreasy-container -p 3001:3000 --env-file ./.env.local qreasy-app
     ```
@@ -253,26 +240,32 @@ Cuando subas cambios a GitHub, el proceso de actualización es muy sencillo:
 
 ---
 
-## Anexo: Cómo Desinstalar Docker (Si fuera necesario)
+## 🆘 Solución de Errores Comunes
 
-**Advertencia:** Esto eliminará Docker y todos sus datos (imágenes, contenedores).
+### Error: Veo "Internal Server Error" o la página de error "Configuración Detectada".
 
-1.  **Detener servicios:**
-    ```bash
-    sudo systemctl stop docker.service
-    sudo systemctl stop docker.socket
-    ```
-2.  **Desinstalar paquetes:**
-    ```bash
-    sudo apt-get purge -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
-    ```
-3.  **Eliminar directorios residuales:**
-    ```bash
-    sudo rm -rf /var/lib/docker
-    sudo rm -rf /var/lib/containerd
-    ```
-4.  **Limpiar sistema:**
-    ```bash
-    sudo apt-get autoremove -y --purge
-    sudo apt-get clean
-    ```
+Este es el error más común y **casi siempre está relacionado con el archivo `.env.local`**.
+
+1.  **Causa Principal:** El contenedor Docker no puede encontrar o leer tus variables de entorno.
+2.  **Solución Definitiva:**
+    *   **Verifica que estás en el directorio correcto:**
+        ```bash
+        # Entra a la terminal de tu servidor y ejecuta esto:
+        cd /home/esquel.org.ar/qr
+        pwd 
+        # La salida DEBE ser /home/esquel.org.ar/qr
+        ```
+    *   **Verifica el contenido de tu archivo `.env.local`:**
+        ```bash
+        # Desde el directorio anterior, ejecuta:
+        cat .env.local
+        ```
+    *   El contenido debe ser **exactamente** así, sin comillas, sin espacios extra, y con tus credenciales reales:
+        ```env
+        DB_HOST=172.17.0.1
+        DB_USER=tu_usuario_de_bd
+        DB_PASSWORD=tu_contraseña_de_bd
+        DB_NAME=el_nombre_de_tu_bd
+        NEXT_PUBLIC_BASE_URL=https://qr.esquel.org.ar
+        ```
+    *   Si has hecho algún cambio, **repite el Paso 6 de Mantenimiento** (detener, eliminar, reconstruir y reiniciar el contenedor).

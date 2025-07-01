@@ -12,16 +12,16 @@ function DatabaseConfigError({ error, reset }: { error: Error, reset: () => void
       <CardHeader>
         <CardTitle className="flex items-center text-2xl font-headline text-destructive">
           <Database className="mr-3 h-7 w-7" />
-          Error Crítico: Falla la Conexión a la Base de Datos
+          ¡Error de Configuración Detectado!
         </CardTitle>
         <CardDescription>
-          Tu aplicación se ha iniciado, pero no puede encontrar las credenciales de la base de datos. Esto es casi siempre un problema con el archivo de configuración <strong>.env.local</strong>.
+          Tu aplicación no puede conectarse a la base de datos. Esto es un problema con el archivo <strong>.env.local</strong>. Sigue estas instrucciones para solucionarlo.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="bg-destructive/10 p-4 rounded-md">
           <p className="font-mono text-sm text-destructive font-semibold">
-            Error Reportado:
+            Mensaje de Error Exacto:
           </p>
           <code className="text-destructive font-mono text-sm whitespace-pre-wrap">
             {error.message}
@@ -29,7 +29,7 @@ function DatabaseConfigError({ error, reset }: { error: Error, reset: () => void
         </div>
         
         <div className="space-y-4">
-          <h3 className="text-lg font-semibold flex items-center"><FileCheck className="mr-2 h-5 w-5 text-primary" /> Cómo Solucionarlo: Revisa tu archivo `.env.local`</h3>
+          <h3 className="text-lg font-semibold flex items-center"><FileCheck className="mr-2 h-5 w-5 text-primary" /> Paso 1: Revisa tu archivo `.env.local`</h3>
           <p className="text-muted-foreground">
             Conéctate a tu servidor por SSH y abre este archivo para editarlo:
           </p>
@@ -54,7 +54,7 @@ function DatabaseConfigError({ error, reset }: { error: Error, reset: () => void
         </div>
         
         <div className="space-y-4">
-            <h3 className="text-lg font-semibold flex items-center"><Terminal className="mr-2 h-5 w-5 text-primary" /> Reinicia el Contenedor</h3>
+            <h3 className="text-lg font-semibold flex items-center"><Terminal className="mr-2 h-5 w-5 text-primary" /> Paso 2: Reinicia el Contenedor</h3>
             <p className="text-muted-foreground">
               Después de guardar los cambios en `.env.local`, debes reiniciar el contenedor para que los lea. Ejecuta estos 3 comandos en orden:
             </p>
@@ -81,6 +81,11 @@ function DatabaseConfigError({ error, reset }: { error: Error, reset: () => void
 
 // Componente para errores genéricos
 function GenericError({ error, reset }: { error: Error, reset: () => void }) {
+  useEffect(() => {
+    // Loguea el error en la consola del servidor para la depuración.
+    console.error("[QREASY_GENERIC_ERROR]", error);
+  }, [error]);
+
   return (
     <Card className="w-full max-w-2xl text-center shadow-xl border-destructive/50">
         <CardHeader>
@@ -120,7 +125,7 @@ export default function Error({
   reset: () => void
 }) {
   useEffect(() => {
-    // Log the error to an error reporting service
+    // Loguear el error en el lado del cliente también puede ser útil
     console.error("[GLOBAL_ERROR_BOUNDARY_CLIENT]", error)
   }, [error])
 

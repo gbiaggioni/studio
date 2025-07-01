@@ -11,7 +11,7 @@ Aceptamos contribuciones a través de Pull Requests (PRs). Aquí tienes los paso
 3.  **Crea una Rama:** Crea una nueva rama para tus cambios: `git checkout -b mi-nueva-funcionalidad`
 4.  **Realiza tus Cambios:** Implementa tu nueva característica o corrección de error.
 5.  **Confirma tus Cambios:** Haz commit de tus cambios con un mensaje claro.
-6.  **Empuja tus Cambios:** Sube tus cambios a tu fork.
+6.  **Empuja tus Cambios:** Sube tus cambios a tu fork (`git push origin mi-nueva-funcionalidad`).
 7.  **Abre un Pull Request:** Ve al repositorio original y abre un Pull Request desde tu rama a la rama `main` del proyecto.
 
 ## Configuración del Entorno de Desarrollo (con Docker)
@@ -20,21 +20,23 @@ Para trabajar en el proyecto localmente, es **obligatorio** usar Docker para ase
 
 1.  **Prerrequisitos:**
     *   [Docker Desktop](https://www.docker.com/products/docker-desktop/) instalado en tu computadora.
-    *   Una base de datos MariaDB/MySQL accesible (puede estar en otro contenedor Docker o en tu máquina local).
+    *   Una base de datos MariaDB/MySQL accesible.
 
 2.  **Configurar Variables de Entorno:**
-    *   Copia el archivo `.env.example` a un nuevo archivo llamado `.env.local`.
-    *   Abre `.env.local` y rellena las credenciales de tu base de datos y la URL base para el desarrollo local. No es necesario usar comillas. Por ejemplo:
+    *   Copia el archivo `.env.example` a un nuevo archivo llamado `.env.local`:
+        ```bash
+        cp .env.example .env.local
+        ```
+    *   Abre `.env.local` y rellena las credenciales de tu base de datos y la URL base para el desarrollo local. Sigue las instrucciones dentro del archivo.
         ```env
-        # Credenciales de la Base de Datos
+        # Ejemplo de .env.local para desarrollo
         DB_HOST=127.0.0.1
         DB_USER=qreasy_user
         DB_PASSWORD=secret_password
         DB_NAME=qreasy_db
-
-        # URL para desarrollo local
-        NEXT_PUBLIC_BASE_URL=http://localhost:3001
+        NEXT_PUBLIC_BASE_URL=http://localhost:3000
         ```
+        **Nota:** En despliegue, el `DB_HOST` probablemente será `172.17.0.1`.
 
 3.  **Construir y Ejecutar el Contenedor:**
     *   Desde la raíz del proyecto, construye la imagen:
