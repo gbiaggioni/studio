@@ -1,35 +1,50 @@
-# Fase 1: Instalación de dependencias y construcción del proyecto
+# Dockerfile
+
+# Etapa 1: Builder - Construye la aplicación
 FROM node:20-slim AS builder
 
 # Establecer el directorio de trabajo
 WORKDIR /app
 
-# Copiar los archivos de manifiesto de paquetes
-COPY package.json package-lock.json ./
+# Instalar dependencias necesarias para la build
+# Esto incluye devDependencies como 'typescript' que son necesarias para 'next build'
+COPY package.json package-lock.json* ./
+RUN npm install
 
-# Instalar las dependencias de producción
-RUN npm install --omit=dev
-
-# Copiar el resto de los archivos del proyecto
+# Copiar el resto del código fuente de la aplicación
 COPY . .
 
-# Construir la aplicación
+# Ejecutar el comando de build de Next.js
+# Esto generará la salida 'standalone' en .next/standalone
 RUN npm run build
 
-# Fase 2: Ejecución de la aplicación
+# Etapa 2: Runner - Ejecuta la aplicación optimizada
 FROM node:20-slim AS runner
-
-# Establecer el directorio de trabajo
 WORKDIR /app
 
-# Copiar el build desde la fase anterior
-COPY --from=builder /app/.next ./.next
-COPY --from=builder /app/public ./public
-COPY --from=builder /app/package.json ./package.json
-COPY --from=builder /app/node_modules ./node_modules
+ENV NODE_ENV=production
+# Deshabilitar telemetría de Next.js
+ENV NEXT_TELEMETRY_DISABLED 1
 
-# Exponer el puerto en el que correrá la aplicación
+# Crear un usuario no-root por seguridad
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nextjs
+
+# Copiar la salida 'standalone' desde la etapa de builder
+# Esta carpeta contiene solo lo necesario para ejecutar la app en producción, incluido un server.js mínimo
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+
+# Copiar las carpetas 'public' y '.next/static'
+COPY --from=builder --chown=nextjs:nodejs /app/public ./public
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+
+# Cambiar la propiedad de los archivos al usuario no-root
+USER nextjs
+
+# Exponer el puerto que Next.js usará
 EXPOSE 3000
 
-# Comando para iniciar la aplicación
-CMD ["npm", "start"]
+ENV PORT 3000
+
+# Comando para iniciar el servidor de producción de Next.js
+CMD ["node", "server.js"]

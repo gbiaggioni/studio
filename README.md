@@ -251,3 +251,5 @@ Cuando subas cambios a GitHub, el proceso de actualización es muy sencillo:
     sudo docker run -d --restart unless-stopped --name qreasy-container -p 3001:3000 --env-file ./.env.local qreasy-app
     ```
 6.  **Opcional pero recomendado:** Limpia imágenes de Docker antiguas que ya no se usan: `sudo docker image prune -a`
+
+    
