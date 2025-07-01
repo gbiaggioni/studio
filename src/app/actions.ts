@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { QRCodeFormSchema } from '@/lib/schemas';
-import { addQRCodeDB, deleteQRCodeDB, deleteAllQRCodesDB, getQRCodeByShortIdDB, updateQRCodeDB, type QRCodeEntry } from '@/lib/db';
+import { addQRCodeDB, deleteQRCodeDB, deleteAllQRCodesDB, updateQRCodeDB, type QRCodeEntry } from '@/lib/db';
 
 const getErrorMessage = (error: unknown): string => {
   if (error instanceof Error) return error.message;
@@ -82,11 +82,4 @@ export async function deleteAllQRCodesAction() {
   } catch (error) {
     return { message: getErrorMessage(error), success: false };
   }
-}
-
-// Esta función ya no necesita ser exportada desde aquí para la redirección.
-// La página de redirección usará la importación directa desde lib/db.
-async function getQRCodeByShortId(shortId: string): Promise<QRCodeEntry | null> {
-  const qrCode = await getQRCodeByShortIdDB(shortId);
-  return qrCode || null;
 }

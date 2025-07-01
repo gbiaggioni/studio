@@ -90,7 +90,7 @@ sudo docker build -t qreasy-app .
 ### Paso 4: Inicia el Nuevo Contenedor con la Configuración
 Con todo listo, inicia el nuevo contenedor. Este comando es más simple ahora.
 ```bash
-sudo docker run -d --restart unless-stopped --name qreasy-container -p 3001:3000 qreasy-app
+sudo docker run -d --restart unless-stopped --name qreasy-container -p 3001:3000 --env-file ./.env.local qreasy-app
 ```
 Después de estos 4 pasos, la aplicación en `https://qr.esquel.org.ar` debería funcionar.
 
