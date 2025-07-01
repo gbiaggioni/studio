@@ -43,9 +43,9 @@ Para trabajar en el proyecto localmente, es **obligatorio** usar Docker para ase
         ```bash
         docker build -t qreasy-app .
         ```
-    *   Ejecuta el contenedor, mapeando el puerto 3001 de tu máquina al 3000 del contenedor y pasando las variables de entorno:
+    *   Ejecuta el contenedor, pasando las variables de entorno con la bandera `--env-file`. Mapea el puerto 3001 de tu máquina al 3000 del contenedor.
         ```bash
-        docker run -p 3001:3000 --env-file ./.env.local qreasy-app
+        docker run --env-file ./.env.local -p 3001:3000 qreasy-app
         ```
     *   La aplicación estará disponible en `http://localhost:3001`.
 
