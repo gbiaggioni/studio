@@ -1,14 +1,23 @@
 
-# 🆘 ¡ATENCIÓN! LA SOLUCIÓN DEFINITIVA ESTÁ AQUÍ 🆘
-## Si ves un error de "Internal Server Error" o la página no carga, LEE ESTA SECCIÓN.
+# 🆘 ¡ATENCIÓN! SI TIENES PROBLEMAS, LEE ESTA SECCIÓN PRIMERO 🆘
+## Error `git pull`: "Your local changes would be overwritten"
 
-El problema casi siempre es uno de estos dos, en este orden de probabilidad:
-1.  **Error de `bind-address` en la Base de Datos (Error `ECONNREFUSED` en los logs).**
-2.  Un error durante la ejecución del contenedor porque no se le pasaron las credenciales (`.env.local`).
+Si al ejecutar `git pull origin master` en tu servidor ves un error que dice `error: Your local changes... would be overwritten by merge`, significa que no puedes descargar las últimas correcciones.
+
+**SOLUCIÓN:** Ejecuta estos dos comandos en tu servidor para forzar la actualización:
+
+1.  **Descarta los cambios locales:**
+    ```bash
+    git reset --hard HEAD
+    ```
+2.  **Vuelve a intentar la descarga:**
+    ```bash
+    git pull origin master
+    ```
+Una vez que el `git pull` funcione, sigue la "Guía Definitiva de Despliegue" de abajo.
 
 ---
-
-### 🚨 Solución para el error `connect ECONNREFUSED 172.17.0.1:3306` 🚨
+## Error `connect ECONNREFUSED 172.17.0.1:3306` 🚨
 Si en tus logs de Docker (`sudo docker logs qreasy-container`) ves este error, significa que **la aplicación funciona y el contenedor está bien construido**. El problema es que tu servidor de base de datos (MariaDB/MySQL) está configurado por seguridad para **rechazar** conexiones que no vengan de `localhost`. Debes cambiar esto.
 
 1.  **Conéctate a tu servidor** y abre el archivo de configuración de MariaDB/MySQL. La ubicación puede variar, pero suele estar en `/etc/mysql/mariadb.conf.d/50-server.cnf`.
@@ -76,9 +85,9 @@ sudo docker build -t qreasy-app .
 ```
 
 ### Paso 4: Inicia el Nuevo Contenedor con la Configuración
-Con todo listo, inicia el nuevo contenedor. **ESTE COMANDO ES EL MÁS IMPORTANTE**. La bandera `--env-file` le pasa tus credenciales al contenedor.
+Con todo listo, inicia el nuevo contenedor. 
 ```bash
-sudo docker run -d --restart unless-stopped --name qreasy-container --env-file ./.env.local -p 3001:3000 qreasy-app
+sudo docker run -d --restart unless-stopped --name qreasy-container -p 3001:3000 qreasy-app
 ```
 Después de estos 4 pasos, la aplicación en `https://qr.esquel.org.ar` debería funcionar.
 
