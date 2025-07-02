@@ -4,7 +4,20 @@ import React from 'react';
 import QRCode from 'qrcode.react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Printer, Trash2 } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { Printer, Trash2, AlertTriangle } from 'lucide-react';
+import { useToast } from "@/hooks/use-toast";
+import { deleteQRCodeAction } from '@/app/actions';
 import type { QRCodeEntry } from '@/lib/db';
 
 interface QRCodeCardProps {
@@ -13,7 +26,24 @@ interface QRCodeCardProps {
 }
 
 export function QRCodeCard({ qrCode, baseUrl }: QRCodeCardProps) {
+  const { toast } = useToast();
   const shortUrl = `${baseUrl}/r/${qrCode.short_id}`;
+
+  const handleDelete = async () => {
+    const result = await deleteQRCodeAction(qrCode.id_db);
+    if (result.success) {
+      toast({
+        title: "¡Éxito!",
+        description: result.message,
+      });
+    } else {
+      toast({
+        title: "Error",
+        description: result.message || "No se pudo eliminar el código QR.",
+        variant: "destructive",
+      });
+    }
+  };
 
   return (
     <Card className="w-full max-w-sm shadow-lg hover:shadow-xl transition-shadow duration-300" aria-labelledby={`card-title-${qrCode.id_db}`}>
@@ -50,9 +80,29 @@ export function QRCodeCard({ qrCode, baseUrl }: QRCodeCardProps) {
         <Button variant="outline" disabled>
           <Printer className="mr-2 h-4 w-4" /> Imprimir
         </Button>
-        <Button variant="destructive" disabled>
-          <Trash2 className="mr-2 h-4 w-4" /> Eliminar
-        </Button>
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button variant="destructive">
+              <Trash2 className="mr-2 h-4 w-4" /> Eliminar
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle className="flex items-center">
+                <AlertTriangle className="text-destructive mr-2" /> ¿Estás seguro?
+              </AlertDialogTitle>
+              <AlertDialogDescription>
+                Esta acción no se puede deshacer. Esto eliminará permanentemente el código QR para "{qrCode.label}".
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">
+                Sí, eliminar
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </CardFooter>
     </Card>
   );
