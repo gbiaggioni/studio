@@ -1,56 +1,53 @@
-# ------------------ BUILDER ------------------
-# Usa una imagen oficial de Node.js como base.
-FROM node:20-slim AS builder
+# Dockerfile definitivo para QREasy - Sigue las mejores prácticas de Next.js
 
-# Establece el directorio de trabajo en la app.
+# ------------------ BUILDER ------------------
+# Utiliza una imagen ligera de Node.js para la etapa de construcción
+FROM node:20-slim AS builder
 WORKDIR /app
 
-# Copia los archivos de definición de dependencias.
-COPY package*.json ./
+# Instala openssl, que a veces es necesario para la compilación de dependencias nativas.
+RUN apt-get update && apt-get install -y --no-install-recommends openssl
 
-# Instala las dependencias. `npm ci` es más rápido y seguro para builds.
+# Copia los archivos de manifiesto del paquete y el lockfile
+COPY package.json package-lock.json* ./
+
+# Instala las dependencias. Usamos `npm ci` para instalaciones limpias y reproducibles.
 RUN npm ci
 
-# Copia el resto de los archivos de la aplicación.
-# (El .dockerignore se encarga de no copiar node_modules, etc.)
+# Copia el resto del código fuente. Se hace después de `npm ci` para aprovechar el caché de capas de Docker.
 COPY . .
 
-# ANTES de construir, asegúrate de que el .env.local exista.
-# El script de despliegue DEBE haberlo creado.
-RUN if [ ! -f .env.local ]; then \
-      echo ""; \
-      echo "--> ERROR: El archivo .env.local no existe."; \
-      echo "--> Por favor, créalo ejecutando './configure-env.sh' ANTES de construir la imagen."; \
-      echo ""; \
-      exit 1; \
-    fi
-
-# Construye la aplicación para producción.
+# *** ¡IMPORTANTE! ***
+# La construcción debe ser agnóstica al entorno.
+# NO dependemos de variables de entorno en tiempo de build.
+# Las credenciales de la BD se pasarán al contenedor en tiempo de ejecución.
 RUN npm run build
 
 # ------------------ RUNNER ------------------
-# Usa una imagen de Node.js más pequeña para producción.
+# Utiliza una imagen aún más ligera para la etapa de ejecución
 FROM node:20-slim AS runner
-
-# Establece el directorio de trabajo.
 WORKDIR /app
 
-# Establece el entorno a producción.
-ENV NODE_ENV=production
+# Crea un usuario no privilegiado para mayor seguridad
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nextjs
 
-# Copia el archivo .env.local desde el contexto de build original.
-# Next.js lo leerá automáticamente.
-COPY .env.local ./.env.local
-
-# Copia los artefactos de build desde la etapa 'builder'.
-# Next.js genera una versión "standalone" para despliegues ligeros.
+# Copia los artefactos de la construcción desde la etapa 'builder'
+# .next/standalone contiene solo los archivos necesarios para producción
 COPY --from=builder /app/public ./public
-COPY --from=builder /app/next.config.js ./next.config.js
-COPY --from=builder /app/.next/standalone ./
-COPY --from=builder /app/.next/static ./.next/static
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
-# Expone el puerto 3000, que es el que usa Next.js por defecto.
+# Cambia al usuario no privilegiado
+USER nextjs
+
+# Expone el puerto en el que la aplicación se ejecutará dentro del contenedor
 EXPOSE 3000
 
+# Define la variable de entorno para el puerto
+ENV PORT 3000
+
 # El comando para iniciar la aplicación.
+# Las variables de entorno (DB_HOST, etc.) se deben pasar
+# usando la opción `--env-file` en el comando `docker run`.
 CMD ["node", "server.js"]

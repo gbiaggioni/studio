@@ -82,15 +82,15 @@ Este script evita cualquier error manual. **DEBES** ejecutarlo antes de construi
     El script te pedirá los datos de tu base de datos y la URL de tu sitio. **RECUERDA USAR `172.17.0.1` COMO HOST DE LA BASE DE DATOS.**
 
 ### Paso 3: Reconstruye la Imagen de Docker
-Este comando empaqueta la aplicación para producción. La nueva configuración del `Dockerfile` se encarga de todo automáticamente.
+Este comando empaqueta la aplicación para producción.
 ```bash
 sudo docker build -t qreasy-app .
 ```
 
 ### Paso 4: Inicia el Nuevo Contenedor
-Con todo listo, inicia el nuevo contenedor. Este comando es más simple ahora porque el `Dockerfile` ya se encarga de las variables de entorno.
+Con todo listo, inicia el nuevo contenedor. Este comando ahora incluye el flag `--env-file` que es **crucial** para que la aplicación funcione.
 ```bash
-sudo docker run -d --restart unless-stopped --name qreasy-container -p 3001:3000 qreasy-app
+sudo docker run -d --restart unless-stopped --name qreasy-container -p 3001:3000 --env-file ./.env.local qreasy-app
 ```
 Después de estos 4 pasos, la aplicación en `https://qr.esquel.org.ar` debería funcionar.
 
