@@ -46,7 +46,7 @@ echo "----------------------------------------------------"
 echo ""
 echo "Próximos pasos recomendados:"
 echo "1. Reconstruye tu imagen de Docker: sudo docker build -t qreasy-app ."
-echo "2. Inicia tu nuevo contenedor con el comando correcto (¡copia y pega!):"
-echo "   sudo docker run -d --restart unless-stopped --name qreasy-container -p 3001:3000 --env-file ./.env.local qreasy-app"
+echo "2. Inicia tu nuevo contenedor con el comando SIMPLIFICADO (¡copia y pega!):"
+echo "   sudo docker run -d --restart unless-stopped --name qreasy-container -p 3001:3000 qreasy-app"
 
 exit 0

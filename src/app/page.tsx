@@ -1,15 +1,30 @@
 
-import { getQRCodes } from '@/lib/db';
+import { getQRCodes, type QRCodeEntry } from '@/lib/db';
 import { QRCodeForm } from '@/components/QRCodeForm';
 import { QRCodeCard } from '@/components/QRCodeCard';
 import { DeleteAllButton } from '@/components/DeleteAllButton';
 import { Separator } from '@/components/ui/separator';
-import { QrCode } from 'lucide-react';
+import { QrCode, AlertTriangle } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 export const dynamic = 'force-dynamic';
 
 export default async function Home() {
-  const qrCodes = await getQRCodes();
+  let qrCodes: QRCodeEntry[] = [];
+  let dbError: string | null = null;
+
+  try {
+    qrCodes = await getQRCodes();
+  } catch (error) {
+    // Log the actual error to the server console for debugging
+    console.error("[QREASY_DB_ERROR]", error);
+    if (error instanceof Error) {
+      dbError = error.message;
+    } else {
+      dbError = "Ocurrió un error desconocido al conectar con la base de datos.";
+    }
+  }
+
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://qr.esquel.ar';
 
   return (
@@ -25,6 +40,18 @@ export default async function Home() {
       </header>
 
       <main className="w-full max-w-5xl flex flex-col items-center space-y-12">
+        
+        {dbError && (
+          <Alert variant="destructive" className="w-full">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertTitle>Error de Conexión con la Base de Datos</AlertTitle>
+            <AlertDescription>
+              No se pudo establecer conexión con la base de datos. Si estás en un entorno de desarrollo, esto es esperado si no has configurado un archivo <code className="font-mono text-xs bg-muted px-1 rounded-md">.env.local</code>. En producción, revisa tus variables de entorno y la configuración del servidor.
+              <p className="font-mono text-xs mt-2 bg-destructive/20 p-2 rounded-md">{dbError}</p>
+            </AlertDescription>
+          </Alert>
+        )}
+
         <section className="w-full flex justify-center" aria-labelledby="create-qr-heading">
            <h2 id="create-qr-heading" className="sr-only">Crear Código QR</h2>
           <QRCodeForm />
@@ -38,7 +65,11 @@ export default async function Home() {
             {qrCodes.length > 0 && <DeleteAllButton />}
           </div>
 
-          {qrCodes.length === 0 ? (
+          {dbError ? (
+             <p className="text-center text-muted-foreground text-lg py-10">
+              No se pueden cargar los códigos QR debido al error de conexión.
+            </p>
+          ) : qrCodes.length === 0 ? (
             <p className="text-center text-muted-foreground text-lg py-10">
               Aún no hay códigos QR. ¡Agrega uno usando el formulario de arriba!
             </p>

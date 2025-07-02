@@ -1,33 +1,17 @@
-# Archivos de configuración y logs
+.DS_Store
+.dockerignore
+.env.development.local
+.env.local
+.env.production.local
 .env
-.env*.local
-.env.local.backup
+.git
+.github
+.next
+.vscode
+*.lock
+*.log
+node_modules
 npm-debug.log*
+README.md
 yarn-debug.log*
 yarn-error.log*
-*.log
-logs
-**/*.log
-
-# Directorios de dependencias y builds locales
-node_modules
-.next
-dist
-build
-
-# Metadatos del sistema operativo
-.DS_Store
-Thumbs.db
-
-# Configuración de Git
-.git
-.gitignore
-
-# Configuración de Docker
-Dockerfile
-
-# Configuración de editores
-.vscode
-.idea
-*.sublime-project
-*.sublime-workspace

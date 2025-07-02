@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect, useTransition } from 'react';
@@ -11,10 +12,10 @@ import { Input } from "@/components/ui/input";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Printer, Trash2, Copy, Pencil } from 'lucide-react';
-import type { QRCodeEntry } from '@/lib/types';
 import { QRCodeFormSchema, type QRCodeFormValues } from '@/lib/schemas';
 import { deleteQRCodeAction, updateQRCodeAction } from '@/app/actions';
 import { useToast } from '@/hooks/use-toast';
+import type { QRCodeEntry } from '@/lib/db';
 
 interface QRCodeCardProps {
   qrCode: QRCodeEntry;
@@ -23,7 +24,6 @@ interface QRCodeCardProps {
 
 export function QRCodeCard({ qrCode, baseUrl }: QRCodeCardProps) {
   const { toast } = useToast();
-  const [isMounted, setIsMounted] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
 
@@ -37,10 +37,6 @@ export function QRCodeCard({ qrCode, baseUrl }: QRCodeCardProps) {
       url_destino: qrCode.url_destino,
     },
   });
-
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
 
   useEffect(() => {
     if (isEditDialogOpen) {
@@ -166,27 +162,6 @@ export function QRCodeCard({ qrCode, baseUrl }: QRCodeCardProps) {
       toast({ title: "Error", description: "Error al copiar la URL.", variant: "destructive" });
     });
   };
-
-  if (!isMounted) {
-    return (
-      <Card className="w-full max-w-sm shadow-lg animate-pulse">
-        <CardHeader>
-          <div className="h-6 bg-muted rounded w-3/4"></div>
-        </CardHeader>
-        <CardContent className="flex flex-col items-center space-y-4">
-          <div className="bg-muted rounded-md p-4">
-            <div className="w-40 h-40 bg-muted-foreground/20 rounded"></div>
-          </div>
-          <div className="h-4 bg-muted rounded w-full"></div>
-          <div className="h-4 bg-muted rounded w-5/6"></div>
-        </CardContent>
-        <CardFooter className="flex justify-between">
-          <div className="h-10 bg-muted rounded w-20"></div>
-          <div className="h-10 bg-muted rounded w-20"></div>
-        </CardFooter>
-      </Card>
-    );
-  }
 
   return (
     <Card className="w-full max-w-sm shadow-lg hover:shadow-xl transition-shadow duration-300" aria-labelledby={`card-title-${qrCode.id_db}`}>

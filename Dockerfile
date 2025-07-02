@@ -1,45 +1,56 @@
 # ------------------ BUILDER ------------------
-# Usa una imagen base de Node.js delgada para la etapa de construcción
+# Usa una imagen oficial de Node.js como base.
 FROM node:20-slim AS builder
 
-# Establece el directorio de trabajo dentro del contenedor
+# Establece el directorio de trabajo en la app.
 WORKDIR /app
 
-# Instala las dependencias antes de copiar el código para aprovechar el caché de Docker
-COPY package.json package-lock.json* ./
+# Copia los archivos de definición de dependencias.
+COPY package*.json ./
+
+# Instala las dependencias. `npm ci` es más rápido y seguro para builds.
 RUN npm ci
 
-# Copia el resto del código fuente de la aplicación
+# Copia el resto de los archivos de la aplicación.
+# (El .dockerignore se encarga de no copiar node_modules, etc.)
 COPY . .
 
-# Asegúrate de que el archivo .env.local no se necesita para el build
-# Las variables de entorno se proporcionarán en tiempo de ejecución
+# ANTES de construir, asegúrate de que el .env.local exista.
+# El script de despliegue DEBE haberlo creado.
+RUN if [ ! -f .env.local ]; then \
+      echo ""; \
+      echo "--> ERROR: El archivo .env.local no existe."; \
+      echo "--> Por favor, créalo ejecutando './configure-env.sh' ANTES de construir la imagen."; \
+      echo ""; \
+      exit 1; \
+    fi
+
+# Construye la aplicación para producción.
 RUN npm run build
 
 # ------------------ RUNNER ------------------
-# Usa la misma imagen base delgada para la etapa de ejecución
+# Usa una imagen de Node.js más pequeña para producción.
 FROM node:20-slim AS runner
 
-# Establece el directorio de trabajo
+# Establece el directorio de trabajo.
 WORKDIR /app
 
-# Crea un usuario y grupo no-root para mejorar la seguridad
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
+# Establece el entorno a producción.
+ENV NODE_ENV=production
 
-# Copia los artefactos de construcción de la etapa 'builder'
-# La configuración 'output: standalone' en next.config.js agrupa todo lo necesario
+# Copia el archivo .env.local desde el contexto de build original.
+# Next.js lo leerá automáticamente.
+COPY .env.local ./.env.local
+
+# Copia los artefactos de build desde la etapa 'builder'.
+# Next.js genera una versión "standalone" para despliegues ligeros.
 COPY --from=builder /app/public ./public
-COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+COPY --from=builder /app/next.config.js ./next.config.js
+COPY --from=builder /app/.next/standalone ./
+COPY --from=builder /app/.next/static ./.next/static
 
-# Cambia al usuario no-root
-USER nextjs
-
-# Expone el puerto en el que la aplicación Next.js se ejecutará
+# Expone el puerto 3000, que es el que usa Next.js por defecto.
 EXPOSE 3000
 
-# El comando para iniciar el servidor de Next.js en modo producción
-# Las variables de entorno para la base de datos se deben pasar al comando `docker run`
-# usando la bandera --env-file ./.env.local
+# El comando para iniciar la aplicación.
 CMD ["node", "server.js"]
