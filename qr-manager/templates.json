@@ -1,0 +1,324 @@
+[
+    {
+        "id": 1,
+        "name": "Instagram Profile",
+        "category": "Redes Sociales",
+        "description": "QR para perfil de Instagram con colores oficiales",
+        "icon": "fab fa-instagram",
+        "url_pattern": "https://instagram.com/{username}",
+        "style": {
+            "size": 300,
+            "foreground_color": "#E4405F",
+            "background_color": "#FFFFFF",
+            "error_correction": "M",
+            "frame_style": "rounded",
+            "frame_color": "#E4405F",
+            "corner_style": "rounded",
+            "data_style": "circle"
+        },
+        "fields": [
+            {
+                "name": "username",
+                "label": "Usuario de Instagram",
+                "type": "text",
+                "placeholder": "tu_usuario",
+                "required": true
+            }
+        ]
+    },
+    {
+        "id": 2,
+        "name": "Facebook Page",
+        "category": "Redes Sociales",
+        "description": "QR para página de Facebook con branding oficial",
+        "icon": "fab fa-facebook",
+        "url_pattern": "https://facebook.com/{page}",
+        "style": {
+            "size": 300,
+            "foreground_color": "#1877F2",
+            "background_color": "#FFFFFF",
+            "error_correction": "M",
+            "frame_style": "solid",
+            "frame_color": "#1877F2",
+            "corner_style": "square",
+            "data_style": "square"
+        },
+        "fields": [
+            {
+                "name": "page",
+                "label": "Nombre de la página",
+                "type": "text",
+                "placeholder": "tu-pagina",
+                "required": true
+            }
+        ]
+    },
+    {
+        "id": 3,
+        "name": "LinkedIn Profile",
+        "category": "Redes Sociales",
+        "description": "QR profesional para perfil de LinkedIn",
+        "icon": "fab fa-linkedin",
+        "url_pattern": "https://linkedin.com/in/{profile}",
+        "style": {
+            "size": 300,
+            "foreground_color": "#0A66C2",
+            "background_color": "#FFFFFF",
+            "error_correction": "H",
+            "frame_style": "solid",
+            "frame_color": "#0A66C2",
+            "corner_style": "square",
+            "data_style": "square"
+        },
+        "fields": [
+            {
+                "name": "profile",
+                "label": "Perfil de LinkedIn",
+                "type": "text",
+                "placeholder": "tu-nombre-apellido",
+                "required": true
+            }
+        ]
+    },
+    {
+        "id": 4,
+        "name": "WhatsApp Chat",
+        "category": "Contacto",
+        "description": "QR para iniciar chat directo en WhatsApp",
+        "icon": "fab fa-whatsapp",
+        "url_pattern": "https://wa.me/{phone}?text={message}",
+        "style": {
+            "size": 300,
+            "foreground_color": "#25D366",
+            "background_color": "#FFFFFF",
+            "error_correction": "M",
+            "frame_style": "rounded",
+            "frame_color": "#25D366",
+            "corner_style": "rounded",
+            "data_style": "circle"
+        },
+        "fields": [
+            {
+                "name": "phone",
+                "label": "Número de teléfono",
+                "type": "tel",
+                "placeholder": "1234567890",
+                "required": true,
+                "help": "Solo números, sin + ni espacios"
+            },
+            {
+                "name": "message",
+                "label": "Mensaje predefinido",
+                "type": "textarea",
+                "placeholder": "Hola, me contacto desde tu QR",
+                "required": false
+            }
+        ]
+    },
+    {
+        "id": 5,
+        "name": "Menú Digital",
+        "category": "Restaurante",
+        "description": "QR para menú digital de restaurante",
+        "icon": "fas fa-utensils",
+        "url_pattern": "{menu_url}",
+        "style": {
+            "size": 400,
+            "foreground_color": "#D4AF37",
+            "background_color": "#FFFFFF",
+            "error_correction": "H",
+            "frame_style": "rounded",
+            "frame_color": "#D4AF37",
+            "corner_style": "rounded",
+            "data_style": "circle"
+        },
+        "fields": [
+            {
+                "name": "menu_url",
+                "label": "URL del menú",
+                "type": "url",
+                "placeholder": "https://tu-restaurante.com/menu",
+                "required": true
+            }
+        ]
+    },
+    {
+        "id": 6,
+        "name": "WiFi Connection",
+        "category": "Tecnología",
+        "description": "QR para conectar automáticamente a WiFi",
+        "icon": "fas fa-wifi",
+        "url_pattern": "WIFI:T:{security};S:{ssid};P:{password};;",
+        "style": {
+            "size": 300,
+            "foreground_color": "#2196F3",
+            "background_color": "#FFFFFF",
+            "error_correction": "H",
+            "frame_style": "solid",
+            "frame_color": "#2196F3",
+            "corner_style": "square",
+            "data_style": "square"
+        },
+        "fields": [
+            {
+                "name": "ssid",
+                "label": "Nombre de la red WiFi",
+                "type": "text",
+                "placeholder": "Mi_WiFi",
+                "required": true
+            },
+            {
+                "name": "password",
+                "label": "Contraseña",
+                "type": "password",
+                "placeholder": "contraseña123",
+                "required": true
+            },
+            {
+                "name": "security",
+                "label": "Tipo de seguridad",
+                "type": "select",
+                "options": ["WPA", "WEP", "nopass"],
+                "default": "WPA",
+                "required": true
+            }
+        ]
+    },
+    {
+        "id": 7,
+        "name": "Google Review",
+        "category": "Marketing",
+        "description": "QR para solicitar reseñas en Google",
+        "icon": "fab fa-google",
+        "url_pattern": "https://search.google.com/local/writereview?placeid={place_id}",
+        "style": {
+            "size": 300,
+            "foreground_color": "#4285F4",
+            "background_color": "#FFFFFF",
+            "error_correction": "M",
+            "frame_style": "rounded",
+            "frame_color": "#4285F4",
+            "corner_style": "rounded",
+            "data_style": "circle"
+        },
+        "fields": [
+            {
+                "name": "place_id",
+                "label": "Place ID de Google",
+                "type": "text",
+                "placeholder": "ChIJd8BlQ2BZwokRAFUEcm_qrcA",
+                "required": true,
+                "help": "Obtén tu Place ID en developers.google.com"
+            }
+        ]
+    },
+    {
+        "id": 8,
+        "name": "vCard Contact",
+        "category": "Contacto",
+        "description": "QR para tarjeta de contacto digital",
+        "icon": "fas fa-address-card",
+        "url_pattern": "BEGIN:VCARD\nVERSION:3.0\nFN:{name}\nORG:{company}\nTEL:{phone}\nEMAIL:{email}\nURL:{website}\nEND:VCARD",
+        "style": {
+            "size": 350,
+            "foreground_color": "#2C3E50",
+            "background_color": "#FFFFFF",
+            "error_correction": "H",
+            "frame_style": "solid",
+            "frame_color": "#2C3E50",
+            "corner_style": "square",
+            "data_style": "square"
+        },
+        "fields": [
+            {
+                "name": "name",
+                "label": "Nombre completo",
+                "type": "text",
+                "placeholder": "Juan Pérez",
+                "required": true
+            },
+            {
+                "name": "company",
+                "label": "Empresa",
+                "type": "text",
+                "placeholder": "Mi Empresa S.A.",
+                "required": false
+            },
+            {
+                "name": "phone",
+                "label": "Teléfono",
+                "type": "tel",
+                "placeholder": "+1234567890",
+                "required": false
+            },
+            {
+                "name": "email",
+                "label": "Email",
+                "type": "email",
+                "placeholder": "juan@empresa.com",
+                "required": false
+            },
+            {
+                "name": "website",
+                "label": "Sitio web",
+                "type": "url",
+                "placeholder": "https://miempresa.com",
+                "required": false
+            }
+        ]
+    },
+    {
+        "id": 9,
+        "name": "Event Registration",
+        "category": "Eventos",
+        "description": "QR para registro a eventos",
+        "icon": "fas fa-calendar-plus",
+        "url_pattern": "{registration_url}",
+        "style": {
+            "size": 400,
+            "foreground_color": "#9B59B6",
+            "background_color": "#FFFFFF",
+            "error_correction": "M",
+            "frame_style": "rounded",
+            "frame_color": "#9B59B6",
+            "corner_style": "rounded",
+            "data_style": "circle"
+        },
+        "fields": [
+            {
+                "name": "registration_url",
+                "label": "URL de registro",
+                "type": "url",
+                "placeholder": "https://eventbrite.com/e/mi-evento",
+                "required": true
+            }
+        ]
+    },
+    {
+        "id": 10,
+        "name": "YouTube Channel",
+        "category": "Redes Sociales",
+        "description": "QR para canal de YouTube",
+        "icon": "fab fa-youtube",
+        "url_pattern": "https://youtube.com/c/{channel}",
+        "style": {
+            "size": 300,
+            "foreground_color": "#FF0000",
+            "background_color": "#FFFFFF",
+            "error_correction": "M",
+            "frame_style": "rounded",
+            "frame_color": "#FF0000",
+            "corner_style": "rounded",
+            "data_style": "circle"
+        },
+        "fields": [
+            {
+                "name": "channel",
+                "label": "Nombre del canal",
+                "type": "text",
+                "placeholder": "mi-canal",
+                "required": true
+            }
+        ]
+    }
+]

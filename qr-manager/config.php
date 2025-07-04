@@ -11,6 +11,8 @@ define('USERS_FILE', __DIR__ . '/users.json');
 define('REDIRECTS_FILE', __DIR__ . '/redirects.json');
 define('ANALYTICS_FILE', __DIR__ . '/analytics.json');
 define('CATEGORIES_FILE', __DIR__ . '/categories.json');
+define('TEMPLATES_FILE', __DIR__ . '/templates.json');
+define('FOLDERS_FILE', __DIR__ . '/folders.json');
 
 // Funciones auxiliares
 function loadJsonFile($file) {
@@ -401,5 +403,507 @@ function searchQrs($redirects, $searchTerm = '') {
         return strpos(strtolower($redirect['id']), $searchTerm) !== false ||
                strpos(strtolower($redirect['destination_url']), $searchTerm) !== false;
     });
+}
+
+// Funciones de Templates
+function loadTemplates() {
+    return loadJsonFile(TEMPLATES_FILE);
+}
+
+function getTemplateById($id) {
+    $templates = loadTemplates();
+    foreach ($templates as $template) {
+        if ($template['id'] == $id) {
+            return $template;
+        }
+    }
+    return null;
+}
+
+function getTemplatesByCategory($category = null) {
+    $templates = loadTemplates();
+    if (!$category) {
+        return $templates;
+    }
+    
+    return array_filter($templates, function($template) use ($category) {
+        return $template['category'] === $category;
+    });
+}
+
+function generateUrlFromTemplate($template, $data) {
+    $url = $template['url_pattern'];
+    
+    foreach ($data as $key => $value) {
+        $url = str_replace('{' . $key . '}', urlencode($value), $url);
+    }
+    
+    return $url;
+}
+
+// Funciones de Carpetas Jerárquicas
+function loadFolders() {
+    if (!file_exists(FOLDERS_FILE)) {
+        $defaultFolders = [
+            [
+                'id' => 1,
+                'name' => 'Raíz',
+                'parent_id' => null,
+                'path' => '/',
+                'color' => '#6c757d',
+                'created_at' => date('Y-m-d H:i:s'),
+                'created_by' => 'system'
+            ]
+        ];
+        saveJsonFile(FOLDERS_FILE, $defaultFolders);
+        return $defaultFolders;
+    }
+    return loadJsonFile(FOLDERS_FILE);
+}
+
+function saveFolders($folders) {
+    return saveJsonFile(FOLDERS_FILE, $folders);
+}
+
+function createFolder($name, $parentId, $color, $createdBy) {
+    $folders = loadFolders();
+    
+    // Generar nuevo ID
+    $maxId = 0;
+    foreach ($folders as $folder) {
+        if ($folder['id'] > $maxId) {
+            $maxId = $folder['id'];
+        }
+    }
+    
+    // Generar path
+    $path = '/';
+    if ($parentId) {
+        $parent = getFolderById($parentId);
+        if ($parent) {
+            $path = $parent['path'] . $name . '/';
+        }
+    } else {
+        $path = '/' . $name . '/';
+    }
+    
+    $newFolder = [
+        'id' => $maxId + 1,
+        'name' => $name,
+        'parent_id' => $parentId,
+        'path' => $path,
+        'color' => $color,
+        'created_at' => date('Y-m-d H:i:s'),
+        'created_by' => $createdBy
+    ];
+    
+    $folders[] = $newFolder;
+    saveFolders($folders);
+    
+    return $newFolder;
+}
+
+function getFolderById($id) {
+    $folders = loadFolders();
+    foreach ($folders as $folder) {
+        if ($folder['id'] == $id) {
+            return $folder;
+        }
+    }
+    return null;
+}
+
+function getFolderTree() {
+    $folders = loadFolders();
+    
+    // Organizar en árbol
+    $tree = [];
+    $folderMap = [];
+    
+    // Crear mapa de carpetas
+    foreach ($folders as $folder) {
+        $folderMap[$folder['id']] = $folder;
+        $folderMap[$folder['id']]['children'] = [];
+    }
+    
+    // Construir árbol
+    foreach ($folders as $folder) {
+        if ($folder['parent_id'] === null) {
+            $tree[] = &$folderMap[$folder['id']];
+        } else {
+            if (isset($folderMap[$folder['parent_id']])) {
+                $folderMap[$folder['parent_id']]['children'][] = &$folderMap[$folder['id']];
+            }
+        }
+    }
+    
+    return $tree;
+}
+
+// Funciones de Exportar/Importar
+function exportQRs($format = 'json', $filters = []) {
+    $redirects = loadJsonFile(REDIRECTS_FILE);
+    $categories = loadCategories();
+    
+    // Aplicar filtros si existen
+    if (!empty($filters['category_id'])) {
+        $redirects = filterQrsByCategory($redirects, $filters['category_id']);
+    }
+    
+    if (!empty($filters['search'])) {
+        $redirects = searchQrs($redirects, $filters['search']);
+    }
+    
+    // Enriquecer datos con información de categoría
+    foreach ($redirects as &$redirect) {
+        if (isset($redirect['category_id'])) {
+            $category = getCategoryById($redirect['category_id']);
+            $redirect['category_name'] = $category ? $category['name'] : 'Sin categoría';
+        } else {
+            $redirect['category_name'] = 'Sin categoría';
+        }
+        
+        // Agregar analytics básicos
+        $analytics = getQrAnalytics($redirect['id']);
+        $redirect['total_clicks'] = count($analytics);
+        $redirect['last_access'] = !empty($analytics) ? end($analytics)['timestamp'] : null;
+    }
+    
+    switch ($format) {
+        case 'csv':
+            return exportToCSV($redirects);
+        case 'excel':
+            return exportToExcel($redirects);
+        case 'json':
+        default:
+            return json_encode([
+                'export_date' => date('Y-m-d H:i:s'),
+                'total_qrs' => count($redirects),
+                'qrs' => $redirects,
+                'categories' => $categories
+            ], JSON_PRETTY_PRINT);
+    }
+}
+
+function exportToCSV($redirects) {
+    $csv = "ID,URL Destino,URL QR,Categoría,Descripción,Total Clicks,Último Acceso,Creado,Creado Por\n";
+    
+    foreach ($redirects as $redirect) {
+        $csv .= sprintf(
+            '"%s","%s","%s","%s","%s","%s","%s","%s","%s"' . "\n",
+            $redirect['id'],
+            $redirect['destination_url'],
+            $redirect['qr_url'],
+            $redirect['category_name'],
+            $redirect['description'] ?? '',
+            $redirect['total_clicks'],
+            $redirect['last_access'] ?? '',
+            $redirect['created_at'],
+            $redirect['created_by']
+        );
+    }
+    
+    return $csv;
+}
+
+function importQRs($data, $format = 'json') {
+    switch ($format) {
+        case 'json':
+            return importFromJSON($data);
+        case 'csv':
+            return importFromCSV($data);
+        default:
+            return ['success' => false, 'message' => 'Formato no soportado'];
+    }
+}
+
+function importFromJSON($jsonData) {
+    try {
+        $data = json_decode($jsonData, true);
+        
+        if (!isset($data['qrs']) || !is_array($data['qrs'])) {
+            return ['success' => false, 'message' => 'Formato JSON inválido'];
+        }
+        
+        $redirects = loadJsonFile(REDIRECTS_FILE);
+        $imported = 0;
+        $skipped = 0;
+        $errors = [];
+        
+        foreach ($data['qrs'] as $qrData) {
+            // Validar datos mínimos
+            if (!isset($qrData['destination_url']) || !isset($qrData['id'])) {
+                $errors[] = 'QR sin URL o ID: ' . json_encode($qrData);
+                continue;
+            }
+            
+            // Verificar si el ID ya existe
+            $exists = false;
+            foreach ($redirects as $existing) {
+                if ($existing['id'] === $qrData['id']) {
+                    $exists = true;
+                    break;
+                }
+            }
+            
+            if ($exists) {
+                $skipped++;
+                continue;
+            }
+            
+            // Crear nuevo QR
+            $newRedirect = [
+                'id' => $qrData['id'],
+                'destination_url' => $qrData['destination_url'],
+                'qr_url' => BASE_URL . '/redirect.php?id=' . $qrData['id'],
+                'category_id' => $qrData['category_id'] ?? null,
+                'description' => $qrData['description'] ?? '',
+                'created_at' => $qrData['created_at'] ?? date('Y-m-d H:i:s'),
+                'created_by' => $qrData['created_by'] ?? 'imported',
+                'style' => $qrData['style'] ?? getDefaultQrStyle()
+            ];
+            
+            // Crear carpeta física
+            $qrPath = QR_DIR . $newRedirect['id'];
+            if (!is_dir($qrPath)) {
+                mkdir($qrPath, 0755, true);
+            }
+            
+            $indexContent = "<?php\nheader('Location: ../../redirect.php?id=" . addslashes($newRedirect['id']) . "');\nexit;\n?>";
+            file_put_contents($qrPath . '/index.php', $indexContent);
+            
+            $redirects[] = $newRedirect;
+            $imported++;
+        }
+        
+        saveJsonFile(REDIRECTS_FILE, $redirects);
+        
+        return [
+            'success' => true,
+            'imported' => $imported,
+            'skipped' => $skipped,
+            'errors' => $errors
+        ];
+        
+    } catch (Exception $e) {
+        return ['success' => false, 'message' => 'Error al procesar JSON: ' . $e->getMessage()];
+    }
+}
+
+// Funciones de Duplicación
+function duplicateQR($originalId, $newId = null, $modifications = []) {
+    $redirects = loadJsonFile(REDIRECTS_FILE);
+    
+    // Buscar QR original
+    $original = null;
+    foreach ($redirects as $redirect) {
+        if ($redirect['id'] === $originalId) {
+            $original = $redirect;
+            break;
+        }
+    }
+    
+    if (!$original) {
+        return ['success' => false, 'message' => 'QR original no encontrado'];
+    }
+    
+    // Generar nuevo ID si no se proporciona
+    if (!$newId) {
+        $newId = $originalId . '-copy';
+        $counter = 1;
+        while (qrIdExists($newId)) {
+            $newId = $originalId . '-copy-' . $counter;
+            $counter++;
+        }
+    } else {
+        if (qrIdExists($newId)) {
+            return ['success' => false, 'message' => 'El nuevo ID ya existe'];
+        }
+    }
+    
+    // Crear copia con modificaciones
+    $duplicate = $original;
+    $duplicate['id'] = $newId;
+    $duplicate['qr_url'] = BASE_URL . '/redirect.php?id=' . $newId;
+    $duplicate['created_at'] = date('Y-m-d H:i:s');
+    $duplicate['created_by'] = $_SESSION['username'] ?? 'system';
+    
+    // Eliminar campos de actualización
+    unset($duplicate['updated_at'], $duplicate['updated_by']);
+    
+    // Aplicar modificaciones
+    foreach ($modifications as $key => $value) {
+        if ($key !== 'id') { // No permitir cambiar ID aquí
+            $duplicate[$key] = $value;
+        }
+    }
+    
+    // Crear carpeta física
+    $qrPath = QR_DIR . $newId;
+    if (!is_dir($qrPath)) {
+        mkdir($qrPath, 0755, true);
+    }
+    
+    $indexContent = "<?php\nheader('Location: ../../redirect.php?id=" . addslashes($newId) . "');\nexit;\n?>";
+    file_put_contents($qrPath . '/index.php', $indexContent);
+    
+    // Guardar estilo si existe
+    if (isset($original['style'])) {
+        saveQrStyle($newId, $duplicate['style']);
+    }
+    
+    // Agregar a la lista
+    $redirects[] = $duplicate;
+    saveJsonFile(REDIRECTS_FILE, $redirects);
+    
+    return [
+        'success' => true,
+        'new_id' => $newId,
+        'message' => 'QR duplicado exitosamente'
+    ];
+}
+
+function qrIdExists($id) {
+    $redirects = loadJsonFile(REDIRECTS_FILE);
+    foreach ($redirects as $redirect) {
+        if ($redirect['id'] === $id) {
+            return true;
+        }
+    }
+    return false;
+}
+
+// Funciones de Gestión Masiva
+function bulkUpdateQRs($qrIds, $updates) {
+    $redirects = loadJsonFile(REDIRECTS_FILE);
+    $updated = 0;
+    
+    foreach ($redirects as &$redirect) {
+        if (in_array($redirect['id'], $qrIds)) {
+            foreach ($updates as $key => $value) {
+                if ($key !== 'id') { // Proteger ID
+                    $redirect[$key] = $value;
+                }
+            }
+            $redirect['updated_at'] = date('Y-m-d H:i:s');
+            $redirect['updated_by'] = $_SESSION['username'] ?? 'system';
+            $updated++;
+        }
+    }
+    
+    if ($updated > 0) {
+        saveJsonFile(REDIRECTS_FILE, $redirects);
+    }
+    
+    return $updated;
+}
+
+function bulkDeleteQRs($qrIds) {
+    $redirects = loadJsonFile(REDIRECTS_FILE);
+    $deleted = 0;
+    
+    foreach ($qrIds as $qrId) {
+        // Eliminar carpeta física
+        $qrPath = QR_DIR . $qrId;
+        if (is_dir($qrPath)) {
+            if (file_exists($qrPath . '/index.php')) {
+                unlink($qrPath . '/index.php');
+            }
+            rmdir($qrPath);
+        }
+        $deleted++;
+    }
+    
+    // Filtrar QRs eliminados
+    $redirects = array_filter($redirects, function($redirect) use ($qrIds) {
+        return !in_array($redirect['id'], $qrIds);
+    });
+    
+    $redirects = array_values($redirects);
+    saveJsonFile(REDIRECTS_FILE, $redirects);
+    
+    return $deleted;
+}
+
+function getAdvancedStats() {
+    $redirects = loadJsonFile(REDIRECTS_FILE);
+    $categories = loadCategories();
+    $analytics = loadJsonFile(ANALYTICS_FILE);
+    
+    // Estadísticas por categoría
+    $categoryStats = [];
+    foreach ($categories as $category) {
+        $categoryStats[$category['id']] = [
+            'name' => $category['name'],
+            'color' => $category['color'],
+            'qr_count' => 0,
+            'total_clicks' => 0
+        ];
+    }
+    
+    $uncategorizedCount = 0;
+    $uncategorizedClicks = 0;
+    
+    foreach ($redirects as $redirect) {
+        $clicks = count(getQrAnalytics($redirect['id']));
+        
+        if (isset($redirect['category_id']) && isset($categoryStats[$redirect['category_id']])) {
+            $categoryStats[$redirect['category_id']]['qr_count']++;
+            $categoryStats[$redirect['category_id']]['total_clicks'] += $clicks;
+        } else {
+            $uncategorizedCount++;
+            $uncategorizedClicks += $clicks;
+        }
+    }
+    
+    if ($uncategorizedCount > 0) {
+        $categoryStats['uncategorized'] = [
+            'name' => 'Sin categoría',
+            'color' => '#6c757d',
+            'qr_count' => $uncategorizedCount,
+            'total_clicks' => $uncategorizedClicks
+        ];
+    }
+    
+    return [
+        'total_qrs' => count($redirects),
+        'total_categories' => count($categories),
+        'total_clicks' => count($analytics),
+        'category_stats' => $categoryStats,
+        'creation_trends' => getCreationTrends($redirects),
+        'top_performers' => getTopPerformingQRs($redirects, 10)
+    ];
+}
+
+function getCreationTrends($redirects) {
+    $trends = [];
+    
+    foreach ($redirects as $redirect) {
+        $month = date('Y-m', strtotime($redirect['created_at']));
+        $trends[$month] = ($trends[$month] ?? 0) + 1;
+    }
+    
+    return $trends;
+}
+
+function getTopPerformingQRs($redirects, $limit = 10) {
+    $performance = [];
+    
+    foreach ($redirects as $redirect) {
+        $clicks = count(getQrAnalytics($redirect['id']));
+        $performance[] = [
+            'id' => $redirect['id'],
+            'destination_url' => $redirect['destination_url'],
+            'clicks' => $clicks,
+            'created_at' => $redirect['created_at']
+        ];
+    }
+    
+    // Ordenar por clicks
+    usort($performance, function($a, $b) {
+        return $b['clicks'] - $a['clicks'];
+    });
+    
+    return array_slice($performance, 0, $limit);
 }
 ?>

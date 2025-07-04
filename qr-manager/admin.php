@@ -14,6 +14,9 @@ $users = loadJsonFile(USERS_FILE);
 // Cargar categorías
 $categories = loadCategories();
 
+// Cargar templates
+$templates = loadTemplates();
+
 // Procesar acciones
 if ($_POST) {
     $action = $_POST['action'] ?? '';
@@ -533,6 +536,20 @@ $analyticsSummary = getAnalyticsSummary();
                         type="button" role="tab" aria-controls="categories-management" aria-selected="false">
                     <i class="fas fa-folder me-2"></i>
                     Categorías
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="templates-tab" data-bs-toggle="tab" data-bs-target="#templates-management" 
+                        type="button" role="tab" aria-controls="templates-management" aria-selected="false">
+                    <i class="fas fa-magic me-2"></i>
+                    Templates
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="bulk-tab" data-bs-toggle="tab" data-bs-target="#bulk-management" 
+                        type="button" role="tab" aria-controls="bulk-management" aria-selected="false">
+                    <i class="fas fa-cogs me-2"></i>
+                    Gestión Masiva
                 </button>
             </li>
             <li class="nav-item" role="presentation">
@@ -1080,6 +1097,274 @@ $analyticsSummary = getAnalyticsSummary();
             </div>
         </div> <!-- Fin pestaña Categorías -->
         
+        <!-- Pestaña Templates -->
+        <div class="tab-pane fade" id="templates-management" role="tabpanel" aria-labelledby="templates-tab">
+            
+            <div class="row">
+                <div class="col-lg-8">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <i class="fas fa-magic me-2"></i>
+                                Templates Predefinidos
+                                <span class="badge bg-primary"><?php echo count($templates); ?></span>
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <!-- Filtros de templates -->
+                            <div class="filter-bar mb-3">
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <select class="form-select" id="templateCategoryFilter" onchange="filterTemplates()">
+                                            <option value="">Todas las categorías</option>
+                                            <option value="Redes Sociales">Redes Sociales</option>
+                                            <option value="Contacto">Contacto</option>
+                                            <option value="Restaurante">Restaurante</option>
+                                            <option value="Tecnología">Tecnología</option>
+                                            <option value="Marketing">Marketing</option>
+                                            <option value="Eventos">Eventos</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <input type="text" class="form-control" id="templateSearch" 
+                                               placeholder="Buscar templates..." onkeyup="filterTemplates()">
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Grid de templates -->
+                            <div class="row g-3" id="templatesGrid">
+                                <?php foreach ($templates as $template): ?>
+                                <div class="col-md-6 template-card" data-category="<?php echo $template['category']; ?>" 
+                                     data-name="<?php echo strtolower($template['name']); ?>">
+                                    <div class="card border">
+                                        <div class="card-body">
+                                            <div class="d-flex align-items-start">
+                                                <div class="me-3">
+                                                    <i class="<?php echo $template['icon']; ?> fa-2x" 
+                                                       style="color: <?php echo $template['style']['foreground_color']; ?>"></i>
+                                                </div>
+                                                <div class="flex-grow-1">
+                                                    <h6 class="card-title"><?php echo htmlspecialchars($template['name']); ?></h6>
+                                                    <p class="card-text small text-muted"><?php echo htmlspecialchars($template['description']); ?></p>
+                                                    <span class="badge bg-secondary"><?php echo $template['category']; ?></span>
+                                                </div>
+                                            </div>
+                                            <div class="mt-3">
+                                                <button type="button" class="btn btn-primary btn-sm w-100" 
+                                                        onclick="openTemplateModal(<?php echo $template['id']; ?>)">
+                                                    <i class="fas fa-magic me-1"></i>Usar Template
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <?php endforeach; ?>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-lg-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <i class="fas fa-info-circle me-2"></i>
+                                ¿Qué son los Templates?
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="alert alert-info">
+                                <h6><i class="fas fa-lightbulb me-2"></i>Templates Inteligentes</h6>
+                                <p class="mb-2 small">Los templates son plantillas prediseñadas que te permiten crear QRs profesionales en segundos.</p>
+                                <ul class="mb-0 small">
+                                    <li><strong>Redes Sociales:</strong> Instagram, Facebook, LinkedIn</li>
+                                    <li><strong>Contacto:</strong> WhatsApp, vCard</li>
+                                    <li><strong>Tecnología:</strong> WiFi automático</li>
+                                    <li><strong>Marketing:</strong> Google Reviews</li>
+                                </ul>
+                            </div>
+                            
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <h6><i class="fas fa-chart-line me-2"></i>Estadísticas de Templates</h6>
+                                    <?php 
+                                    $templateCategories = [];
+                                    foreach ($templates as $template) {
+                                        $templateCategories[$template['category']] = ($templateCategories[$template['category']] ?? 0) + 1;
+                                    }
+                                    ?>
+                                    <?php foreach ($templateCategories as $category => $count): ?>
+                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                            <small><?php echo $category; ?></small>
+                                            <strong><span class="badge bg-primary"><?php echo $count; ?></span></strong>
+                                        </div>
+                                    <?php endforeach; ?>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div> <!-- Fin pestaña Templates -->
+        
+        <!-- Pestaña Gestión Masiva -->
+        <div class="tab-pane fade" id="bulk-management" role="tabpanel" aria-labelledby="bulk-tab">
+            
+            <div class="row">
+                <div class="col-lg-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <i class="fas fa-download me-2"></i>
+                                Exportar QRs
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <form id="exportForm">
+                                <div class="mb-3">
+                                    <label for="exportFormat" class="form-label">Formato de Exportación</label>
+                                    <select class="form-select" id="exportFormat" name="format">
+                                        <option value="json">JSON (completo con configuración)</option>
+                                        <option value="csv">CSV (datos tabulares)</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="exportCategory" class="form-label">Filtrar por Categoría</label>
+                                    <select class="form-select" id="exportCategory" name="category">
+                                        <option value="">Todas las categorías</option>
+                                        <?php foreach ($categories as $category): ?>
+                                            <option value="<?php echo $category['id']; ?>">
+                                                <?php echo htmlspecialchars($category['name']); ?>
+                                            </option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="exportSearch" class="form-label">Filtrar por Texto</label>
+                                    <input type="text" class="form-control" id="exportSearch" name="search" 
+                                           placeholder="Buscar por ID o URL...">
+                                </div>
+                                
+                                <button type="button" class="btn btn-success w-100" onclick="exportQRs()">
+                                    <i class="fas fa-download me-2"></i>
+                                    Exportar QRs
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                    
+                    <div class="card mt-4">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <i class="fas fa-copy me-2"></i>
+                                Duplicar QR
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <form id="duplicateForm">
+                                <div class="mb-3">
+                                    <label for="originalQrId" class="form-label">QR Original</label>
+                                    <select class="form-select" id="originalQrId" required>
+                                        <option value="">Seleccionar QR a duplicar</option>
+                                        <?php 
+                                        $allRedirects = loadJsonFile(REDIRECTS_FILE);
+                                        foreach ($allRedirects as $redirect): 
+                                        ?>
+                                            <option value="<?php echo $redirect['id']; ?>">
+                                                <?php echo $redirect['id']; ?> - <?php echo substr($redirect['destination_url'], 0, 50); ?>...
+                                            </option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="newQrId" class="form-label">Nuevo ID (opcional)</label>
+                                    <input type="text" class="form-control" id="newQrId" 
+                                           placeholder="Deja vacío para generar automáticamente">
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="newDestinationUrl" class="form-label">Nueva URL (opcional)</label>
+                                    <input type="url" class="form-control" id="newDestinationUrl" 
+                                           placeholder="Deja vacío para mantener la original">
+                                </div>
+                                
+                                <button type="button" class="btn btn-warning w-100" onclick="duplicateQR()">
+                                    <i class="fas fa-copy me-2"></i>
+                                    Duplicar QR
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-lg-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <i class="fas fa-upload me-2"></i>
+                                Importar QRs
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="alert alert-warning">
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                <strong>Importante:</strong> Solo se importan QRs con IDs únicos. Los duplicados se omitirán.
+                            </div>
+                            
+                            <form id="importForm" enctype="multipart/form-data">
+                                <div class="mb-3">
+                                    <label for="importFile" class="form-label">Seleccionar Archivo</label>
+                                    <input type="file" class="form-control" id="importFile" name="import_file" 
+                                           accept=".json,.csv" required>
+                                    <div class="form-text">Formatos soportados: JSON, CSV</div>
+                                </div>
+                                
+                                <button type="button" class="btn btn-primary w-100" onclick="importQRs()">
+                                    <i class="fas fa-upload me-2"></i>
+                                    Importar QRs
+                                </button>
+                            </form>
+                            
+                            <div id="importProgress" class="mt-3" style="display: none;">
+                                <div class="progress">
+                                    <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                                         role="progressbar" style="width: 100%"></div>
+                                </div>
+                                <small class="text-muted">Procesando archivo...</small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card mt-4">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <i class="fas fa-chart-pie me-2"></i>
+                                Estadísticas Avanzadas
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div id="advancedStats">
+                                <div class="text-center">
+                                    <div class="spinner-border" role="status">
+                                        <span class="visually-hidden">Cargando...</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <button type="button" class="btn btn-info w-100 mt-3" onclick="loadAdvancedStats()">
+                                <i class="fas fa-sync me-2"></i>
+                                Actualizar Estadísticas
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div> <!-- Fin pestaña Gestión Masiva -->
+        
         <!-- Pestaña Analytics -->
         <div class="tab-pane fade" id="analytics-management" role="tabpanel" aria-labelledby="analytics-tab">
             
@@ -1487,6 +1772,86 @@ $analyticsSummary = getAnalyticsSummary();
         </div> <!-- Fin tab-content -->
     </div>
 
+    <!-- Modal para Template -->
+    <div class="modal fade" id="templateModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-magic me-2"></i>
+                        <span id="templateModalTitle">Crear QR desde Template</span>
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="templateForm">
+                    <div class="modal-body">
+                        <input type="hidden" id="selectedTemplateId" name="template_id">
+                        
+                        <!-- Template Info -->
+                        <div id="templateInfo" class="alert alert-info mb-3">
+                            <div class="d-flex align-items-center">
+                                <i id="templateIcon" class="fas fa-magic fa-2x me-3"></i>
+                                <div>
+                                    <h6 id="templateName" class="mb-1"></h6>
+                                    <p id="templateDescription" class="mb-0 small"></p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Template Fields (Dynamic) -->
+                        <div id="templateFields"></div>
+                        
+                        <!-- QR Configuration -->
+                        <hr>
+                        <h6><i class="fas fa-cog me-2"></i>Configuración del QR</h6>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="templateCustomId" class="form-label">ID Personalizado</label>
+                                    <input type="text" class="form-control" id="templateCustomId" name="custom_id" 
+                                           placeholder="Opcional: deje vacío para generar automáticamente">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="templateCategoryId" class="form-label">Categoría</label>
+                                    <select class="form-select" id="templateCategoryId" name="category_id">
+                                        <option value="">Sin categoría</option>
+                                        <?php foreach ($categories as $category): ?>
+                                            <option value="<?php echo $category['id']; ?>">
+                                                <?php echo htmlspecialchars($category['name']); ?>
+                                            </option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="templateDescription" class="form-label">Descripción</label>
+                            <textarea class="form-control" id="templateDescriptionInput" name="description" rows="2" 
+                                      placeholder="Descripción opcional del QR"></textarea>
+                        </div>
+                        
+                        <!-- Preview -->
+                        <div class="alert alert-secondary">
+                            <strong>Vista Previa URL:</strong>
+                            <div id="urlPreview" class="font-monospace small">Completa los campos para ver la URL</div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-magic me-2"></i>
+                            Crear QR
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal para crear categoría -->
     <div class="modal fade" id="categoryModal" tabindex="-1">
         <div class="modal-dialog">
@@ -1848,6 +2213,334 @@ $analyticsSummary = getAnalyticsSummary();
             document.body.removeChild(link);
         }
         
+        // ============ NUEVAS FUNCIONES DE TEMPLATES ============
+        
+        // Filtrar templates
+        function filterTemplates() {
+            const categoryFilter = document.getElementById('templateCategoryFilter').value;
+            const searchTerm = document.getElementById('templateSearch').value.toLowerCase();
+            const templateCards = document.querySelectorAll('.template-card');
+            
+            templateCards.forEach(card => {
+                const category = card.dataset.category;
+                const name = card.dataset.name;
+                
+                const categoryMatch = !categoryFilter || category === categoryFilter;
+                const searchMatch = !searchTerm || name.includes(searchTerm);
+                
+                if (categoryMatch && searchMatch) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        }
+        
+        // Abrir modal de template
+        function openTemplateModal(templateId) {
+            fetch(`templates-handler.php?action=get_template&id=${templateId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const template = data.template;
+                        
+                        // Llenar información del template
+                        document.getElementById('selectedTemplateId').value = template.id;
+                        document.getElementById('templateIcon').className = template.icon + ' fa-2x me-3';
+                        document.getElementById('templateName').textContent = template.name;
+                        document.getElementById('templateDescription').textContent = template.description;
+                        
+                        // Generar campos dinámicos
+                        const fieldsContainer = document.getElementById('templateFields');
+                        fieldsContainer.innerHTML = '';
+                        
+                        template.fields.forEach(field => {
+                            const fieldHtml = generateTemplateField(field);
+                            fieldsContainer.insertAdjacentHTML('beforeend', fieldHtml);
+                        });
+                        
+                        // Mostrar modal
+                        const modal = new bootstrap.Modal(document.getElementById('templateModal'));
+                        modal.show();
+                        
+                        // Agregar event listeners para preview
+                        addTemplateFieldListeners(template);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Error al cargar template');
+                });
+        }
+        
+        // Generar HTML para campo de template
+        function generateTemplateField(field) {
+            let fieldHtml = `<div class="mb-3">
+                <label for="field_${field.name}" class="form-label">${field.label}`;
+            
+            if (field.required) {
+                fieldHtml += ' <span class="text-danger">*</span>';
+            }
+            
+            fieldHtml += '</label>';
+            
+            switch (field.type) {
+                case 'textarea':
+                    fieldHtml += `<textarea class="form-control template-field" id="field_${field.name}" 
+                                    name="${field.name}" placeholder="${field.placeholder || ''}" 
+                                    ${field.required ? 'required' : ''}></textarea>`;
+                    break;
+                case 'select':
+                    fieldHtml += `<select class="form-select template-field" id="field_${field.name}" 
+                                    name="${field.name}" ${field.required ? 'required' : ''}>`;
+                    field.options.forEach(option => {
+                        const selected = option === field.default ? 'selected' : '';
+                        fieldHtml += `<option value="${option}" ${selected}>${option}</option>`;
+                    });
+                    fieldHtml += '</select>';
+                    break;
+                default:
+                    fieldHtml += `<input type="${field.type}" class="form-control template-field" 
+                                    id="field_${field.name}" name="${field.name}" 
+                                    placeholder="${field.placeholder || ''}" ${field.required ? 'required' : ''}>`;
+            }
+            
+            if (field.help) {
+                fieldHtml += `<div class="form-text">${field.help}</div>`;
+            }
+            
+            fieldHtml += '</div>';
+            return fieldHtml;
+        }
+        
+        // Agregar listeners para vista previa
+        function addTemplateFieldListeners(template) {
+            const fields = document.querySelectorAll('.template-field');
+            fields.forEach(field => {
+                field.addEventListener('input', () => updateUrlPreview(template));
+            });
+            updateUrlPreview(template);
+        }
+        
+        // Actualizar vista previa de URL
+        function updateUrlPreview(template) {
+            let url = template.url_pattern;
+            const fields = document.querySelectorAll('.template-field');
+            
+            fields.forEach(field => {
+                const placeholder = `{${field.name}}`;
+                const value = field.value || `[${field.name}]`;
+                url = url.replace(placeholder, encodeURIComponent(value));
+            });
+            
+            document.getElementById('urlPreview').textContent = url;
+        }
+        
+        // Manejar envío de formulario de template
+        document.getElementById('templateForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            
+            // Agregar datos de template
+            const templateData = {};
+            const templateFields = document.querySelectorAll('.template-field');
+            templateFields.forEach(field => {
+                templateData[field.name] = field.value;
+            });
+            
+            formData.append('action', 'create_from_template');
+            formData.append('template_data', JSON.stringify(templateData));
+            
+            fetch('templates-handler.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('QR creado exitosamente desde template!');
+                    location.reload();
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error al crear QR desde template');
+            });
+        });
+        
+        // ============ FUNCIONES DE GESTIÓN MASIVA ============
+        
+        // Exportar QRs
+        function exportQRs() {
+            const format = document.getElementById('exportFormat').value;
+            const category = document.getElementById('exportCategory').value;
+            const search = document.getElementById('exportSearch').value;
+            
+            const params = new URLSearchParams({
+                action: 'export',
+                format: format,
+                category: category,
+                search: search
+            });
+            
+            window.location.href = `bulk-handler.php?${params.toString()}`;
+        }
+        
+        // Importar QRs
+        function importQRs() {
+            const fileInput = document.getElementById('importFile');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                alert('Por favor selecciona un archivo');
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('action', 'import');
+            formData.append('import_file', file);
+            
+            // Mostrar progreso
+            document.getElementById('importProgress').style.display = 'block';
+            
+            fetch('bulk-handler.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('importProgress').style.display = 'none';
+                
+                if (data.success) {
+                    alert(`Importación exitosa!
+                    - Importados: ${data.imported}
+                    - Omitidos: ${data.skipped}
+                    ${data.errors.length > 0 ? '- Errores: ' + data.errors.length : ''}`);
+                    location.reload();
+                } else {
+                    alert('Error en importación: ' + data.message);
+                }
+            })
+            .catch(error => {
+                document.getElementById('importProgress').style.display = 'none';
+                console.error('Error:', error);
+                alert('Error al importar archivo');
+            });
+        }
+        
+        // Duplicar QR
+        function duplicateQR() {
+            const originalId = document.getElementById('originalQrId').value;
+            const newId = document.getElementById('newQrId').value;
+            const newUrl = document.getElementById('newDestinationUrl').value;
+            
+            if (!originalId) {
+                alert('Selecciona un QR original');
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('action', 'duplicate_qr');
+            formData.append('original_id', originalId);
+            formData.append('new_id', newId);
+            
+            const modifications = {};
+            if (newUrl) {
+                modifications.destination_url = newUrl;
+            }
+            formData.append('modifications', JSON.stringify(modifications));
+            
+            fetch('templates-handler.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(`QR duplicado exitosamente!
+                    Nuevo ID: ${data.new_id}`);
+                    location.reload();
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error al duplicar QR');
+            });
+        }
+        
+        // Cargar estadísticas avanzadas
+        function loadAdvancedStats() {
+            fetch('bulk-handler.php?action=get_advanced_stats')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        displayAdvancedStats(data.stats);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    document.getElementById('advancedStats').innerHTML = 
+                        '<div class="alert alert-danger">Error al cargar estadísticas</div>';
+                });
+        }
+        
+        // Mostrar estadísticas avanzadas
+        function displayAdvancedStats(stats) {
+            const container = document.getElementById('advancedStats');
+            
+            let html = `
+                <div class="row text-center mb-3">
+                    <div class="col-md-4">
+                        <h5 class="text-primary">${stats.total_qrs}</h5>
+                        <small class="text-muted">QRs Totales</small>
+                    </div>
+                    <div class="col-md-4">
+                        <h5 class="text-success">${stats.total_categories}</h5>
+                        <small class="text-muted">Categorías</small>
+                    </div>
+                    <div class="col-md-4">
+                        <h5 class="text-warning">${stats.total_clicks}</h5>
+                        <small class="text-muted">Clicks Totales</small>
+                    </div>
+                </div>
+                
+                <h6><i class="fas fa-chart-pie me-2"></i>Por Categoría</h6>
+            `;
+            
+            Object.values(stats.category_stats).forEach(category => {
+                html += `
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <div class="d-flex align-items-center">
+                            <span class="badge me-2" style="background-color: ${category.color}; width: 12px; height: 12px;"></span>
+                            <small>${category.name}</small>
+                        </div>
+                        <small><strong>${category.qr_count} QRs (${category.total_clicks} clicks)</strong></small>
+                    </div>
+                `;
+            });
+            
+            html += '<hr><h6><i class="fas fa-trophy me-2"></i>Top Performers</h6>';
+            
+            stats.top_performers.slice(0, 5).forEach((qr, index) => {
+                html += `
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <div>
+                            <span class="badge bg-secondary me-2">#${index + 1}</span>
+                            <small><code>${qr.id}</code></small>
+                        </div>
+                        <strong class="text-primary">${qr.clicks}</strong>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        }
+        
         // Auto-dismiss alerts after 5 seconds
         setTimeout(function() {
             const alerts = document.querySelectorAll('.alert');
@@ -1866,6 +2559,11 @@ $analyticsSummary = getAnalyticsSummary();
         if (document.getElementById('analytics-tab').classList.contains('active')) {
             initializeCharts();
         }
+        
+        // Cargar estadísticas al cargar la página
+        document.addEventListener('DOMContentLoaded', function() {
+            loadAdvancedStats();
+        });
         
         function initializeCharts() {
             // Device breakdown chart
