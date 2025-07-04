@@ -1,0 +1,9 @@
+[
+    {
+        "id": "ejemplo",
+        "destination_url": "https://github.com",
+        "qr_url": "http://localhost/qr-manager/qr/ejemplo",
+        "created_at": "2024-01-01 12:00:00",
+        "created_by": "admin"
+    }
+]
