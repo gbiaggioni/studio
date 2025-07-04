@@ -73,6 +73,56 @@ if ($_POST) {
             $messageType = 'success';
             break;
             
+        case 'edit':
+            $editId = $_POST['edit_id'] ?? '';
+            $newDestinationUrl = trim($_POST['new_destination_url'] ?? '');
+            
+            if (empty($newDestinationUrl)) {
+                $message = 'La nueva URL de destino es obligatoria';
+                $messageType = 'danger';
+                break;
+            }
+            
+            if (!filter_var($newDestinationUrl, FILTER_VALIDATE_URL)) {
+                $message = 'La nueva URL de destino no es válida';
+                $messageType = 'danger';
+                break;
+            }
+            
+            if ($editId) {
+                // Buscar y actualizar la redirección
+                $found = false;
+                foreach ($redirects as &$redirect) {
+                    if ($redirect['id'] === $editId) {
+                        $oldUrl = $redirect['destination_url'];
+                        $redirect['destination_url'] = $newDestinationUrl;
+                        $redirect['updated_at'] = date('Y-m-d H:i:s');
+                        $redirect['updated_by'] = $_SESSION['username'];
+                        $found = true;
+                        break;
+                    }
+                }
+                
+                if ($found) {
+                    // Guardar cambios en JSON
+                    saveJsonFile(REDIRECTS_FILE, $redirects);
+                    
+                    // Actualizar archivo index.php en la carpeta
+                    $qrPath = QR_DIR . $editId;
+                    if (is_dir($qrPath)) {
+                        $indexContent = "<?php\nheader('Location: " . addslashes($newDestinationUrl) . "');\nexit;\n?>";
+                        file_put_contents($qrPath . '/index.php', $indexContent);
+                    }
+                    
+                    $message = 'Redirección actualizada exitosamente. Nueva URL: ' . $newDestinationUrl;
+                    $messageType = 'success';
+                } else {
+                    $message = 'No se encontró la redirección especificada';
+                    $messageType = 'danger';
+                }
+            }
+            break;
+            
         case 'delete':
             $deleteId = $_POST['delete_id'] ?? '';
             
@@ -242,6 +292,7 @@ $redirects = loadJsonFile(REDIRECTS_FILE);
                                             <th>QR URL</th>
                                             <th>Código QR</th>
                                             <th>Creado</th>
+                                            <th>Última Actualización</th>
                                             <th>Acciones</th>
                                         </tr>
                                     </thead>
@@ -276,11 +327,26 @@ $redirects = loadJsonFile(REDIRECTS_FILE);
                                                     </small>
                                                 </td>
                                                 <td>
+                                                    <small>
+                                                        <?php if (isset($redirect['updated_at'])): ?>
+                                                            <?php echo htmlspecialchars($redirect['updated_at']); ?><br>
+                                                            <span class="text-muted">por <?php echo htmlspecialchars($redirect['updated_by'] ?? 'N/A'); ?></span>
+                                                        <?php else: ?>
+                                                            <span class="text-muted">Sin modificaciones</span>
+                                                        <?php endif; ?>
+                                                    </small>
+                                                </td>
+                                                <td>
                                                     <div class="btn-group" role="group">
                                                         <a href="https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=<?php echo urlencode($redirect['qr_url']); ?>" 
                                                            target="_blank" class="btn btn-sm btn-outline-primary" title="Ver QR grande">
                                                             <i class="fas fa-search-plus"></i>
                                                         </a>
+                                                        <button type="button" class="btn btn-sm btn-outline-warning" 
+                                                                onclick="editRedirect('<?php echo htmlspecialchars($redirect['id']); ?>', '<?php echo htmlspecialchars($redirect['destination_url']); ?>')" 
+                                                                title="Editar destino">
+                                                            <i class="fas fa-edit"></i>
+                                                        </button>
                                                         <button type="button" class="btn btn-sm btn-outline-danger" 
                                                                 onclick="deleteRedirect('<?php echo htmlspecialchars($redirect['id']); ?>')" 
                                                                 title="Eliminar">
@@ -323,11 +389,74 @@ $redirects = loadJsonFile(REDIRECTS_FILE);
         </div>
     </div>
 
+    <!-- Modal para editar redirección -->
+    <div class="modal fade" id="editModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-edit me-2"></i>
+                        Editar Destino QR
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form method="POST">
+                    <div class="modal-body">
+                        <input type="hidden" name="action" value="edit">
+                        <input type="hidden" name="edit_id" id="editId">
+                        
+                        <div class="mb-3">
+                            <label for="editQrId" class="form-label">ID del QR</label>
+                            <input type="text" class="form-control" id="editQrId" readonly>
+                            <div class="form-text">Este ID no se puede modificar</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="editCurrentUrl" class="form-label">URL Actual</label>
+                            <input type="text" class="form-control" id="editCurrentUrl" readonly>
+                            <div class="form-text">URL de destino actual</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="newDestinationUrl" class="form-label">Nueva URL de Destino *</label>
+                            <input type="url" class="form-control" id="newDestinationUrl" name="new_destination_url" 
+                                   placeholder="https://nueva-url.com" required>
+                            <div class="form-text">Ingrese la nueva URL a la que debe redirigir este QR</div>
+                        </div>
+                        
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            <strong>Nota:</strong> El código QR seguirá siendo el mismo, solo cambiará su destino.
+                            Los usuarios que ya tengan el QR escaneado o guardado seguirán usando la misma URL.
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-warning">
+                            <i class="fas fa-save me-2"></i>
+                            Actualizar Destino
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         function deleteRedirect(id) {
             document.getElementById('deleteId').value = id;
             const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
+            modal.show();
+        }
+        
+        function editRedirect(id, currentUrl) {
+            document.getElementById('editId').value = id;
+            document.getElementById('editQrId').value = id;
+            document.getElementById('editCurrentUrl').value = currentUrl;
+            document.getElementById('newDestinationUrl').value = currentUrl;
+            
+            const modal = new bootstrap.Modal(document.getElementById('editModal'));
             modal.show();
         }
         

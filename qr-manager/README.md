@@ -10,6 +10,7 @@ Una aplicación web completa que permite a administradores generar códigos QR q
 - 📁 **Creación automática de carpetas** en el servidor
 - 🗃️ **Almacenamiento en archivos JSON** (sin base de datos)
 - 🎨 **Interfaz moderna** con Bootstrap 5
+- ✏️ **Edición de destinos** después de crear el QR
 - 🗑️ **Eliminación de redirecciones** con limpieza automática
 - 📊 **Panel de administración** intuitivo
 
@@ -95,7 +96,22 @@ Deberías ver la página de login.
 
 - **Ver todas**: La tabla muestra todas las redirecciones creadas
 - **Ver QR grande**: Haz clic en el ícono de lupa para ver el QR en tamaño completo
+- **Editar destino**: Haz clic en el ícono de lápiz para cambiar la URL de destino
 - **Eliminar**: Haz clic en el ícono de papelera para eliminar (borra la carpeta y entrada del JSON)
+
+### 5. Editar redirecciones existentes
+
+1. En la tabla de redirecciones, haz clic en el botón de edición (ícono de lápiz)
+2. Se abrirá un modal mostrando:
+   - **ID del QR**: No se puede modificar
+   - **URL actual**: Para referencia
+   - **Nueva URL**: Campo para ingresar el nuevo destino
+3. Ingresa la nueva URL de destino
+4. Haz clic en "Actualizar Destino"
+5. El sistema actualiza automáticamente:
+   - El archivo `index.php` en la carpeta del QR
+   - La entrada en `redirects.json`
+   - Registra quién y cuándo hizo el cambio
 
 ## 📁 Estructura de archivos
 

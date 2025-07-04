@@ -37,6 +37,13 @@ Ejecuta: `https://tudominio.com/qr-manager/test-setup.php`
 4. Tu QR apuntará a: `https://tudominio.com/qr-manager/qr/mi-video`
 5. Al escanear redirige a YouTube
 
+## ✏️ Editar Redirecciones
+
+1. En la tabla, haz clic en el **ícono de lápiz** (botón amarillo)
+2. Cambia la URL de destino en el modal
+3. Haz clic en "Actualizar Destino"
+4. El QR seguirá igual, pero ahora redirige al nuevo destino
+
 ## 🔧 Archivos Principales
 
 | Archivo | Función |
