@@ -1,4 +1,4 @@
 <?php
-header('Location: https://github.com');
+header('Location: ../../redirect.php?id=ejemplo');
 exit;
 ?>

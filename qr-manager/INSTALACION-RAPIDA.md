@@ -10,6 +10,7 @@ Sube toda la carpeta `qr-manager/` a tu servidor web.
 chmod 777 qr-manager/qr/
 chmod 666 qr-manager/users.json
 chmod 666 qr-manager/redirects.json
+chmod 666 qr-manager/analytics.json
 ```
 
 ### 3. Configurar dominio
@@ -55,6 +56,15 @@ Ejecuta: `https://tudominio.com/qr-manager/test-setup.php`
 - **Administrador**: Acceso total
 - **Manager**: Gestión de QRs + usuarios limitado  
 - **Usuario**: Acceso básico
+
+## 📊 Ver Analytics
+
+1. Ve a la pestaña **"Analytics"**
+2. **Dashboard** con métricas en tiempo real:
+   - Total clicks, QRs activos, estadísticas diarias
+   - Gráfico de dispositivos interactivo  
+   - Top países y QRs más populares
+3. **Exportar reportes**: CSV, Excel, PDF con filtros de fecha
 
 ## �🔧 Archivos Principales
 

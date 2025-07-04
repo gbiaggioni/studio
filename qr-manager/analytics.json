@@ -1,0 +1,97 @@
+[
+    {
+        "id": "677c8e1a23f4c",
+        "qr_id": "ejemplo",
+        "destination_url": "https://github.com",
+        "timestamp": "2024-01-15 10:30:45",
+        "ip_address": "192.168.1.100",
+        "user_agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
+        "referrer": "",
+        "device_info": {
+            "type": "mobile",
+            "browser": "Safari",
+            "os": "iOS"
+        },
+        "location_info": {
+            "country": "Spain",
+            "city": "Madrid",
+            "region": "Madrid"
+        }
+    },
+    {
+        "id": "677c8e1b45f2a",
+        "qr_id": "ejemplo",
+        "destination_url": "https://github.com",
+        "timestamp": "2024-01-15 14:22:10",
+        "ip_address": "10.0.0.50",
+        "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36",
+        "referrer": "https://google.com",
+        "device_info": {
+            "type": "desktop",
+            "browser": "Chrome",
+            "os": "Windows"
+        },
+        "location_info": {
+            "country": "Mexico",
+            "city": "Guadalajara",
+            "region": "Jalisco"
+        }
+    },
+    {
+        "id": "677c8e1c67d8e",
+        "qr_id": "ejemplo",
+        "destination_url": "https://github.com",
+        "timestamp": "2024-01-16 09:15:30",
+        "ip_address": "172.16.0.25",
+        "user_agent": "Mozilla/5.0 (iPad; CPU OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
+        "referrer": "",
+        "device_info": {
+            "type": "tablet",
+            "browser": "Safari",
+            "os": "iOS"
+        },
+        "location_info": {
+            "country": "Colombia",
+            "city": "Bogotá",
+            "region": "Cundinamarca"
+        }
+    },
+    {
+        "id": "677c8e1d89abc",
+        "qr_id": "ejemplo",
+        "destination_url": "https://github.com",
+        "timestamp": "2024-01-16 16:45:12",
+        "ip_address": "203.0.113.42",
+        "user_agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36",
+        "referrer": "",
+        "device_info": {
+            "type": "desktop",
+            "browser": "Chrome",
+            "os": "Linux"
+        },
+        "location_info": {
+            "country": "Argentina",
+            "city": "Buenos Aires",
+            "region": "Buenos Aires"
+        }
+    },
+    {
+        "id": "677c8e1e45def",
+        "qr_id": "ejemplo",
+        "destination_url": "https://github.com",
+        "timestamp": "2024-01-16 20:30:55",
+        "ip_address": "198.51.100.123",
+        "user_agent": "Mozilla/5.0 (Android 14; Mobile; rv:119.0) Gecko/119.0 Firefox/119.0",
+        "referrer": "https://twitter.com",
+        "device_info": {
+            "type": "mobile",
+            "browser": "Firefox",
+            "os": "Android"
+        },
+        "location_info": {
+            "country": "Chile",
+            "city": "Santiago",
+            "region": "Metropolitana"
+        }
+    }
+]

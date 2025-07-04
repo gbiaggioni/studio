@@ -56,15 +56,15 @@ if ($_POST) {
                 mkdir($qrPath, 0755, true);
             }
             
-            // Crear archivo index.php en la carpeta
-            $indexContent = "<?php\nheader('Location: " . addslashes($destinationUrl) . "');\nexit;\n?>";
+            // Crear archivo index.php en la carpeta que redirige al sistema centralizado
+            $indexContent = "<?php\nheader('Location: ../../redirect.php?id=" . addslashes($qrId) . "');\nexit;\n?>";
             file_put_contents($qrPath . '/index.php', $indexContent);
             
             // Guardar en redirects.json
             $newRedirect = [
                 'id' => $qrId,
                 'destination_url' => $destinationUrl,
-                'qr_url' => QR_URL . $qrId,
+                'qr_url' => BASE_URL . '/redirect.php?id=' . $qrId,
                 'created_at' => date('Y-m-d H:i:s'),
                 'created_by' => $_SESSION['username']
             ];
@@ -110,12 +110,7 @@ if ($_POST) {
                     // Guardar cambios en JSON
                     saveJsonFile(REDIRECTS_FILE, $redirects);
                     
-                    // Actualizar archivo index.php en la carpeta
-                    $qrPath = QR_DIR . $editId;
-                    if (is_dir($qrPath)) {
-                        $indexContent = "<?php\nheader('Location: " . addslashes($newDestinationUrl) . "');\nexit;\n?>";
-                        file_put_contents($qrPath . '/index.php', $indexContent);
-                    }
+                    // No necesitamos actualizar archivo físico porque el sistema centralizado maneja las redirecciones
                     
                     $message = 'Redirección actualizada exitosamente. Nueva URL: ' . $newDestinationUrl;
                     $messageType = 'success';
@@ -337,6 +332,9 @@ if ($_POST) {
 // Recargar datos después de cambios
 $redirects = loadJsonFile(REDIRECTS_FILE);
 $users = loadJsonFile(USERS_FILE);
+
+// Cargar datos de analytics
+$analyticsSummary = getAnalyticsSummary();
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -418,6 +416,13 @@ $users = loadJsonFile(USERS_FILE);
                         type="button" role="tab" aria-controls="qr-management" aria-selected="true">
                     <i class="fas fa-qrcode me-2"></i>
                     Gestión de QRs
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="analytics-tab" data-bs-toggle="tab" data-bs-target="#analytics-management" 
+                        type="button" role="tab" aria-controls="analytics-management" aria-selected="false">
+                    <i class="fas fa-chart-bar me-2"></i>
+                    Analytics
                 </button>
             </li>
             <li class="nav-item" role="presentation">
@@ -570,6 +575,249 @@ $users = loadJsonFile(USERS_FILE);
         </div>
         
         </div> <!-- Fin pestaña QR Management -->
+        
+        <!-- Pestaña Analytics -->
+        <div class="tab-pane fade" id="analytics-management" role="tabpanel" aria-labelledby="analytics-tab">
+            
+            <!-- Métricas generales -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <i class="fas fa-mouse-pointer fa-2x text-primary mb-2"></i>
+                            <h5 class="card-title"><?php echo number_format($analyticsSummary['total_clicks']); ?></h5>
+                            <p class="card-text text-muted">Total Clicks</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <i class="fas fa-qrcode fa-2x text-success mb-2"></i>
+                            <h5 class="card-title"><?php echo number_format($analyticsSummary['unique_qrs']); ?></h5>
+                            <p class="card-text text-muted">QRs Activos</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <i class="fas fa-calendar-day fa-2x text-warning mb-2"></i>
+                            <h5 class="card-title"><?php echo number_format($analyticsSummary['today_clicks']); ?></h5>
+                            <p class="card-text text-muted">Hoy</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <i class="fas fa-calendar-week fa-2x text-info mb-2"></i>
+                            <h5 class="card-title"><?php echo number_format($analyticsSummary['week_clicks']); ?></h5>
+                            <p class="card-text text-muted">Esta Semana</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row">
+                <!-- Gráfico de dispositivos -->
+                <div class="col-lg-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <i class="fas fa-mobile-alt me-2"></i>
+                                Dispositivos Utilizados
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="deviceChart" width="400" height="200"></canvas>
+                            <div class="mt-3">
+                                <div class="row text-center">
+                                    <div class="col">
+                                        <strong><?php echo $analyticsSummary['device_breakdown']['mobile']; ?></strong>
+                                        <br><small class="text-muted">Móvil</small>
+                                    </div>
+                                    <div class="col">
+                                        <strong><?php echo $analyticsSummary['device_breakdown']['desktop']; ?></strong>
+                                        <br><small class="text-muted">Desktop</small>
+                                    </div>
+                                    <div class="col">
+                                        <strong><?php echo $analyticsSummary['device_breakdown']['tablet']; ?></strong>
+                                        <br><small class="text-muted">Tablet</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Top países -->
+                <div class="col-lg-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <i class="fas fa-globe me-2"></i>
+                                Top Países
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <?php if (empty($analyticsSummary['country_breakdown'])): ?>
+                                <p class="text-muted text-center">No hay datos de ubicación aún</p>
+                            <?php else: ?>
+                                <?php $maxCount = max($analyticsSummary['country_breakdown']); ?>
+                                <?php foreach ($analyticsSummary['country_breakdown'] as $country => $count): ?>
+                                    <div class="mb-3">
+                                        <div class="d-flex justify-content-between align-items-center mb-1">
+                                            <span><?php echo htmlspecialchars($country); ?></span>
+                                            <strong><?php echo $count; ?></strong>
+                                        </div>
+                                        <div class="progress" style="height: 8px;">
+                                            <div class="progress-bar bg-primary" role="progressbar" 
+                                                 style="width: <?php echo ($count / $maxCount) * 100; ?>%"></div>
+                                        </div>
+                                    </div>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row mt-4">
+                <!-- Top QRs más usados -->
+                <div class="col-lg-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <i class="fas fa-trophy me-2"></i>
+                                QRs Más Populares
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <?php if (empty($analyticsSummary['top_qrs'])): ?>
+                                <p class="text-muted text-center">No hay datos de uso aún</p>
+                            <?php else: ?>
+                                <?php $maxClicks = max($analyticsSummary['top_qrs']); ?>
+                                <?php $position = 1; ?>
+                                <?php foreach ($analyticsSummary['top_qrs'] as $qrId => $clicks): ?>
+                                    <div class="mb-3">
+                                        <div class="d-flex justify-content-between align-items-center mb-1">
+                                            <span>
+                                                <span class="badge bg-secondary me-2">#<?php echo $position; ?></span>
+                                                <code><?php echo htmlspecialchars($qrId); ?></code>
+                                            </span>
+                                            <strong><?php echo $clicks; ?> clicks</strong>
+                                        </div>
+                                        <div class="progress" style="height: 8px;">
+                                            <div class="progress-bar bg-success" role="progressbar" 
+                                                 style="width: <?php echo ($clicks / $maxClicks) * 100; ?>%"></div>
+                                        </div>
+                                    </div>
+                                    <?php $position++; ?>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Actividad reciente -->
+                <div class="col-lg-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <i class="fas fa-clock me-2"></i>
+                                Actividad Reciente
+                            </h5>
+                        </div>
+                        <div class="card-body" style="max-height: 400px; overflow-y: auto;">
+                            <?php if (empty($analyticsSummary['recent_activity'])): ?>
+                                <p class="text-muted text-center">No hay actividad reciente</p>
+                            <?php else: ?>
+                                <?php foreach ($analyticsSummary['recent_activity'] as $activity): ?>
+                                    <div class="mb-3 pb-3 border-bottom">
+                                        <div class="d-flex justify-content-between align-items-start">
+                                            <div>
+                                                <strong><code><?php echo htmlspecialchars($activity['qr_id']); ?></code></strong>
+                                                <br>
+                                                <small class="text-muted">
+                                                    <i class="fas fa-<?php 
+                                                        $deviceType = $activity['device_info']['type'] ?? 'desktop';
+                                                        echo $deviceType === 'mobile' ? 'mobile-alt' : 
+                                                            ($deviceType === 'tablet' ? 'tablet-alt' : 'desktop');
+                                                    ?> me-1"></i>
+                                                    <?php echo htmlspecialchars($activity['device_info']['type'] ?? 'unknown'); ?> • 
+                                                    <?php echo htmlspecialchars($activity['location_info']['country'] ?? 'Unknown'); ?>
+                                                </small>
+                                            </div>
+                                            <small class="text-muted">
+                                                <?php echo date('H:i', strtotime($activity['timestamp'])); ?>
+                                            </small>
+                                        </div>
+                                    </div>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Botones de exportación -->
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <i class="fas fa-download me-2"></i>
+                                Exportar Reportes
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <p>Descarga reportes detallados de analytics en diferentes formatos:</p>
+                                    <div class="btn-group" role="group">
+                                        <a href="export.php?format=csv" class="btn btn-outline-success">
+                                            <i class="fas fa-file-csv me-2"></i>
+                                            Exportar CSV
+                                        </a>
+                                        <a href="export.php?format=excel" class="btn btn-outline-primary">
+                                            <i class="fas fa-file-excel me-2"></i>
+                                            Exportar Excel
+                                        </a>
+                                        <a href="export.php?format=pdf" class="btn btn-outline-danger">
+                                            <i class="fas fa-file-pdf me-2"></i>
+                                            Exportar PDF
+                                        </a>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <form method="GET" action="export.php" class="d-inline">
+                                        <div class="row">
+                                            <div class="col-6">
+                                                <label class="form-label small">Desde:</label>
+                                                <input type="date" name="date_from" class="form-control form-control-sm" 
+                                                       value="<?php echo date('Y-m-d', strtotime('-30 days')); ?>">
+                                            </div>
+                                            <div class="col-6">
+                                                <label class="form-label small">Hasta:</label>
+                                                <input type="date" name="date_to" class="form-control form-control-sm" 
+                                                       value="<?php echo date('Y-m-d'); ?>">
+                                            </div>
+                                        </div>
+                                        <input type="hidden" name="format" value="csv">
+                                        <button type="submit" class="btn btn-sm btn-primary mt-2">
+                                            <i class="fas fa-filter me-1"></i>
+                                            Filtrar y Exportar
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+        </div> <!-- Fin pestaña Analytics -->
         
         <!-- Pestaña User Management -->
         <div class="tab-pane fade" id="user-management" role="tabpanel" aria-labelledby="users-tab">
@@ -900,6 +1148,7 @@ $users = loadJsonFile(USERS_FILE);
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
         function deleteRedirect(id) {
             document.getElementById('deleteId').value = id;
@@ -943,6 +1192,62 @@ $users = loadJsonFile(USERS_FILE);
                 bsAlert.close();
             });
         }, 5000);
+        
+        // Initialize charts when analytics tab is shown
+        document.getElementById('analytics-tab').addEventListener('shown.bs.tab', function (e) {
+            initializeCharts();
+        });
+        
+        // Initialize charts if analytics tab is already active
+        if (document.getElementById('analytics-tab').classList.contains('active')) {
+            initializeCharts();
+        }
+        
+        function initializeCharts() {
+            // Device breakdown chart
+            const deviceCtx = document.getElementById('deviceChart').getContext('2d');
+            
+            // Check if chart already exists and destroy it
+            if (window.deviceChart instanceof Chart) {
+                window.deviceChart.destroy();
+            }
+            
+            const deviceData = {
+                mobile: <?php echo $analyticsSummary['device_breakdown']['mobile']; ?>,
+                desktop: <?php echo $analyticsSummary['device_breakdown']['desktop']; ?>,
+                tablet: <?php echo $analyticsSummary['device_breakdown']['tablet']; ?>
+            };
+            
+            window.deviceChart = new Chart(deviceCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Móvil', 'Desktop', 'Tablet'],
+                    datasets: [{
+                        data: [deviceData.mobile, deviceData.desktop, deviceData.tablet],
+                        backgroundColor: [
+                            '#28a745',
+                            '#007bff', 
+                            '#ffc107'
+                        ],
+                        borderWidth: 2,
+                        borderColor: '#fff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                usePointStyle: true,
+                                padding: 20
+                            }
+                        }
+                    }
+                }
+            });
+        }
     </script>
 </body>
 </html>

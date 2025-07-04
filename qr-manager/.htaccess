@@ -8,6 +8,12 @@ ServerSignature Off
     Deny from all
 </Files>
 
+# Proteger archivo de analytics específicamente
+<Files "analytics.json">
+    Order Allow,Deny
+    Deny from all
+</Files>
+
 # Configurar tipos MIME
 AddType application/json .json
 

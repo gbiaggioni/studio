@@ -132,10 +132,31 @@ Deberías ver la página de login.
    - Confirma la eliminación en el modal
    - **Nota**: No puedes eliminar tu propio usuario ni el último administrador
 
-### 7. Roles y permisos
+### 7. Ver Analytics y Estadísticas
 
-- **Administrador**: Acceso completo al sistema (crear/editar/eliminar QRs y usuarios)
-- **Manager**: Puede gestionar QRs pero con acceso limitado a usuarios
+1. En el panel de administración, haz clic en la pestaña **"Analytics"**
+2. **Dashboard principal** con métricas clave:
+   - Total de clicks de todos los QRs
+   - QRs activos en el sistema
+   - Estadísticas de hoy y esta semana
+   - Distribución por dispositivos (móvil/desktop/tablet)
+
+3. **Análisis detallado:**
+   - **Gráfico de dispositivos**: Visualización tipo "doughnut" con Chart.js
+   - **Top países**: Lista de países con más accesos
+   - **QRs más populares**: Ranking de códigos QR más usados
+   - **Actividad reciente**: Lista en tiempo real de últimos accesos
+
+4. **Exportar reportes:**
+   - **CSV**: Para análisis en Excel/Hojas de Cálculo
+   - **Excel**: Con resumen automático y gráficos
+   - **PDF**: Reporte profesional con estadísticas visuales
+   - **Filtros por fecha**: Exportar datos de períodos específicos
+
+### 8. Roles y permisos
+
+- **Administrador**: Acceso completo al sistema (crear/editar/eliminar QRs, usuarios y analytics)
+- **Manager**: Puede gestionar QRs y ver analytics, acceso limitado a usuarios
 - **Usuario**: Acceso básico (actualmente mismo acceso que Manager)
 
 ## 📁 Estructura de archivos
@@ -145,9 +166,12 @@ qr-manager/
 ├── index.php          # Página de login
 ├── admin.php          # Panel de administración
 ├── logout.php         # Cerrar sesión
+├── redirect.php       # Sistema centralizado de redirección
+├── export.php         # Exportación de reportes
 ├── config.php         # Configuración y funciones
 ├── users.json         # Usuarios administradores
 ├── redirects.json     # Redirecciones creadas
+├── analytics.json     # Datos de estadísticas y accesos
 ├── .htaccess          # Configuración Apache
 ├── README.md          # Documentación
 └── qr/                # Carpetas de redirección
