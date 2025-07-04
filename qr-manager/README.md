@@ -11,8 +11,9 @@ Una aplicación web completa que permite a administradores generar códigos QR q
 - 🗃️ **Almacenamiento en archivos JSON** (sin base de datos)
 - 🎨 **Interfaz moderna** con Bootstrap 5
 - ✏️ **Edición de destinos** después de crear el QR
-- 🗑️ **Eliminación de redirecciones** con limpieza automática
-- 📊 **Panel de administración** intuitivo
+- � **Administración completa de usuarios** con roles y permisos
+- �🗑️ **Eliminación de redirecciones** con limpieza automática
+- 📊 **Panel de administración** intuitivo con pestañas
 
 ## 📋 Requisitos
 
@@ -112,6 +113,30 @@ Deberías ver la página de login.
    - El archivo `index.php` en la carpeta del QR
    - La entrada en `redirects.json`
    - Registra quién y cuándo hizo el cambio
+
+### 6. Administrar usuarios del sistema
+
+1. En el panel de administración, haz clic en la pestaña **"Gestión de Usuarios"**
+2. **Crear nuevo usuario:**
+   - Completa el formulario con nombre de usuario, contraseña y rol
+   - Los roles disponibles son: Administrador, Manager, Usuario
+   - Haz clic en "Crear Usuario"
+
+3. **Editar usuario existente:**
+   - En la tabla de usuarios, haz clic en el botón de edición (ícono de lápiz)
+   - Puedes cambiar: nombre de usuario, rol y contraseña (opcional)
+   - Haz clic en "Actualizar Usuario"
+
+4. **Eliminar usuario:**
+   - Haz clic en el botón de eliminación (ícono de papelera)
+   - Confirma la eliminación en el modal
+   - **Nota**: No puedes eliminar tu propio usuario ni el último administrador
+
+### 7. Roles y permisos
+
+- **Administrador**: Acceso completo al sistema (crear/editar/eliminar QRs y usuarios)
+- **Manager**: Puede gestionar QRs pero con acceso limitado a usuarios
+- **Usuario**: Acceso básico (actualmente mismo acceso que Manager)
 
 ## 📁 Estructura de archivos
 

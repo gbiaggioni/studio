@@ -44,7 +44,19 @@ Ejecuta: `https://tudominio.com/qr-manager/test-setup.php`
 3. Haz clic en "Actualizar Destino"
 4. El QR seguirá igual, pero ahora redirige al nuevo destino
 
-## 🔧 Archivos Principales
+## � Gestión de Usuarios
+
+1. Ve a la pestaña **"Gestión de Usuarios"**
+2. **Crear usuario**: Completa formulario con usuario/contraseña/rol
+3. **Editar usuario**: Clic en lápiz → Cambiar datos → Guardar
+4. **Eliminar usuario**: Clic en papelera → Confirmar
+
+### Roles disponibles:
+- **Administrador**: Acceso total
+- **Manager**: Gestión de QRs + usuarios limitado  
+- **Usuario**: Acceso básico
+
+## �🔧 Archivos Principales
 
 | Archivo | Función |
 |---------|---------|
