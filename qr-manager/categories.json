@@ -1,0 +1,47 @@
+[
+    {
+        "id": 1,
+        "name": "Marketing",
+        "description": "Campañas publicitarias y promocionales",
+        "color": "#e74c3c",
+        "icon": "fas fa-bullhorn",
+        "created_at": "2024-01-01 10:00:00",
+        "created_by": "system"
+    },
+    {
+        "id": 2,
+        "name": "Productos",
+        "description": "Enlaces a productos y catálogos",
+        "color": "#3498db",
+        "icon": "fas fa-shopping-cart",
+        "created_at": "2024-01-01 10:00:00",
+        "created_by": "system"
+    },
+    {
+        "id": 3,
+        "name": "Eventos",
+        "description": "Información de eventos y actividades",
+        "color": "#9b59b6",
+        "icon": "fas fa-calendar-alt",
+        "created_at": "2024-01-01 10:00:00",
+        "created_by": "system"
+    },
+    {
+        "id": 4,
+        "name": "Contacto",
+        "description": "Información de contacto y redes sociales",
+        "color": "#2ecc71",
+        "icon": "fas fa-address-book",
+        "created_at": "2024-01-01 10:00:00",
+        "created_by": "system"
+    },
+    {
+        "id": 5,
+        "name": "Documentos",
+        "description": "PDFs, formularios y documentación",
+        "color": "#f39c12",
+        "icon": "fas fa-file-alt",
+        "created_at": "2024-01-01 10:00:00",
+        "created_by": "system"
+    }
+]

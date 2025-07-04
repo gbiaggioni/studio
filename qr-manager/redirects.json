@@ -3,9 +3,23 @@
         "id": "ejemplo",
         "destination_url": "https://github.com",
         "qr_url": "http://localhost/qr-manager/qr/ejemplo",
+        "category_id": 1,
+        "description": "Ejemplo de QR con personalización visual - GitHub",
         "created_at": "2024-01-01 12:00:00",
         "created_by": "admin",
         "updated_at": "2024-01-01 15:30:00",
-        "updated_by": "admin"
+        "updated_by": "admin",
+        "style": {
+            "size": 300,
+            "error_correction": "M",
+            "foreground_color": "#2c3e50",
+            "background_color": "#ecf0f1",
+            "logo_file": "",
+            "logo_size": 60,
+            "frame_style": "rounded",
+            "frame_color": "#3498db",
+            "corner_style": "rounded",
+            "data_style": "circle"
+        }
     }
 ]

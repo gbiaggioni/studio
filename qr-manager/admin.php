@@ -11,6 +11,9 @@ $redirects = loadJsonFile(REDIRECTS_FILE);
 // Cargar usuarios existentes  
 $users = loadJsonFile(USERS_FILE);
 
+// Cargar categorías
+$categories = loadCategories();
+
 // Procesar acciones
 if ($_POST) {
     $action = $_POST['action'] ?? '';
@@ -19,6 +22,20 @@ if ($_POST) {
         case 'create':
             $destinationUrl = trim($_POST['destination_url'] ?? '');
             $customId = trim($_POST['custom_id'] ?? '');
+            $categoryId = $_POST['category_id'] ?? null;
+            $description = trim($_POST['description'] ?? '');
+            
+            // Obtener datos de personalización visual
+            $qrStyle = [
+                'size' => $_POST['qr_size'] ?? 300,
+                'foreground_color' => $_POST['foreground_color'] ?? '#000000',
+                'background_color' => $_POST['background_color'] ?? '#FFFFFF',
+                'error_correction' => $_POST['error_correction'] ?? 'M',
+                'frame_style' => $_POST['frame_style'] ?? 'none',
+                'frame_color' => $_POST['frame_color'] ?? '#000000',
+                'corner_style' => $_POST['corner_style'] ?? 'square',
+                'data_style' => $_POST['data_style'] ?? 'square'
+            ];
             
             if (empty($destinationUrl)) {
                 $message = 'La URL de destino es obligatoria';
@@ -60,13 +77,19 @@ if ($_POST) {
             $indexContent = "<?php\nheader('Location: ../../redirect.php?id=" . addslashes($qrId) . "');\nexit;\n?>";
             file_put_contents($qrPath . '/index.php', $indexContent);
             
+            // Guardar estilo personalizado
+            saveQrStyle($qrId, $qrStyle);
+            
             // Guardar en redirects.json
             $newRedirect = [
                 'id' => $qrId,
                 'destination_url' => $destinationUrl,
                 'qr_url' => BASE_URL . '/redirect.php?id=' . $qrId,
+                'category_id' => $categoryId,
+                'description' => $description,
                 'created_at' => date('Y-m-d H:i:s'),
-                'created_by' => $_SESSION['username']
+                'created_by' => $_SESSION['username'],
+                'style' => $qrStyle
             ];
             
             $redirects[] = $newRedirect;
@@ -326,12 +349,58 @@ if ($_POST) {
             $message = 'Usuario eliminado exitosamente';
             $messageType = 'success';
             break;
+            
+        case 'create_category':
+            $categoryName = trim($_POST['category_name'] ?? '');
+            $categoryDescription = trim($_POST['category_description'] ?? '');
+            $categoryColor = $_POST['category_color'] ?? '#3498db';
+            $categoryIcon = $_POST['category_icon'] ?? 'fas fa-folder';
+            
+            if (empty($categoryName)) {
+                $message = 'El nombre de la categoría es obligatorio';
+                $messageType = 'danger';
+                break;
+            }
+            
+            // Verificar que no exista una categoría con el mismo nombre
+            $categoryExists = false;
+            foreach ($categories as $category) {
+                if (strtolower($category['name']) === strtolower($categoryName)) {
+                    $categoryExists = true;
+                    break;
+                }
+            }
+            
+            if ($categoryExists) {
+                $message = 'Ya existe una categoría con ese nombre';
+                $messageType = 'danger';
+                break;
+            }
+            
+            $newCategory = createCategory($categoryName, $categoryDescription, $categoryColor, $categoryIcon, $_SESSION['username']);
+            
+            $message = 'Categoría creada exitosamente: ' . $categoryName;
+            $messageType = 'success';
+            break;
     }
 }
 
 // Recargar datos después de cambios
 $redirects = loadJsonFile(REDIRECTS_FILE);
 $users = loadJsonFile(USERS_FILE);
+$categories = loadCategories();
+
+// Procesar filtros y búsqueda
+$categoryFilter = $_GET['category'] ?? null;
+$searchTerm = $_GET['search'] ?? '';
+
+if ($categoryFilter) {
+    $redirects = filterQrsByCategory($redirects, $categoryFilter);
+}
+
+if ($searchTerm) {
+    $redirects = searchQrs($redirects, $searchTerm);
+}
 
 // Cargar datos de analytics
 $analyticsSummary = getAnalyticsSummary();
@@ -376,6 +445,47 @@ $analyticsSummary = getAnalyticsSummary();
             background-color: #f8f9fa;
             border-top: none;
         }
+        .category-badge {
+            font-size: 0.8rem;
+            padding: 0.3rem 0.6rem;
+        }
+        .qr-preview {
+            max-width: 200px;
+            max-height: 200px;
+            border: 2px dashed #ddd;
+            border-radius: 8px;
+            padding: 10px;
+            text-align: center;
+            background: #f8f9fa;
+        }
+        .color-picker-wrapper {
+            position: relative;
+            display: inline-block;
+        }
+        .color-preview {
+            width: 30px;
+            height: 30px;
+            border: 2px solid #ddd;
+            border-radius: 4px;
+            cursor: pointer;
+            display: inline-block;
+            margin-left: 10px;
+        }
+        .style-selector {
+            margin-bottom: 15px;
+        }
+        .visual-options {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 15px;
+        }
+        .filter-bar {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
     </style>
 </head>
 <body>
@@ -419,6 +529,13 @@ $analyticsSummary = getAnalyticsSummary();
                 </button>
             </li>
             <li class="nav-item" role="presentation">
+                <button class="nav-link" id="categories-tab" data-bs-toggle="tab" data-bs-target="#categories-management" 
+                        type="button" role="tab" aria-controls="categories-management" aria-selected="false">
+                    <i class="fas fa-folder me-2"></i>
+                    Categorías
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
                 <button class="nav-link" id="analytics-tab" data-bs-toggle="tab" data-bs-target="#analytics-management" 
                         type="button" role="tab" aria-controls="analytics-management" aria-selected="false">
                     <i class="fas fa-chart-bar me-2"></i>
@@ -441,7 +558,7 @@ $analyticsSummary = getAnalyticsSummary();
 
         <div class="row">
             <!-- Formulario de creación -->
-            <div class="col-lg-4">
+            <div class="col-lg-5">
                 <div class="card">
                     <div class="card-header">
                         <h5 class="mb-0">
@@ -450,26 +567,135 @@ $analyticsSummary = getAnalyticsSummary();
                         </h5>
                     </div>
                     <div class="card-body">
-                        <form method="POST">
+                        <form method="POST" id="createQrForm">
                             <input type="hidden" name="action" value="create">
                             
+                            <!-- Información básica -->
                             <div class="mb-3">
                                 <label for="destination_url" class="form-label">URL de Destino *</label>
                                 <input type="url" class="form-control" id="destination_url" name="destination_url" 
-                                       placeholder="https://ejemplo.com" required>
+                                       placeholder="https://ejemplo.com" required onchange="updateQrPreview()">
                                 <div class="form-text">URL completa a la que redirigirá el código QR</div>
                             </div>
                             
-                            <div class="mb-3">
-                                <label for="custom_id" class="form-label">ID Personalizado (Opcional)</label>
-                                <input type="text" class="form-control" id="custom_id" name="custom_id" 
-                                       placeholder="mi-qr-personalizado" pattern="[a-zA-Z0-9\-_]+">
-                                <div class="form-text">Deje vacío para generar automáticamente</div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="custom_id" class="form-label">ID Personalizado</label>
+                                        <input type="text" class="form-control" id="custom_id" name="custom_id" 
+                                               placeholder="mi-qr-personalizado" pattern="[a-zA-Z0-9\-_]+">
+                                        <div class="form-text">Opcional: deje vacío para generar automáticamente</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="category_id" class="form-label">Categoría</label>
+                                        <select class="form-select" id="category_id" name="category_id">
+                                            <option value="">Sin categoría</option>
+                                            <?php foreach ($categories as $category): ?>
+                                                <option value="<?php echo $category['id']; ?>">
+                                                    <?php echo htmlspecialchars($category['name']); ?>
+                                                </option>
+                                            <?php endforeach; ?>
+                                        </select>
+                                    </div>
+                                </div>
                             </div>
                             
-                            <button type="submit" class="btn btn-primary w-100">
+                            <div class="mb-3">
+                                <label for="description" class="form-label">Descripción</label>
+                                <textarea class="form-control" id="description" name="description" rows="2" 
+                                          placeholder="Descripción opcional del QR"></textarea>
+                            </div>
+                            
+                            <!-- Vista previa -->
+                            <div class="mb-3">
+                                <label class="form-label">Vista Previa</label>
+                                <div class="qr-preview" id="qrPreview">
+                                    <i class="fas fa-qrcode fa-3x text-muted"></i>
+                                    <p class="text-muted mt-2">Vista previa del QR</p>
+                                </div>
+                            </div>
+                            
+                            <!-- Personalización Visual -->
+                            <div class="visual-options">
+                                <h6><i class="fas fa-palette me-2"></i>Personalización Visual</h6>
+                                
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="foreground_color" class="form-label">Color Principal</label>
+                                            <div class="d-flex align-items-center">
+                                                <input type="color" class="form-control form-control-color" 
+                                                       id="foreground_color" name="foreground_color" value="#000000" 
+                                                       onchange="updateQrPreview()">
+                                                <span class="ms-2 small">QR</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="background_color" class="form-label">Color Fondo</label>
+                                            <div class="d-flex align-items-center">
+                                                <input type="color" class="form-control form-control-color" 
+                                                       id="background_color" name="background_color" value="#FFFFFF" 
+                                                       onchange="updateQrPreview()">
+                                                <span class="ms-2 small">Fondo</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="qr_size" class="form-label">Tamaño</label>
+                                            <select class="form-select" id="qr_size" name="qr_size" onchange="updateQrPreview()">
+                                                <option value="200">200x200 (Pequeño)</option>
+                                                <option value="300" selected>300x300 (Mediano)</option>
+                                                <option value="400">400x400 (Grande)</option>
+                                                <option value="500">500x500 (Extra Grande)</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="error_correction" class="form-label">Corrección Error</label>
+                                            <select class="form-select" id="error_correction" name="error_correction" onchange="updateQrPreview()">
+                                                <option value="L">Baja (7%)</option>
+                                                <option value="M" selected>Media (15%)</option>
+                                                <option value="Q">Alta (25%)</option>
+                                                <option value="H">Muy Alta (30%)</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="frame_style" class="form-label">Estilo Marco</label>
+                                            <select class="form-select" id="frame_style" name="frame_style">
+                                                <option value="none">Sin marco</option>
+                                                <option value="solid">Marco sólido</option>
+                                                <option value="rounded">Marco redondeado</option>
+                                                <option value="gradient">Marco degradado</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="frame_color" class="form-label">Color Marco</label>
+                                            <input type="color" class="form-control form-control-color" 
+                                                   id="frame_color" name="frame_color" value="#000000">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <button type="submit" class="btn btn-primary w-100 mt-3">
                                 <i class="fas fa-qrcode me-2"></i>
-                                Crear Código QR
+                                Crear Código QR Personalizado
                             </button>
                         </form>
                     </div>
@@ -477,13 +703,50 @@ $analyticsSummary = getAnalyticsSummary();
             </div>
 
             <!-- Lista de redirecciones -->
-            <div class="col-lg-8">
+            <div class="col-lg-7">
+                <!-- Barra de filtros -->
+                <div class="filter-bar">
+                    <form method="GET" class="row g-3">
+                        <div class="col-md-4">
+                            <label for="search" class="form-label">Buscar</label>
+                            <input type="text" class="form-control" id="search" name="search" 
+                                   placeholder="Buscar por ID o URL..." value="<?php echo htmlspecialchars($searchTerm); ?>">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="category" class="form-label">Filtrar por Categoría</label>
+                            <select class="form-select" id="category" name="category">
+                                <option value="">Todas las categorías</option>
+                                <?php foreach ($categories as $category): ?>
+                                    <option value="<?php echo $category['id']; ?>" 
+                                            <?php echo $categoryFilter == $category['id'] ? 'selected' : ''; ?>>
+                                        <?php echo htmlspecialchars($category['name']); ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        <div class="col-md-4 d-flex align-items-end">
+                            <button type="submit" class="btn btn-primary me-2">
+                                <i class="fas fa-search me-1"></i>Filtrar
+                            </button>
+                            <a href="?" class="btn btn-outline-secondary">
+                                <i class="fas fa-times me-1"></i>Limpiar
+                            </a>
+                        </div>
+                    </form>
+                </div>
+                
                 <div class="card">
-                    <div class="card-header">
+                    <div class="card-header d-flex justify-content-between align-items-center">
                         <h5 class="mb-0">
                             <i class="fas fa-list me-2"></i>
-                            Redirecciones Existentes (<?php echo count($redirects); ?>)
+                            Redirecciones QR 
+                            <span class="badge bg-primary"><?php echo count($redirects); ?></span>
                         </h5>
+                        <div>
+                            <button type="button" class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#categoryModal">
+                                <i class="fas fa-plus me-1"></i>Nueva Categoría
+                            </button>
+                        </div>
                     </div>
                     <div class="card-body">
                         <?php if (empty($redirects)): ?>
@@ -496,62 +759,118 @@ $analyticsSummary = getAnalyticsSummary();
                                 <table class="table table-hover">
                                     <thead>
                                         <tr>
-                                            <th>ID</th>
-                                            <th>URL Destino</th>
-                                            <th>QR URL</th>
+                                            <th>QR Info</th>
+                                            <th>Destino</th>
                                             <th>Código QR</th>
-                                            <th>Creado</th>
-                                            <th>Última Actualización</th>
+                                            <th>Categoría</th>
+                                            <th>Estadísticas</th>
                                             <th>Acciones</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         <?php foreach ($redirects as $redirect): ?>
+                                            <?php 
+                                            $category = isset($redirect['category_id']) ? getCategoryById($redirect['category_id']) : null;
+                                            $qrStyle = isset($redirect['style']) ? $redirect['style'] : getDefaultQrStyle();
+                                            $qrAnalytics = getQrAnalytics($redirect['id']);
+                                            $clickCount = count($qrAnalytics);
+                                            ?>
                                             <tr>
+                                                <!-- QR Info -->
                                                 <td>
-                                                    <code><?php echo htmlspecialchars($redirect['id']); ?></code>
+                                                    <div class="d-flex align-items-start">
+                                                        <div>
+                                                            <strong><code><?php echo htmlspecialchars($redirect['id']); ?></code></strong>
+                                                            <?php if (!empty($redirect['description'])): ?>
+                                                                <br><small class="text-muted"><?php echo htmlspecialchars($redirect['description']); ?></small>
+                                                            <?php endif; ?>
+                                                            <br>
+                                                            <small class="text-muted">
+                                                                Creado: <?php echo date('d/m/Y', strtotime($redirect['created_at'])); ?>
+                                                                por <?php echo htmlspecialchars($redirect['created_by']); ?>
+                                                            </small>
+                                                            <?php if (isset($redirect['updated_at'])): ?>
+                                                                <br><small class="text-warning">
+                                                                    Editado: <?php echo date('d/m/Y', strtotime($redirect['updated_at'])); ?>
+                                                                </small>
+                                                            <?php endif; ?>
+                                                        </div>
+                                                    </div>
                                                 </td>
+                                                
+                                                <!-- Destino -->
                                                 <td>
                                                     <a href="<?php echo htmlspecialchars($redirect['destination_url']); ?>" 
                                                        target="_blank" class="text-decoration-none">
-                                                        <?php echo htmlspecialchars(substr($redirect['destination_url'], 0, 30) . (strlen($redirect['destination_url']) > 30 ? '...' : '')); ?>
+                                                        <?php echo htmlspecialchars(substr($redirect['destination_url'], 0, 40) . (strlen($redirect['destination_url']) > 40 ? '...' : '')); ?>
                                                         <i class="fas fa-external-link-alt ms-1 small"></i>
                                                     </a>
-                                                </td>
-                                                <td>
-                                                    <a href="<?php echo htmlspecialchars($redirect['qr_url']); ?>" 
-                                                       target="_blank" class="text-decoration-none">
-                                                        <?php echo htmlspecialchars($redirect['qr_url']); ?>
-                                                        <i class="fas fa-external-link-alt ms-1 small"></i>
-                                                    </a>
-                                                </td>
-                                                <td>
-                                                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=<?php echo urlencode($redirect['qr_url']); ?>" 
-                                                         class="qr-code" alt="QR Code">
-                                                </td>
-                                                <td>
-                                                    <small>
-                                                        <?php echo htmlspecialchars($redirect['created_at']); ?><br>
-                                                        <span class="text-muted">por <?php echo htmlspecialchars($redirect['created_by']); ?></span>
-                                                    </small>
-                                                </td>
-                                                <td>
-                                                    <small>
-                                                        <?php if (isset($redirect['updated_at'])): ?>
-                                                            <?php echo htmlspecialchars($redirect['updated_at']); ?><br>
-                                                            <span class="text-muted">por <?php echo htmlspecialchars($redirect['updated_by'] ?? 'N/A'); ?></span>
-                                                        <?php else: ?>
-                                                            <span class="text-muted">Sin modificaciones</span>
-                                                        <?php endif; ?>
-                                                    </small>
-                                                </td>
-                                                <td>
-                                                    <div class="btn-group" role="group">
-                                                        <a href="https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=<?php echo urlencode($redirect['qr_url']); ?>" 
-                                                           target="_blank" class="btn btn-sm btn-outline-primary" title="Ver QR grande">
-                                                            <i class="fas fa-search-plus"></i>
+                                                    <br>
+                                                    <small class="text-muted">
+                                                        <i class="fas fa-link me-1"></i>
+                                                        <a href="<?php echo htmlspecialchars($redirect['qr_url']); ?>" 
+                                                           target="_blank" class="text-muted">
+                                                            <?php echo htmlspecialchars(substr($redirect['qr_url'], 0, 35) . '...'); ?>
                                                         </a>
-                                                        <button type="button" class="btn btn-sm btn-outline-warning" 
+                                                    </small>
+                                                </td>
+                                                
+                                                <!-- Código QR Personalizado -->
+                                                <td>
+                                                    <?php 
+                                                    $customQrUrl = generateCustomQR($redirect['qr_url'], $qrStyle);
+                                                    ?>
+                                                    <img src="<?php echo $customQrUrl; ?>&size=80x80" 
+                                                         class="qr-code" alt="QR Code" style="max-width: 80px; max-height: 80px;">
+                                                    <br>
+                                                    <small class="text-muted">
+                                                        <?php echo $qrStyle['size']; ?>px • 
+                                                        <span style="color: <?php echo $qrStyle['foreground_color']; ?>">●</span>
+                                                        <span style="color: <?php echo $qrStyle['background_color']; ?>">●</span>
+                                                    </small>
+                                                </td>
+                                                
+                                                <!-- Categoría -->
+                                                <td>
+                                                    <?php if ($category): ?>
+                                                        <span class="badge category-badge" 
+                                                              style="background-color: <?php echo $category['color']; ?>">
+                                                            <i class="<?php echo $category['icon']; ?> me-1"></i>
+                                                            <?php echo htmlspecialchars($category['name']); ?>
+                                                        </span>
+                                                    <?php else: ?>
+                                                        <span class="badge bg-secondary category-badge">
+                                                            <i class="fas fa-folder me-1"></i>Sin categoría
+                                                        </span>
+                                                    <?php endif; ?>
+                                                </td>
+                                                
+                                                <!-- Estadísticas -->
+                                                <td>
+                                                    <div class="text-center">
+                                                        <strong class="text-primary"><?php echo $clickCount; ?></strong>
+                                                        <br><small class="text-muted">clicks</small>
+                                                        <?php if ($clickCount > 0): ?>
+                                                            <?php 
+                                                            $lastAccess = end($qrAnalytics);
+                                                            $daysSinceLastAccess = floor((time() - strtotime($lastAccess['timestamp'])) / 86400);
+                                                            ?>
+                                                            <br><small class="text-info">
+                                                                Último: hace <?php echo $daysSinceLastAccess; ?> día<?php echo $daysSinceLastAccess != 1 ? 's' : ''; ?>
+                                                            </small>
+                                                        <?php endif; ?>
+                                                    </div>
+                                                </td>
+                                                
+                                                <!-- Acciones -->
+                                                <td>
+                                                    <div class="btn-group-vertical" role="group">
+                                                        <button type="button" class="btn btn-sm btn-outline-info mb-1" 
+                                                                onclick="viewQrDetails('<?php echo htmlspecialchars($redirect['id']); ?>')" 
+                                                                title="Ver detalles y descargar">
+                                                            <i class="fas fa-eye"></i>
+                                                        </button>
+                                                        <button type="button" class="btn btn-sm btn-outline-warning mb-1" 
                                                                 onclick="editRedirect('<?php echo htmlspecialchars($redirect['id']); ?>', '<?php echo htmlspecialchars($redirect['destination_url']); ?>')" 
                                                                 title="Editar destino">
                                                             <i class="fas fa-edit"></i>
@@ -575,6 +894,191 @@ $analyticsSummary = getAnalyticsSummary();
         </div>
         
         </div> <!-- Fin pestaña QR Management -->
+        
+        <!-- Pestaña Categorías -->
+        <div class="tab-pane fade" id="categories-management" role="tabpanel" aria-labelledby="categories-tab">
+            
+            <div class="row">
+                <div class="col-lg-8">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <i class="fas fa-folder me-2"></i>
+                                Categorías Existentes
+                                <span class="badge bg-primary"><?php echo count($categories); ?></span>
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <?php if (empty($categories)): ?>
+                                <div class="text-center py-5">
+                                    <i class="fas fa-folder-open fa-3x text-muted mb-3"></i>
+                                    <p class="text-muted">No hay categorías creadas aún</p>
+                                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#categoryModal">
+                                        <i class="fas fa-plus me-2"></i>Crear Primera Categoría
+                                    </button>
+                                </div>
+                            <?php else: ?>
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <thead>
+                                            <tr>
+                                                <th>Categoría</th>
+                                                <th>Descripción</th>
+                                                <th>QRs Asignados</th>
+                                                <th>Creado</th>
+                                                <th>Acciones</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <?php foreach ($categories as $category): ?>
+                                                <?php 
+                                                // Contar QRs en esta categoría
+                                                $allRedirects = loadJsonFile(REDIRECTS_FILE);
+                                                $qrsInCategory = array_filter($allRedirects, function($r) use ($category) {
+                                                    return isset($r['category_id']) && $r['category_id'] == $category['id'];
+                                                });
+                                                $qrCount = count($qrsInCategory);
+                                                ?>
+                                                <tr>
+                                                    <td>
+                                                        <div class="d-flex align-items-center">
+                                                            <span class="badge me-3" style="background-color: <?php echo $category['color']; ?>; padding: 8px;">
+                                                                <i class="<?php echo $category['icon']; ?>"></i>
+                                                            </span>
+                                                            <div>
+                                                                <strong><?php echo htmlspecialchars($category['name']); ?></strong>
+                                                                <br>
+                                                                <small class="text-muted">ID: <?php echo $category['id']; ?></small>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td>
+                                                        <?php if (!empty($category['description'])): ?>
+                                                            <?php echo htmlspecialchars($category['description']); ?>
+                                                        <?php else: ?>
+                                                            <em class="text-muted">Sin descripción</em>
+                                                        <?php endif; ?>
+                                                    </td>
+                                                    <td>
+                                                        <div class="text-center">
+                                                            <span class="badge bg-info"><?php echo $qrCount; ?></span>
+                                                            <br>
+                                                            <small class="text-muted">QRs</small>
+                                                        </div>
+                                                    </td>
+                                                    <td>
+                                                        <small>
+                                                            <?php echo date('d/m/Y', strtotime($category['created_at'])); ?>
+                                                            <br>
+                                                            <span class="text-muted">por <?php echo htmlspecialchars($category['created_by']); ?></span>
+                                                        </small>
+                                                    </td>
+                                                    <td>
+                                                        <div class="btn-group" role="group">
+                                                            <a href="?category=<?php echo $category['id']; ?>" 
+                                                               class="btn btn-sm btn-outline-primary" 
+                                                               title="Ver QRs de esta categoría">
+                                                                <i class="fas fa-eye"></i>
+                                                            </a>
+                                                            <button type="button" class="btn btn-sm btn-outline-warning" 
+                                                                    onclick="editCategory('<?php echo htmlspecialchars(json_encode($category)); ?>')" 
+                                                                    title="Editar categoría">
+                                                                <i class="fas fa-edit"></i>
+                                                            </button>
+                                                            <?php if ($qrCount == 0): ?>
+                                                            <button type="button" class="btn btn-sm btn-outline-danger" 
+                                                                    onclick="deleteCategory(<?php echo $category['id']; ?>, '<?php echo htmlspecialchars($category['name']); ?>')" 
+                                                                    title="Eliminar categoría">
+                                                                <i class="fas fa-trash"></i>
+                                                            </button>
+                                                            <?php else: ?>
+                                                            <button type="button" class="btn btn-sm btn-outline-secondary" 
+                                                                    title="No se puede eliminar: tiene QRs asignados" disabled>
+                                                                <i class="fas fa-lock"></i>
+                                                            </button>
+                                                            <?php endif; ?>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            <?php endforeach; ?>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-lg-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <i class="fas fa-plus-circle me-2"></i>
+                                Gestión de Categorías
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <button type="button" class="btn btn-success w-100 mb-3" data-bs-toggle="modal" data-bs-target="#categoryModal">
+                                <i class="fas fa-plus me-2"></i>
+                                Nueva Categoría
+                            </button>
+                            
+                            <div class="alert alert-info">
+                                <h6><i class="fas fa-lightbulb me-2"></i>¿Para qué sirven las categorías?</h6>
+                                <ul class="mb-0 small">
+                                    <li><strong>Organización:</strong> Agrupa QRs por propósito</li>
+                                    <li><strong>Filtrado:</strong> Encuentra QRs rápidamente</li>
+                                    <li><strong>Analytics:</strong> Analiza rendimiento por categoría</li>
+                                    <li><strong>Branding:</strong> Colores e iconos personalizados</li>
+                                </ul>
+                            </div>
+                            
+                            <!-- Estadísticas de categorías -->
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <h6><i class="fas fa-chart-pie me-2"></i>Estadísticas</h6>
+                                    
+                                    <?php 
+                                    $allRedirects = loadJsonFile(REDIRECTS_FILE);
+                                    $categoryStats = [];
+                                    $uncategorized = 0;
+                                    
+                                    foreach ($allRedirects as $redirect) {
+                                        if (isset($redirect['category_id'])) {
+                                            $categoryStats[$redirect['category_id']] = ($categoryStats[$redirect['category_id']] ?? 0) + 1;
+                                        } else {
+                                            $uncategorized++;
+                                        }
+                                    }
+                                    ?>
+                                    
+                                    <?php foreach ($categories as $category): ?>
+                                        <?php $count = $categoryStats[$category['id']] ?? 0; ?>
+                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                            <div class="d-flex align-items-center">
+                                                <span class="badge me-2" style="background-color: <?php echo $category['color']; ?>; width: 12px; height: 12px;"></span>
+                                                <small><?php echo htmlspecialchars($category['name']); ?></small>
+                                            </div>
+                                            <small><strong><?php echo $count; ?></strong></small>
+                                        </div>
+                                    <?php endforeach; ?>
+                                    
+                                    <?php if ($uncategorized > 0): ?>
+                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                            <div class="d-flex align-items-center">
+                                                <span class="badge bg-secondary me-2" style="width: 12px; height: 12px;"></span>
+                                                <small>Sin categoría</small>
+                                            </div>
+                                            <small><strong><?php echo $uncategorized; ?></strong></small>
+                                        </div>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div> <!-- Fin pestaña Categorías -->
         
         <!-- Pestaña Analytics -->
         <div class="tab-pane fade" id="analytics-management" role="tabpanel" aria-labelledby="analytics-tab">
@@ -983,6 +1487,102 @@ $analyticsSummary = getAnalyticsSummary();
         </div> <!-- Fin tab-content -->
     </div>
 
+    <!-- Modal para crear categoría -->
+    <div class="modal fade" id="categoryModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-folder-plus me-2"></i>
+                        Crear Nueva Categoría
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form method="POST">
+                    <div class="modal-body">
+                        <input type="hidden" name="action" value="create_category">
+                        
+                        <div class="mb-3">
+                            <label for="category_name" class="form-label">Nombre de la Categoría *</label>
+                            <input type="text" class="form-control" id="category_name" name="category_name" 
+                                   placeholder="Ej: Marketing, Productos, Eventos" required maxlength="50">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="category_description" class="form-label">Descripción</label>
+                            <textarea class="form-control" id="category_description" name="category_description" 
+                                      rows="3" placeholder="Descripción opcional de la categoría"></textarea>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="category_color" class="form-label">Color</label>
+                                    <input type="color" class="form-control form-control-color" 
+                                           id="category_color" name="category_color" value="#3498db">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="category_icon" class="form-label">Icono</label>
+                                    <select class="form-select" id="category_icon" name="category_icon">
+                                        <option value="fas fa-folder">📁 Carpeta</option>
+                                        <option value="fas fa-bullhorn">📢 Marketing</option>
+                                        <option value="fas fa-shopping-cart">🛒 Productos</option>
+                                        <option value="fas fa-calendar-alt">📅 Eventos</option>
+                                        <option value="fas fa-address-book">📇 Contacto</option>
+                                        <option value="fas fa-file-alt">📄 Documentos</option>
+                                        <option value="fas fa-share-alt">🔗 Redes Sociales</option>
+                                        <option value="fas fa-utensils">🍽️ Restaurante</option>
+                                        <option value="fas fa-home">🏠 Inmobiliaria</option>
+                                        <option value="fas fa-graduation-cap">🎓 Educación</option>
+                                        <option value="fas fa-heartbeat">⚕️ Salud</option>
+                                        <option value="fas fa-music">🎵 Entretenimiento</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            Las categorías te ayudan a organizar y filtrar tus códigos QR de manera más eficiente.
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-plus me-2"></i>
+                            Crear Categoría
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para ver detalles del QR y descargas -->
+    <div class="modal fade" id="qrDetailsModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-qrcode me-2"></i>
+                        Detalles del Código QR
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="qrDetailsContent">
+                    <!-- Contenido cargado dinámicamente -->
+                    <div class="text-center">
+                        <div class="spinner-border" role="status">
+                            <span class="visually-hidden">Cargando...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal de confirmación para eliminar -->
     <div class="modal fade" id="deleteModal" tabindex="-1">
         <div class="modal-dialog">
@@ -1182,6 +1782,70 @@ $analyticsSummary = getAnalyticsSummary();
             
             const modal = new bootstrap.Modal(document.getElementById('deleteUserModal'));
             modal.show();
+        }
+        
+        // Función para actualizar vista previa del QR
+        function updateQrPreview() {
+            const destinationUrl = document.getElementById('destination_url').value;
+            const foregroundColor = document.getElementById('foreground_color').value;
+            const backgroundColor = document.getElementById('background_color').value;
+            const qrSize = document.getElementById('qr_size').value;
+            const errorCorrection = document.getElementById('error_correction').value;
+            
+            if (destinationUrl) {
+                // Generar URL del QR con configuración personalizada
+                const baseUrl = '<?php echo BASE_URL; ?>/redirect.php?id=preview';
+                const qrApiUrl = 'https://api.qrserver.com/v1/create-qr-code/';
+                
+                const params = new URLSearchParams({
+                    'data': baseUrl,
+                    'size': '200x200',
+                    'ecc': errorCorrection,
+                    'color': foregroundColor.replace('#', ''),
+                    'bgcolor': backgroundColor.replace('#', '')
+                });
+                
+                const qrUrl = qrApiUrl + '?' + params.toString();
+                
+                document.getElementById('qrPreview').innerHTML = 
+                    `<img src="${qrUrl}" alt="Vista previa QR" class="img-fluid" style="max-width: 200px;">
+                     <br><small class="text-muted mt-2">${qrSize}px • Corrección: ${errorCorrection}</small>`;
+            } else {
+                document.getElementById('qrPreview').innerHTML = 
+                    `<i class="fas fa-qrcode fa-3x text-muted"></i>
+                     <p class="text-muted mt-2">Ingrese una URL para ver la vista previa</p>`;
+            }
+        }
+        
+        // Función para ver detalles del QR
+        function viewQrDetails(qrId) {
+            // Mostrar el modal
+            const modal = new bootstrap.Modal(document.getElementById('qrDetailsModal'));
+            modal.show();
+            
+            // Cargar contenido del QR
+            fetch('qr-details.php?id=' + encodeURIComponent(qrId))
+                .then(response => response.text())
+                .then(html => {
+                    document.getElementById('qrDetailsContent').innerHTML = html;
+                })
+                .catch(error => {
+                    document.getElementById('qrDetailsContent').innerHTML = 
+                        '<div class="alert alert-danger">Error al cargar los detalles del QR.</div>';
+                });
+        }
+        
+        // Función para descargar QR en diferentes formatos
+        function downloadQR(qrId, format, size) {
+            const downloadUrl = `qr-download.php?id=${encodeURIComponent(qrId)}&format=${format}&size=${size}`;
+            
+            // Crear enlace temporal para descarga
+            const link = document.createElement('a');
+            link.href = downloadUrl;
+            link.download = `qr-${qrId}.${format}`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
         }
         
         // Auto-dismiss alerts after 5 seconds
