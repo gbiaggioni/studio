@@ -1,0 +1,52 @@
+[
+    {
+        "id": 1,
+        "email": "admin@empresa.com",
+        "name": "Administrador Principal",
+        "department": "IT",
+        "role": "Administrator",
+        "active": true,
+        "created_at": "2024-01-01 12:00:00",
+        "created_by": "system"
+    },
+    {
+        "id": 2,
+        "email": "gerencia@empresa.com",
+        "name": "Director General",
+        "department": "Management",
+        "role": "Manager",
+        "active": true,
+        "created_at": "2024-01-01 12:00:00",
+        "created_by": "admin"
+    },
+    {
+        "id": 3,
+        "email": "marketing@empresa.com",
+        "name": "Equipo Marketing",
+        "department": "Marketing",
+        "role": "Editor",
+        "active": true,
+        "created_at": "2024-01-01 12:00:00",
+        "created_by": "admin"
+    },
+    {
+        "id": 4,
+        "email": "ventas@corporacion.net",
+        "name": "Departamento Ventas",
+        "department": "Sales",
+        "role": "Viewer",
+        "active": true,
+        "created_at": "2024-01-01 12:00:00",
+        "created_by": "admin"
+    },
+    {
+        "id": 5,
+        "email": "demo@empresa.com",
+        "name": "Usuario Demo",
+        "department": "Demo",
+        "role": "Viewer",
+        "active": true,
+        "created_at": "2024-01-01 12:00:00",
+        "created_by": "admin"
+    }
+]

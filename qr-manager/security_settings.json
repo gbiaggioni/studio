@@ -1,0 +1,77 @@
+{
+    "ejemplo": {
+        "qr_id": "ejemplo",
+        "security_enabled": true,
+        "security_type": "password",
+        "password": "$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi",
+        "password_hint": "Contraseña del evento",
+        "expiry_date": null,
+        "allowed_ips": [],
+        "capture_form": {
+            "enabled": false,
+            "title": "Acceso Requerido",
+            "message": "Por favor, proporciona tu información para acceder al contenido",
+            "fields": []
+        },
+        "email_verification": {
+            "enabled": false,
+            "allowed_domains": []
+        },
+        "employee_only": false,
+        "max_uses": null,
+        "current_uses": 0,
+        "blocked_countries": [],
+        "require_user_agent": false,
+        "custom_redirect_delay": 0,
+        "access_log": true,
+        "created_at": "2024-01-01 12:00:00",
+        "created_by": "admin"
+    },
+    "demo-protected": {
+        "qr_id": "demo-protected",
+        "security_enabled": true,
+        "security_type": "password",
+        "password": "$2y$10$abcdefghijklmnopqrstuvwxyz1234567890ABCDEFGHIJKLMNOP",
+        "password_hint": "Contraseña: demo123",
+        "expiry_date": "2024-12-31 23:59:59",
+        "allowed_ips": ["192.168.1.0/24"],
+        "capture_form": {
+            "enabled": true,
+            "title": "Acceso a Contenido Empresarial",
+            "message": "Este contenido es privado. Proporciona tu información para continuar.",
+            "fields": [
+                {
+                    "name": "name",
+                    "label": "Nombre Completo",
+                    "type": "text",
+                    "required": true
+                },
+                {
+                    "name": "email",
+                    "label": "Email Corporativo",
+                    "type": "email",
+                    "required": true
+                },
+                {
+                    "name": "company",
+                    "label": "Empresa",
+                    "type": "text",
+                    "required": false
+                }
+            ]
+        },
+        "email_verification": {
+            "enabled": true,
+            "allowed_domains": ["empresa.com", "corporacion.net"]
+        },
+        "employee_only": true,
+        "max_uses": 100,
+        "current_uses": 23,
+        "blocked_countries": ["CN", "RU"],
+        "require_user_agent": true,
+        "custom_redirect_delay": 3,
+        "access_log": true,
+        "created_at": "2024-01-01 12:00:00",
+        "created_by": "admin"
+    }
+}

@@ -560,6 +560,13 @@ $analyticsSummary = getAnalyticsSummary();
                 </button>
             </li>
             <li class="nav-item" role="presentation">
+                <button class="nav-link" id="security-tab" data-bs-toggle="tab" data-bs-target="#security-management" 
+                        type="button" role="tab" aria-controls="security-management" aria-selected="false">
+                    <i class="fas fa-shield-alt me-2"></i>
+                    Seguridad
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
                 <button class="nav-link" id="users-tab" data-bs-toggle="tab" data-bs-target="#user-management" 
                         type="button" role="tab" aria-controls="user-management" aria-selected="false">
                     <i class="fas fa-users me-2"></i>
@@ -1608,6 +1615,377 @@ $analyticsSummary = getAnalyticsSummary();
             
         </div> <!-- Fin pestaña Analytics -->
         
+        <!-- Pestaña Seguridad -->
+        <div class="tab-pane fade" id="security-management" role="tabpanel" aria-labelledby="security-tab">
+            
+            <div class="row">
+                <!-- Panel de configuración de seguridad -->
+                <div class="col-lg-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <i class="fas fa-shield-alt me-2"></i>
+                                Configurar QR Protegido
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <form id="securityForm">
+                                <!-- Seleccionar QR -->
+                                <div class="mb-3">
+                                    <label for="securityQrId" class="form-label">Seleccionar QR *</label>
+                                    <select class="form-select" id="securityQrId" name="qr_id" required onchange="loadSecurityConfig()">
+                                        <option value="">Selecciona un QR para proteger</option>
+                                        <?php foreach ($redirects as $redirect): ?>
+                                            <option value="<?php echo htmlspecialchars($redirect['id']); ?>">
+                                                <?php echo htmlspecialchars($redirect['id']); ?> - 
+                                                <?php echo htmlspecialchars(substr($redirect['destination_url'], 0, 40) . '...'); ?>
+                                            </option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </div>
+                                
+                                <!-- Habilitar seguridad -->
+                                <div class="mb-3">
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" id="securityEnabled" name="security_enabled" onchange="toggleSecurityOptions()">
+                                        <label class="form-check-label" for="securityEnabled">
+                                            <strong>Habilitar Protección</strong>
+                                        </label>
+                                    </div>
+                                    <div class="form-text">Activar protección de seguridad para este QR</div>
+                                </div>
+                                
+                                <div id="securityOptions" style="display: none;">
+                                    <!-- Tipo de seguridad -->
+                                    <div class="mb-3">
+                                        <label for="securityType" class="form-label">Tipo de Protección</label>
+                                        <select class="form-select" id="securityType" name="security_type" onchange="toggleSecurityTypeOptions()">
+                                            <option value="none">Sin protección</option>
+                                            <option value="password">Contraseña requerida</option>
+                                            <option value="capture">Formulario de captura</option>
+                                            <option value="email">Verificación por email</option>
+                                            <option value="employee">Solo empleados</option>
+                                            <option value="combined">Protección combinada</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <!-- Opciones de contraseña -->
+                                    <div id="passwordOptions" style="display: none;">
+                                        <div class="mb-3">
+                                            <label for="qrPassword" class="form-label">Contraseña</label>
+                                            <input type="password" class="form-control" id="qrPassword" name="password" 
+                                                   placeholder="Ingresa la contraseña">
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="passwordHint" class="form-label">Pista (Opcional)</label>
+                                            <input type="text" class="form-control" id="passwordHint" name="password_hint" 
+                                                   placeholder="Ej: Contraseña del evento">
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Fecha de caducidad -->
+                                    <div class="mb-3">
+                                        <label for="expiryDate" class="form-label">Fecha de Caducidad (Opcional)</label>
+                                        <input type="datetime-local" class="form-control" id="expiryDate" name="expiry_date">
+                                        <div class="form-text">El QR dejará de funcionar después de esta fecha</div>
+                                    </div>
+                                    
+                                    <!-- IPs permitidas -->
+                                    <div class="mb-3">
+                                        <label for="allowedIps" class="form-label">IPs Permitidas (Opcional)</label>
+                                        <textarea class="form-control" id="allowedIps" name="allowed_ips" rows="2" 
+                                                  placeholder="192.168.1.100&#10;10.0.0.0/24"></textarea>
+                                        <div class="form-text">Una IP por línea. Soporta notación CIDR</div>
+                                    </div>
+                                    
+                                    <!-- Máximo de usos -->
+                                    <div class="mb-3">
+                                        <label for="maxUses" class="form-label">Máximo de Usos (Opcional)</label>
+                                        <input type="number" class="form-control" id="maxUses" name="max_uses" 
+                                               placeholder="Ej: 100" min="1">
+                                        <div class="form-text">Número máximo de accesos permitidos</div>
+                                    </div>
+                                    
+                                    <!-- Configuraciones adicionales -->
+                                    <div class="mb-3">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="employeeOnly" name="employee_only">
+                                            <label class="form-check-label" for="employeeOnly">
+                                                Solo empleados autorizados
+                                            </label>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="accessLog" name="access_log" checked>
+                                            <label class="form-check-label" for="accessLog">
+                                                Registrar intentos de acceso
+                                            </label>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Delay de redirección -->
+                                    <div class="mb-3">
+                                        <label for="redirectDelay" class="form-label">Delay de Redirección (segundos)</label>
+                                        <input type="number" class="form-control" id="redirectDelay" name="custom_redirect_delay" 
+                                               value="0" min="0" max="30">
+                                        <div class="form-text">Tiempo de espera antes de redirigir (0 = inmediato)</div>
+                                    </div>
+                                </div>
+                                
+                                <button type="submit" class="btn btn-primary w-100" id="saveSecurityBtn" disabled>
+                                    <i class="fas fa-shield-alt me-2"></i>
+                                    Guardar Configuración
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                    
+                    <!-- Estadísticas de seguridad -->
+                    <div class="card mt-3">
+                        <div class="card-header">
+                            <h6 class="mb-0">
+                                <i class="fas fa-chart-bar me-2"></i>
+                                Estadísticas de Seguridad
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <?php $securityStats = getSecurityStats(); ?>
+                            <div class="row text-center">
+                                <div class="col-6">
+                                    <div class="mb-2">
+                                        <strong class="text-primary"><?php echo $securityStats['protected_qrs']; ?></strong>
+                                        <br><small class="text-muted">QRs Protegidos</small>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="mb-2">
+                                        <strong class="text-warning"><?php echo $securityStats['expired_qrs']; ?></strong>
+                                        <br><small class="text-muted">QRs Expirados</small>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div>
+                                        <strong class="text-success"><?php echo $securityStats['employees_count']; ?></strong>
+                                        <br><small class="text-muted">Empleados</small>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div>
+                                        <strong class="text-info"><?php echo $securityStats['total_qrs_with_security_config']; ?></strong>
+                                        <br><small class="text-muted">Total Configurados</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Lista de QRs protegidos y empleados -->
+                <div class="col-lg-8">
+                    <!-- QRs protegidos -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <i class="fas fa-lock me-2"></i>
+                                QRs Protegidos
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <?php 
+                            $securitySettings = loadSecuritySettings();
+                            $protectedQrs = array_filter($securitySettings, function($s) { return $s['security_enabled']; });
+                            ?>
+                            
+                            <?php if (empty($protectedQrs)): ?>
+                                <div class="text-center py-4">
+                                    <i class="fas fa-shield-alt fa-3x text-muted mb-3"></i>
+                                    <p class="text-muted">No hay QRs protegidos aún</p>
+                                    <p class="small">Configura la seguridad de un QR usando el panel izquierdo</p>
+                                </div>
+                            <?php else: ?>
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <thead>
+                                            <tr>
+                                                <th>QR ID</th>
+                                                <th>Tipo de Protección</th>
+                                                <th>Estado</th>
+                                                <th>Usos</th>
+                                                <th>Expira</th>
+                                                <th>Acciones</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <?php foreach ($protectedQrs as $qrId => $security): ?>
+                                                <?php 
+                                                $isExpired = $security['expiry_date'] && strtotime($security['expiry_date']) < time();
+                                                $usagePercent = $security['max_uses'] ? ($security['current_uses'] / $security['max_uses']) * 100 : 0;
+                                                ?>
+                                                <tr class="<?php echo $isExpired ? 'table-warning' : ''; ?>">
+                                                    <td>
+                                                        <code><?php echo htmlspecialchars($qrId); ?></code>
+                                                    </td>
+                                                    <td>
+                                                        <?php 
+                                                        $typeLabels = [
+                                                            'password' => '<i class="fas fa-key"></i> Contraseña',
+                                                            'capture' => '<i class="fas fa-form"></i> Formulario',
+                                                            'email' => '<i class="fas fa-envelope"></i> Email',
+                                                            'employee' => '<i class="fas fa-user-tie"></i> Empleados',
+                                                            'combined' => '<i class="fas fa-shield"></i> Combinado'
+                                                        ];
+                                                        echo $typeLabels[$security['security_type']] ?? $security['security_type'];
+                                                        ?>
+                                                        
+                                                        <?php if ($security['employee_only']): ?>
+                                                            <br><small class="badge bg-warning">Solo Empleados</small>
+                                                        <?php endif; ?>
+                                                        
+                                                        <?php if (!empty($security['allowed_ips'])): ?>
+                                                            <br><small class="badge bg-info">IP Restringida</small>
+                                                        <?php endif; ?>
+                                                    </td>
+                                                    <td>
+                                                        <?php if ($isExpired): ?>
+                                                            <span class="badge bg-danger">Expirado</span>
+                                                        <?php elseif ($security['max_uses'] && $security['current_uses'] >= $security['max_uses']): ?>
+                                                            <span class="badge bg-warning">Agotado</span>
+                                                        <?php else: ?>
+                                                            <span class="badge bg-success">Activo</span>
+                                                        <?php endif; ?>
+                                                    </td>
+                                                    <td>
+                                                        <div class="text-center">
+                                                            <strong><?php echo $security['current_uses']; ?></strong>
+                                                            <?php if ($security['max_uses']): ?>
+                                                                / <?php echo $security['max_uses']; ?>
+                                                                <div class="progress mt-1" style="height: 4px;">
+                                                                    <div class="progress-bar" style="width: <?php echo $usagePercent; ?>%"></div>
+                                                                </div>
+                                                            <?php else: ?>
+                                                                <br><small class="text-muted">Sin límite</small>
+                                                            <?php endif; ?>
+                                                        </div>
+                                                    </td>
+                                                    <td>
+                                                        <?php if ($security['expiry_date']): ?>
+                                                            <small>
+                                                                <?php echo date('d/m/Y H:i', strtotime($security['expiry_date'])); ?>
+                                                                <?php if ($isExpired): ?>
+                                                                    <br><span class="text-danger">¡Expirado!</span>
+                                                                <?php endif; ?>
+                                                            </small>
+                                                        <?php else: ?>
+                                                            <small class="text-muted">Sin caducidad</small>
+                                                        <?php endif; ?>
+                                                    </td>
+                                                    <td>
+                                                        <div class="btn-group-vertical" role="group">
+                                                            <button type="button" class="btn btn-sm btn-outline-primary mb-1" 
+                                                                    onclick="editSecurity('<?php echo htmlspecialchars($qrId); ?>')" 
+                                                                    title="Editar configuración">
+                                                                <i class="fas fa-edit"></i>
+                                                            </button>
+                                                            <button type="button" class="btn btn-sm btn-outline-info mb-1" 
+                                                                    onclick="viewSecurityLogs('<?php echo htmlspecialchars($qrId); ?>')" 
+                                                                    title="Ver logs de acceso">
+                                                                <i class="fas fa-history"></i>
+                                                            </button>
+                                                            <button type="button" class="btn btn-sm btn-outline-danger" 
+                                                                    onclick="removeSecurity('<?php echo htmlspecialchars($qrId); ?>')" 
+                                                                    title="Quitar protección">
+                                                                <i class="fas fa-shield-alt"></i>
+                                                            </button>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            <?php endforeach; ?>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                    
+                    <!-- Gestión de empleados -->
+                    <div class="card mt-3">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h6 class="mb-0">
+                                <i class="fas fa-user-tie me-2"></i>
+                                Empleados Autorizados
+                            </h6>
+                            <button type="button" class="btn btn-sm btn-success" onclick="addEmployee()">
+                                <i class="fas fa-plus me-1"></i>Agregar
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            <?php $employees = loadEmployees(); ?>
+                            
+                            <?php if (empty($employees)): ?>
+                                <div class="text-center py-3">
+                                    <i class="fas fa-user-tie fa-2x text-muted mb-2"></i>
+                                    <p class="text-muted small">No hay empleados autorizados</p>
+                                </div>
+                            <?php else: ?>
+                                <div class="table-responsive">
+                                    <table class="table table-sm">
+                                        <thead>
+                                            <tr>
+                                                <th>Email</th>
+                                                <th>Nombre</th>
+                                                <th>Departamento</th>
+                                                <th>Estado</th>
+                                                <th>Acciones</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <?php foreach ($employees as $employee): ?>
+                                                <tr>
+                                                    <td>
+                                                        <small><?php echo htmlspecialchars($employee['email']); ?></small>
+                                                    </td>
+                                                    <td>
+                                                        <small><?php echo htmlspecialchars($employee['name']); ?></small>
+                                                    </td>
+                                                    <td>
+                                                        <small><?php echo htmlspecialchars($employee['department']); ?></small>
+                                                    </td>
+                                                    <td>
+                                                        <?php if ($employee['active']): ?>
+                                                            <span class="badge bg-success">Activo</span>
+                                                        <?php else: ?>
+                                                            <span class="badge bg-secondary">Inactivo</span>
+                                                        <?php endif; ?>
+                                                    </td>
+                                                    <td>
+                                                        <div class="btn-group" role="group">
+                                                            <button type="button" class="btn btn-sm btn-outline-warning" 
+                                                                    onclick="editEmployee(<?php echo $employee['id']; ?>)" 
+                                                                    title="Editar">
+                                                                <i class="fas fa-edit"></i>
+                                                            </button>
+                                                            <button type="button" class="btn btn-sm btn-outline-danger" 
+                                                                    onclick="deleteEmployee(<?php echo $employee['id']; ?>)" 
+                                                                    title="Eliminar">
+                                                                <i class="fas fa-trash"></i>
+                                                            </button>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            <?php endforeach; ?>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+        </div> <!-- Fin pestaña Seguridad -->
+        
         <!-- Pestaña User Management -->
         <div class="tab-pane fade" id="user-management" role="tabpanel" aria-labelledby="users-tab">
             <div class="row">
@@ -2564,6 +2942,284 @@ $analyticsSummary = getAnalyticsSummary();
         document.addEventListener('DOMContentLoaded', function() {
             loadAdvancedStats();
         });
+        
+        // ============ FUNCIONES DE SEGURIDAD ============
+        
+        // Habilitar/deshabilitar opciones de seguridad
+        function toggleSecurityOptions() {
+            const enabled = document.getElementById('securityEnabled').checked;
+            const options = document.getElementById('securityOptions');
+            const saveBtn = document.getElementById('saveSecurityBtn');
+            
+            if (enabled) {
+                options.style.display = 'block';
+                saveBtn.disabled = false;
+            } else {
+                options.style.display = 'none';
+                saveBtn.disabled = true;
+            }
+        }
+        
+        // Toggle options según tipo de seguridad
+        function toggleSecurityTypeOptions() {
+            const securityType = document.getElementById('securityType').value;
+            const passwordOptions = document.getElementById('passwordOptions');
+            
+            // Reset all options
+            passwordOptions.style.display = 'none';
+            
+            // Show relevant options
+            if (securityType === 'password' || securityType === 'combined') {
+                passwordOptions.style.display = 'block';
+            }
+        }
+        
+        // Cargar configuración de seguridad existente
+        function loadSecurityConfig() {
+            const qrId = document.getElementById('securityQrId').value;
+            
+            if (!qrId) {
+                resetSecurityForm();
+                return;
+            }
+            
+            fetch(`security-handler.php?action=get_config&qr_id=${encodeURIComponent(qrId)}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.config) {
+                        populateSecurityForm(data.config);
+                    } else {
+                        resetSecurityForm();
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    resetSecurityForm();
+                });
+        }
+        
+        // Poblar formulario con configuración existente
+        function populateSecurityForm(config) {
+            document.getElementById('securityEnabled').checked = config.security_enabled;
+            document.getElementById('securityType').value = config.security_type || 'none';
+            document.getElementById('passwordHint').value = config.password_hint || '';
+            document.getElementById('expiryDate').value = config.expiry_date || '';
+            document.getElementById('allowedIps').value = (config.allowed_ips || []).join('\n');
+            document.getElementById('maxUses').value = config.max_uses || '';
+            document.getElementById('employeeOnly').checked = config.employee_only || false;
+            document.getElementById('accessLog').checked = config.access_log !== false;
+            document.getElementById('redirectDelay').value = config.custom_redirect_delay || 0;
+            
+            toggleSecurityOptions();
+            toggleSecurityTypeOptions();
+        }
+        
+        // Resetear formulario
+        function resetSecurityForm() {
+            document.getElementById('securityForm').reset();
+            document.getElementById('securityEnabled').checked = false;
+            toggleSecurityOptions();
+        }
+        
+        // Manejar envío de formulario de seguridad
+        document.getElementById('securityForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            formData.append('action', 'save_config');
+            
+            // Procesar IPs permitidas
+            const allowedIpsText = document.getElementById('allowedIps').value;
+            const allowedIps = allowedIpsText.split('\n')
+                .map(ip => ip.trim())
+                .filter(ip => ip.length > 0);
+            
+            formData.set('allowed_ips', JSON.stringify(allowedIps));
+            
+            fetch('security-handler.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Configuración de seguridad guardada exitosamente!');
+                    location.reload();
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error al guardar configuración de seguridad');
+            });
+        });
+        
+        // Editar configuración de seguridad
+        function editSecurity(qrId) {
+            document.getElementById('securityQrId').value = qrId;
+            loadSecurityConfig();
+            
+            // Activar pestaña de seguridad si no está activa
+            const securityTab = document.getElementById('security-tab');
+            if (!securityTab.classList.contains('active')) {
+                securityTab.click();
+            }
+            
+            // Scroll to form
+            document.getElementById('securityForm').scrollIntoView({ behavior: 'smooth' });
+        }
+        
+        // Remover protección de seguridad
+        function removeSecurity(qrId) {
+            if (!confirm('¿Está seguro de que desea quitar la protección de este QR?')) {
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('action', 'remove_security');
+            formData.append('qr_id', qrId);
+            
+            fetch('security-handler.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Protección removida exitosamente');
+                    location.reload();
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error al remover protección');
+            });
+        }
+        
+        // Ver logs de seguridad
+        function viewSecurityLogs(qrId) {
+            window.open(`security-logs.php?qr_id=${encodeURIComponent(qrId)}`, '_blank', 
+                       'width=1000,height=600,scrollbars=yes,resizable=yes');
+        }
+        
+        // ============ FUNCIONES DE EMPLEADOS ============
+        
+        // Agregar empleado
+        function addEmployee() {
+            const email = prompt('Email del empleado:');
+            if (!email) return;
+            
+            const name = prompt('Nombre completo:');
+            if (!name) return;
+            
+            const department = prompt('Departamento:');
+            if (!department) return;
+            
+            const formData = new FormData();
+            formData.append('action', 'add_employee');
+            formData.append('email', email);
+            formData.append('name', name);
+            formData.append('department', department);
+            
+            fetch('security-handler.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Empleado agregado exitosamente');
+                    location.reload();
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error al agregar empleado');
+            });
+        }
+        
+        // Editar empleado
+        function editEmployee(employeeId) {
+            // Cargar datos del empleado
+            fetch(`security-handler.php?action=get_employee&id=${employeeId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const employee = data.employee;
+                        
+                        const newEmail = prompt('Email del empleado:', employee.email);
+                        if (newEmail === null) return;
+                        
+                        const newName = prompt('Nombre completo:', employee.name);
+                        if (newName === null) return;
+                        
+                        const newDepartment = prompt('Departamento:', employee.department);
+                        if (newDepartment === null) return;
+                        
+                        // Guardar cambios
+                        const formData = new FormData();
+                        formData.append('action', 'edit_employee');
+                        formData.append('employee_id', employeeId);
+                        formData.append('email', newEmail);
+                        formData.append('name', newName);
+                        formData.append('department', newDepartment);
+                        
+                        return fetch('security-handler.php', {
+                            method: 'POST',
+                            body: formData
+                        });
+                    } else {
+                        throw new Error(data.message);
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('Empleado actualizado exitosamente');
+                        location.reload();
+                    } else {
+                        alert('Error: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Error al editar empleado');
+                });
+        }
+        
+        // Eliminar empleado
+        function deleteEmployee(employeeId) {
+            if (!confirm('¿Está seguro de que desea eliminar este empleado?')) {
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('action', 'delete_employee');
+            formData.append('employee_id', employeeId);
+            
+            fetch('security-handler.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Empleado eliminado exitosamente');
+                    location.reload();
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error al eliminar empleado');
+            });
+        }
         
         function initializeCharts() {
             // Device breakdown chart

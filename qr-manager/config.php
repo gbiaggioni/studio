@@ -13,6 +13,9 @@ define('ANALYTICS_FILE', __DIR__ . '/analytics.json');
 define('CATEGORIES_FILE', __DIR__ . '/categories.json');
 define('TEMPLATES_FILE', __DIR__ . '/templates.json');
 define('FOLDERS_FILE', __DIR__ . '/folders.json');
+define('SECURITY_SETTINGS_FILE', __DIR__ . '/security_settings.json');
+define('EMPLOYEES_FILE', __DIR__ . '/employees.json');
+define('ACCESS_TOKENS_FILE', __DIR__ . '/access_tokens.json');
 
 // Funciones auxiliares
 function loadJsonFile($file) {
@@ -905,5 +908,416 @@ function getTopPerformingQRs($redirects, $limit = 10) {
     });
     
     return array_slice($performance, 0, $limit);
+}
+
+// ============ FUNCIONES DE SEGURIDAD ============
+
+// Funciones de Configuración de Seguridad
+function loadSecuritySettings() {
+    if (!file_exists(SECURITY_SETTINGS_FILE)) {
+        return [];
+    }
+    return loadJsonFile(SECURITY_SETTINGS_FILE);
+}
+
+function saveSecuritySettings($settings) {
+    return saveJsonFile(SECURITY_SETTINGS_FILE, $settings);
+}
+
+function getSecuritySettings($qrId) {
+    $settings = loadSecuritySettings();
+    return $settings[$qrId] ?? null;
+}
+
+function createSecuritySettings($qrId, $config, $createdBy) {
+    $settings = loadSecuritySettings();
+    
+    $securityConfig = [
+        'qr_id' => $qrId,
+        'security_enabled' => $config['security_enabled'] ?? false,
+        'security_type' => $config['security_type'] ?? 'none',
+        'password' => isset($config['password']) ? password_hash($config['password'], PASSWORD_DEFAULT) : null,
+        'password_hint' => $config['password_hint'] ?? '',
+        'expiry_date' => $config['expiry_date'] ?? null,
+        'allowed_ips' => $config['allowed_ips'] ?? [],
+        'capture_form' => $config['capture_form'] ?? ['enabled' => false],
+        'email_verification' => $config['email_verification'] ?? ['enabled' => false],
+        'employee_only' => $config['employee_only'] ?? false,
+        'max_uses' => $config['max_uses'] ?? null,
+        'current_uses' => 0,
+        'blocked_countries' => $config['blocked_countries'] ?? [],
+        'require_user_agent' => $config['require_user_agent'] ?? false,
+        'custom_redirect_delay' => $config['custom_redirect_delay'] ?? 0,
+        'access_log' => $config['access_log'] ?? true,
+        'created_at' => date('Y-m-d H:i:s'),
+        'created_by' => $createdBy
+    ];
+    
+    $settings[$qrId] = $securityConfig;
+    saveSecuritySettings($settings);
+    
+    return $securityConfig;
+}
+
+function updateSecuritySettings($qrId, $updates) {
+    $settings = loadSecuritySettings();
+    
+    if (!isset($settings[$qrId])) {
+        return false;
+    }
+    
+    foreach ($updates as $key => $value) {
+        if ($key === 'password' && !empty($value)) {
+            $settings[$qrId][$key] = password_hash($value, PASSWORD_DEFAULT);
+        } else {
+            $settings[$qrId][$key] = $value;
+        }
+    }
+    
+    $settings[$qrId]['updated_at'] = date('Y-m-d H:i:s');
+    saveSecuritySettings($settings);
+    
+    return true;
+}
+
+// Funciones de Validación de Seguridad
+function validateQrAccess($qrId, $password = null, $captureData = null, $userEmail = null) {
+    $security = getSecuritySettings($qrId);
+    
+    if (!$security || !$security['security_enabled']) {
+        return ['allowed' => true, 'message' => ''];
+    }
+    
+    // Verificar caducidad
+    if ($security['expiry_date'] && strtotime($security['expiry_date']) < time()) {
+        return ['allowed' => false, 'message' => 'Este QR ha caducado', 'error_type' => 'expired'];
+    }
+    
+    // Verificar límite de usos
+    if ($security['max_uses'] && $security['current_uses'] >= $security['max_uses']) {
+        return ['allowed' => false, 'message' => 'Se ha alcanzado el límite máximo de usos', 'error_type' => 'max_uses'];
+    }
+    
+    // Verificar IP permitidas
+    if (!empty($security['allowed_ips']) && !isIpAllowed(getUserIP(), $security['allowed_ips'])) {
+        return ['allowed' => false, 'message' => 'Tu dirección IP no está autorizada', 'error_type' => 'ip_blocked'];
+    }
+    
+    // Verificar países bloqueados
+    if (!empty($security['blocked_countries'])) {
+        $userCountry = getUserCountry(getUserIP());
+        if (in_array($userCountry, $security['blocked_countries'])) {
+            return ['allowed' => false, 'message' => 'Acceso no disponible desde tu ubicación', 'error_type' => 'country_blocked'];
+        }
+    }
+    
+    // Verificar solo empleados
+    if ($security['employee_only'] && !isAuthorizedEmployee($userEmail)) {
+        return ['allowed' => false, 'message' => 'Solo empleados autorizados pueden acceder', 'error_type' => 'employee_only'];
+    }
+    
+    // Verificar contraseña
+    if ($security['security_type'] === 'password') {
+        if (!$password || !password_verify($password, $security['password'])) {
+            return ['allowed' => false, 'message' => 'Contraseña incorrecta', 'error_type' => 'invalid_password'];
+        }
+    }
+    
+    // Verificar verificación de email
+    if ($security['email_verification']['enabled']) {
+        if (!$userEmail || !isEmailDomainAllowed($userEmail, $security['email_verification']['allowed_domains'])) {
+            return ['allowed' => false, 'message' => 'Email no autorizado', 'error_type' => 'email_not_allowed'];
+        }
+    }
+    
+    // Verificar formulario de captura
+    if ($security['capture_form']['enabled'] && !$captureData) {
+        return ['allowed' => false, 'message' => 'Se requiere información adicional', 'error_type' => 'capture_required'];
+    }
+    
+    return ['allowed' => true, 'message' => 'Acceso autorizado'];
+}
+
+function isIpAllowed($userIp, $allowedIps) {
+    foreach ($allowedIps as $allowedIp) {
+        if (strpos($allowedIp, '/') !== false) {
+            // CIDR notation
+            if (ipInRange($userIp, $allowedIp)) {
+                return true;
+            }
+        } else {
+            // Exact IP match
+            if ($userIp === $allowedIp) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+function ipInRange($ip, $cidr) {
+    list($subnet, $mask) = explode('/', $cidr);
+    return (ip2long($ip) & ~((1 << (32 - $mask)) - 1)) == ip2long($subnet);
+}
+
+function getUserIP() {
+    if (!empty($_SERVER['HTTP_CLIENT_IP'])) {
+        return $_SERVER['HTTP_CLIENT_IP'];
+    } elseif (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
+        return $_SERVER['HTTP_X_FORWARDED_FOR'];
+    } else {
+        return $_SERVER['REMOTE_ADDR'];
+    }
+}
+
+function getUserCountry($ip) {
+    // Simplified country detection - in production use a proper GeoIP service
+    $ipData = @file_get_contents("http://ip-api.com/json/{$ip}");
+    if ($ipData) {
+        $data = json_decode($ipData, true);
+        return $data['countryCode'] ?? 'Unknown';
+    }
+    return 'Unknown';
+}
+
+// Funciones de Empleados
+function loadEmployees() {
+    if (!file_exists(EMPLOYEES_FILE)) {
+        $defaultEmployees = [
+            [
+                'id' => 1,
+                'email' => 'admin@empresa.com',
+                'name' => 'Administrador',
+                'department' => 'IT',
+                'active' => true,
+                'created_at' => date('Y-m-d H:i:s'),
+                'created_by' => 'system'
+            ]
+        ];
+        saveJsonFile(EMPLOYEES_FILE, $defaultEmployees);
+        return $defaultEmployees;
+    }
+    return loadJsonFile(EMPLOYEES_FILE);
+}
+
+function saveEmployees($employees) {
+    return saveJsonFile(EMPLOYEES_FILE, $employees);
+}
+
+function isAuthorizedEmployee($email) {
+    if (!$email) return false;
+    
+    $employees = loadEmployees();
+    foreach ($employees as $employee) {
+        if ($employee['email'] === $email && $employee['active']) {
+            return true;
+        }
+    }
+    return false;
+}
+
+function addEmployee($email, $name, $department, $createdBy) {
+    $employees = loadEmployees();
+    
+    // Verificar si ya existe
+    foreach ($employees as $employee) {
+        if ($employee['email'] === $email) {
+            return false;
+        }
+    }
+    
+    // Generar nuevo ID
+    $maxId = 0;
+    foreach ($employees as $employee) {
+        if ($employee['id'] > $maxId) {
+            $maxId = $employee['id'];
+        }
+    }
+    
+    $newEmployee = [
+        'id' => $maxId + 1,
+        'email' => $email,
+        'name' => $name,
+        'department' => $department,
+        'active' => true,
+        'created_at' => date('Y-m-d H:i:s'),
+        'created_by' => $createdBy
+    ];
+    
+    $employees[] = $newEmployee;
+    saveEmployees($employees);
+    
+    return $newEmployee;
+}
+
+function isEmailDomainAllowed($email, $allowedDomains) {
+    if (empty($allowedDomains)) return true;
+    
+    $emailDomain = substr(strrchr($email, "@"), 1);
+    return in_array($emailDomain, $allowedDomains);
+}
+
+// Funciones de Tokens de Acceso
+function generateAccessToken($qrId, $duration = 3600) {
+    $token = bin2hex(random_bytes(32));
+    $tokens = loadAccessTokens();
+    
+    $tokens[$token] = [
+        'qr_id' => $qrId,
+        'created_at' => time(),
+        'expires_at' => time() + $duration,
+        'used' => false
+    ];
+    
+    saveAccessTokens($tokens);
+    return $token;
+}
+
+function validateAccessToken($token) {
+    $tokens = loadAccessTokens();
+    
+    if (!isset($tokens[$token])) {
+        return false;
+    }
+    
+    $tokenData = $tokens[$token];
+    
+    if ($tokenData['expires_at'] < time() || $tokenData['used']) {
+        return false;
+    }
+    
+    return $tokenData;
+}
+
+function markTokenAsUsed($token) {
+    $tokens = loadAccessTokens();
+    
+    if (isset($tokens[$token])) {
+        $tokens[$token]['used'] = true;
+        saveAccessTokens($tokens);
+    }
+}
+
+function loadAccessTokens() {
+    if (!file_exists(ACCESS_TOKENS_FILE)) {
+        return [];
+    }
+    return loadJsonFile(ACCESS_TOKENS_FILE);
+}
+
+function saveAccessTokens($tokens) {
+    return saveJsonFile(ACCESS_TOKENS_FILE, $tokens);
+}
+
+// Función para incrementar uso
+function incrementQrUsage($qrId) {
+    $settings = loadSecuritySettings();
+    
+    if (isset($settings[$qrId])) {
+        $settings[$qrId]['current_uses'] = ($settings[$qrId]['current_uses'] ?? 0) + 1;
+        saveSecuritySettings($settings);
+    }
+}
+
+// Función para limpiar tokens expirados
+function cleanExpiredTokens() {
+    $tokens = loadAccessTokens();
+    $currentTime = time();
+    
+    foreach ($tokens as $token => $data) {
+        if ($data['expires_at'] < $currentTime) {
+            unset($tokens[$token]);
+        }
+    }
+    
+    saveAccessTokens($tokens);
+}
+
+// Función para logging de accesos seguros
+function logSecureAccess($qrId, $ip, $userAgent, $result, $additionalData = []) {
+    $logFile = __DIR__ . '/logs/security_access.log';
+    
+    if (!is_dir(dirname($logFile))) {
+        mkdir(dirname($logFile), 0755, true);
+    }
+    
+    $logEntry = [
+        'timestamp' => date('Y-m-d H:i:s'),
+        'qr_id' => $qrId,
+        'ip' => $ip,
+        'user_agent' => $userAgent,
+        'result' => $result,
+        'additional_data' => $additionalData
+    ];
+    
+    file_put_contents($logFile, json_encode($logEntry) . "\n", FILE_APPEND);
+}
+
+// Función para enviar email de verificación
+function sendVerificationEmail($email, $qrId, $verificationCode) {
+    // En producción, usar un servicio de email real como SendGrid, Mailgun, etc.
+    $subject = "Verificación de acceso - QR Manager";
+    $message = "Tu código de verificación es: {$verificationCode}\n\n";
+    $message .= "Este código expira en 10 minutos.\n";
+    $message .= "Si no solicitaste este acceso, ignora este mensaje.";
+    
+    $headers = "From: noreply@qrmanager.com\r\n";
+    $headers .= "Content-Type: text/plain; charset=UTF-8\r\n";
+    
+    // En desarrollo, guardar en archivo
+    $emailLog = __DIR__ . '/logs/emails.log';
+    if (!is_dir(dirname($emailLog))) {
+        mkdir(dirname($emailLog), 0755, true);
+    }
+    
+    $emailEntry = [
+        'timestamp' => date('Y-m-d H:i:s'),
+        'to' => $email,
+        'subject' => $subject,
+        'message' => $message,
+        'verification_code' => $verificationCode
+    ];
+    
+    file_put_contents($emailLog, json_encode($emailEntry) . "\n", FILE_APPEND);
+    
+    // En producción, descomentar la siguiente línea:
+    // return mail($email, $subject, $message, $headers);
+    
+    return true; // Simular envío exitoso para desarrollo
+}
+
+// Función para generar código de verificación
+function generateVerificationCode() {
+    return sprintf('%06d', mt_rand(100000, 999999));
+}
+
+// Función para obtener estadísticas de seguridad
+function getSecurityStats() {
+    $settings = loadSecuritySettings();
+    $totalQrs = count($settings);
+    $protectedQrs = 0;
+    $expiredQrs = 0;
+    $securityTypes = [];
+    
+    foreach ($settings as $setting) {
+        if ($setting['security_enabled']) {
+            $protectedQrs++;
+        }
+        
+        if ($setting['expiry_date'] && strtotime($setting['expiry_date']) < time()) {
+            $expiredQrs++;
+        }
+        
+        $type = $setting['security_type'];
+        $securityTypes[$type] = ($securityTypes[$type] ?? 0) + 1;
+    }
+    
+    return [
+        'total_qrs_with_security_config' => $totalQrs,
+        'protected_qrs' => $protectedQrs,
+        'expired_qrs' => $expiredQrs,
+        'security_types' => $securityTypes,
+        'employees_count' => count(loadEmployees())
+    ];
 }
 ?>
