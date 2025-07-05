@@ -3,6 +3,7 @@
 # =============================================================================
 # SCRIPT DE INSTALACIÓN QR MANAGER PARA CYBERPANEL + OPENLITESPEED
 # Ubuntu 20.04 + CyberPanel + OpenLiteSpeed
+# Compatible con sh y bash
 # =============================================================================
 
 echo "🚀 Iniciando instalación de QR Manager para CyberPanel + OpenLiteSpeed..."
@@ -24,10 +25,10 @@ show_progress() {
 # 1. Configurar permisos básicos
 show_progress "Configurando permisos de archivos"
 chmod 755 .
-chmod 644 *.php
-chmod 644 *.json
-chmod 644 .htaccess
-chmod 755 install-cyberpanel.sh
+chmod 644 *.php 2>/dev/null || true
+chmod 644 *.json 2>/dev/null || true
+chmod 644 .htaccess 2>/dev/null || true
+chmod 755 install-cyberpanel.sh 2>/dev/null || true
 
 # 2. Crear directorio QR con permisos correctos
 show_progress "Configurando directorio de QRs"
@@ -39,7 +40,7 @@ chmod 755 qr
 # Si ya existe el directorio ejemplo, configurar permisos
 if [ -d "qr/ejemplo" ]; then
     chmod 755 qr/ejemplo
-    chmod 644 qr/ejemplo/index.php
+    chmod 644 qr/ejemplo/index.php 2>/dev/null || true
 fi
 
 # 3. Crear directorio de logs si no existe
@@ -48,41 +49,61 @@ if [ ! -d "logs" ]; then
     mkdir logs
 fi
 chmod 755 logs
-touch logs/access.log
-touch logs/error.log
-touch logs/security.log
-chmod 644 logs/*.log
+touch logs/access.log 2>/dev/null || true
+touch logs/error.log 2>/dev/null || true
+touch logs/security.log 2>/dev/null || true
+chmod 644 logs/*.log 2>/dev/null || true
 
 # 4. Configurar permisos especiales para archivos JSON
 show_progress "Configurando permisos de archivos de datos"
-chmod 666 *.json
+chmod 666 *.json 2>/dev/null || true
 
 # 5. Verificar configuración PHP
 show_progress "Verificando configuración PHP"
-php_version=$(php -v | head -n 1 | cut -d ' ' -f 2 | cut -d '.' -f 1,2)
-echo "📋 Versión PHP detectada: $php_version"
-
-if [[ $(echo "$php_version < 7.4" | bc -l) == 1 ]]; then
-    echo "⚠️  Advertencia: Se recomienda PHP 7.4 o superior"
+if command -v php >/dev/null 2>&1; then
+    php_version=$(php -v 2>/dev/null | head -n 1 | cut -d ' ' -f 2 | cut -d '.' -f 1,2)
+    echo "📋 Versión PHP detectada: $php_version"
+    
+    # Verificar si es PHP 7.4 o superior (comparación simple)
+    case "$php_version" in
+        7.4*|7.5*|7.6*|7.7*|7.8*|7.9*|8.*|9.*)
+            echo "✅ Versión PHP compatible"
+            ;;
+        *)
+            echo "⚠️  Advertencia: Se recomienda PHP 7.4 o superior"
+            ;;
+    esac
+else
+    echo "⚠️  PHP no encontrado en PATH, pero puede estar configurado en CyberPanel"
 fi
 
 # 6. Verificar extensiones PHP necesarias
 show_progress "Verificando extensiones PHP requeridas"
 
-required_extensions=("json" "session" "curl" "gd" "fileinfo")
-missing_extensions=()
-
-for ext in "${required_extensions[@]}"; do
-    if ! php -m | grep -qi "^$ext$"; then
-        missing_extensions+=("$ext")
+if command -v php >/dev/null 2>&1; then
+    # Lista de extensiones requeridas
+    required_extensions="json session curl gd fileinfo"
+    missing_extensions=""
+    
+    for ext in $required_extensions; do
+        if ! php -m 2>/dev/null | grep -qi "^$ext$"; then
+            if [ -z "$missing_extensions" ]; then
+                missing_extensions="$ext"
+            else
+                missing_extensions="$missing_extensions $ext"
+            fi
+        fi
+    done
+    
+    if [ -z "$missing_extensions" ]; then
+        echo "✅ Todas las extensiones PHP requeridas están instaladas"
+    else
+        echo "⚠️  Extensiones PHP faltantes: $missing_extensions"
+        echo "   Pueden estar disponibles en CyberPanel pero no detectadas aquí"
     fi
-done
-
-if [ ${#missing_extensions[@]} -eq 0 ]; then
-    echo "✅ Todas las extensiones PHP requeridas están instaladas"
 else
-    echo "⚠️  Extensiones PHP faltantes: ${missing_extensions[*]}"
-    echo "   Instálalas con: sudo apt install php-${missing_extensions[0]// / php-}"
+    echo "⚠️  No se puede verificar extensiones PHP desde línea de comandos"
+    echo "   Verifica en CyberPanel que estén instaladas: json, session, curl, gd, fileinfo"
 fi
 
 # 7. Crear archivo de configuración específico para OpenLiteSpeed
