@@ -3,7 +3,7 @@
 # =============================================================================
 # SCRIPT DE INSTALACIÓN QR MANAGER PARA CYBERPANEL + OPENLITESPEED
 # Ubuntu 20.04 + CyberPanel + OpenLiteSpeed
-# Compatible con sh y bash
+# Compatible con sh y bash - Versión con verificación completa de requisitos
 # =============================================================================
 
 echo "🚀 Iniciando instalación de QR Manager para CyberPanel + OpenLiteSpeed..."
@@ -16,6 +16,280 @@ if [ ! -f "config.php" ]; then
 fi
 
 echo "✅ Directorio verificado correctamente"
+
+# =============================================================================
+# VERIFICACIÓN COMPLETA DE REQUISITOS DEL SISTEMA
+# =============================================================================
+
+echo ""
+echo "🔍 VERIFICANDO REQUISITOS DEL SISTEMA..."
+echo "========================================="
+
+# Variables para el reporte final
+ERRORS=0
+WARNINGS=0
+SERVER_TYPE=""
+PHP_VERSION=""
+PHP_CLI_AVAILABLE=false
+
+# Función para mostrar errores
+show_error() {
+    echo "❌ ERROR: $1"
+    ERRORS=$((ERRORS + 1))
+}
+
+# Función para mostrar advertencias
+show_warning() {
+    echo "⚠️  ADVERTENCIA: $1"
+    WARNINGS=$((WARNINGS + 1))
+}
+
+# Función para mostrar éxito
+show_success() {
+    echo "✅ $1"
+}
+
+# Función para mostrar información
+show_info() {
+    echo "📋 $1"
+}
+
+# =============================================================================
+# 1. DETECTAR SERVIDOR WEB
+# =============================================================================
+
+show_info "Detectando servidor web..."
+
+# Verificar OpenLiteSpeed
+if command -v litespeed >/dev/null 2>&1 || [ -f "/usr/local/lsws/bin/litespeed" ] || [ -d "/usr/local/lsws" ]; then
+    SERVER_TYPE="OpenLiteSpeed"
+    show_success "OpenLiteSpeed detectado"
+    
+    # Verificar CyberPanel
+    if command -v cyberpanel >/dev/null 2>&1 || [ -f "/usr/local/CyberCP/cyberpanel/manage.py" ]; then
+        show_success "CyberPanel detectado - Configuración óptima"
+    else
+        show_warning "OpenLiteSpeed detectado pero CyberPanel no encontrado"
+        show_info "  - Se recomienda usar CyberPanel para facilitar la gestión"
+    fi
+
+# Verificar Apache
+elif command -v apache2 >/dev/null 2>&1 || command -v httpd >/dev/null 2>&1; then
+    if command -v apache2 >/dev/null 2>&1; then
+        SERVER_TYPE="Apache"
+        show_success "Apache detectado"
+    else
+        SERVER_TYPE="Apache (httpd)"
+        show_success "Apache (httpd) detectado"
+    fi
+    
+    # Verificar mod_rewrite
+    if apache2ctl -M 2>/dev/null | grep -q "rewrite_module" || httpd -M 2>/dev/null | grep -q "rewrite_module"; then
+        show_success "mod_rewrite está habilitado"
+    else
+        show_error "mod_rewrite NO está habilitado (requerido para Apache)"
+        show_info "  - Habilitar con: sudo a2enmod rewrite && sudo systemctl reload apache2"
+    fi
+
+# Verificar Nginx
+elif command -v nginx >/dev/null 2>&1; then
+    SERVER_TYPE="Nginx"
+    show_success "Nginx detectado"
+    show_warning "Nginx requiere configuración manual adicional"
+    show_info "  - Necesitarás configurar las reglas de rewrite manualmente"
+
+# No se detectó servidor web
+else
+    show_error "No se detectó servidor web (Apache, OpenLiteSpeed, Nginx)"
+    show_info "  - Instala Apache: sudo apt install apache2"
+    show_info "  - O instala OpenLiteSpeed con CyberPanel"
+fi
+
+# =============================================================================
+# 2. VERIFICAR VERSIÓN Y CONFIGURACIÓN DE PHP
+# =============================================================================
+
+show_info "Verificando PHP..."
+
+# Verificar PHP CLI
+if command -v php >/dev/null 2>&1; then
+    PHP_CLI_AVAILABLE=true
+    PHP_VERSION=$(php -v 2>/dev/null | head -n 1 | cut -d ' ' -f 2 | cut -d '.' -f 1,2)
+    show_success "PHP CLI disponible - Versión: $PHP_VERSION"
+    
+    # Verificar versión PHP
+    case "$PHP_VERSION" in
+        7.4*|7.5*|7.6*|7.7*|7.8*|7.9*|8.*|9.*)
+            show_success "Versión PHP compatible ($PHP_VERSION)"
+            ;;
+        7.0*|7.1*|7.2*|7.3*)
+            show_warning "Versión PHP antigua ($PHP_VERSION) - Se recomienda 7.4+"
+            ;;
+        *)
+            show_error "Versión PHP no compatible o no detectada ($PHP_VERSION)"
+            ;;
+    esac
+else
+    show_warning "PHP CLI no disponible en PATH"
+    show_info "  - En CyberPanel, PHP puede estar configurado pero no en CLI"
+    show_info "  - Esto es normal en algunos servidores compartidos"
+fi
+
+# =============================================================================
+# 3. VERIFICAR EXTENSIONES PHP REQUERIDAS
+# =============================================================================
+
+show_info "Verificando extensiones PHP requeridas..."
+
+if [ "$PHP_CLI_AVAILABLE" = true ]; then
+    required_extensions="json session curl gd fileinfo"
+    missing_extensions=""
+    
+    for ext in $required_extensions; do
+        if php -m 2>/dev/null | grep -qi "^$ext$"; then
+            show_success "Extensión $ext: Disponible"
+        else
+            show_warning "Extensión $ext: No detectada en CLI"
+            if [ -z "$missing_extensions" ]; then
+                missing_extensions="$ext"
+            else
+                missing_extensions="$missing_extensions $ext"
+            fi
+        fi
+    done
+    
+    if [ -n "$missing_extensions" ]; then
+        show_info "  - Extensiones faltantes: $missing_extensions"
+        show_info "  - En CyberPanel: Websites > [Tu sitio] > PHP > Verificar extensiones"
+        show_info "  - En Ubuntu: sudo apt install php-json php-curl php-gd"
+    fi
+else
+    show_info "  - No se pueden verificar extensiones sin PHP CLI"
+    show_info "  - Verifica en CyberPanel que estén instaladas: json, session, curl, gd, fileinfo"
+fi
+
+# =============================================================================
+# 4. VERIFICAR ESTRUCTURA DE DIRECTORIOS Y PERMISOS
+# =============================================================================
+
+show_info "Verificando estructura de directorios..."
+
+# Verificar directorio actual
+CURRENT_DIR=$(pwd)
+if echo "$CURRENT_DIR" | grep -q "qr-manager"; then
+    show_success "Directorio qr-manager detectado: $CURRENT_DIR"
+else
+    show_warning "No pareces estar en un directorio qr-manager"
+    show_info "  - Directorio actual: $CURRENT_DIR"
+fi
+
+# Verificar si estamos en un directorio web típico
+if echo "$CURRENT_DIR" | grep -qE "(public_html|www|htdocs|web)"; then
+    show_success "Directorio web detectado en la ruta"
+elif echo "$CURRENT_DIR" | grep -q "home"; then
+    show_success "Directorio de usuario detectado"
+else
+    show_warning "No parece ser un directorio web típico"
+    show_info "  - Asegúrate de estar en: /home/tu-dominio.com/public_html/qr-manager/"
+fi
+
+# Verificar permisos de escritura
+if [ -w . ]; then
+    show_success "Permisos de escritura en directorio actual"
+else
+    show_error "Sin permisos de escritura en directorio actual"
+    show_info "  - Ejecutar: chmod 755 ."
+fi
+
+# =============================================================================
+# 5. VERIFICAR CONECTIVIDAD EXTERNA
+# =============================================================================
+
+show_info "Verificando conectividad externa..."
+
+# Verificar conectividad a APIs esenciales
+test_urls="https://api.qrserver.com https://ipapi.co"
+connectivity_ok=true
+
+for url in $test_urls; do
+    if curl -s --max-time 5 --head "$url" >/dev/null 2>&1; then
+        show_success "Conectividad OK: $url"
+    elif wget -q --timeout=5 --spider "$url" >/dev/null 2>&1; then
+        show_success "Conectividad OK: $url (wget)"
+    else
+        show_warning "Sin conectividad: $url"
+        connectivity_ok=false
+    fi
+done
+
+if [ "$connectivity_ok" = false ]; then
+    show_info "  - Algunas funciones (QR generation, geolocation) pueden fallar"
+    show_info "  - Verifica firewall y configuración de red"
+fi
+
+# =============================================================================
+# 6. VERIFICAR DEPENDENCIAS DEL SISTEMA
+# =============================================================================
+
+show_info "Verificando dependencias del sistema..."
+
+# Verificar herramientas básicas
+tools="curl wget chmod chown mkdir touch"
+for tool in $tools; do
+    if command -v "$tool" >/dev/null 2>&1; then
+        show_success "Herramienta disponible: $tool"
+    else
+        show_warning "Herramienta faltante: $tool"
+    fi
+done
+
+# =============================================================================
+# 7. REPORTE FINAL DE REQUISITOS
+# =============================================================================
+
+echo ""
+echo "📊 REPORTE FINAL DE REQUISITOS"
+echo "==============================="
+
+show_info "Servidor Web: $SERVER_TYPE"
+show_info "PHP Versión: $PHP_VERSION"
+show_info "Directorio: $CURRENT_DIR"
+show_info "Errores encontrados: $ERRORS"
+show_info "Advertencias: $WARNINGS"
+
+echo ""
+
+# Decidir si continuar según los errores
+if [ $ERRORS -gt 0 ]; then
+    echo "❌ INSTALACIÓN NO RECOMENDADA"
+    echo "Se encontraron $ERRORS errores críticos que deben resolverse."
+    echo ""
+    echo "¿Deseas continuar de todos modos? (no recomendado)"
+    echo "Escribe 'si' para continuar o 'no' para salir:"
+    read -r response
+    if [ "$response" != "si" ] && [ "$response" != "SI" ] && [ "$response" != "s" ]; then
+        echo "❌ Instalación cancelada. Resuelve los errores y vuelve a intentar."
+        exit 1
+    fi
+elif [ $WARNINGS -gt 0 ]; then
+    echo "⚠️  INSTALACIÓN CON ADVERTENCIAS"
+    echo "Se encontraron $WARNINGS advertencias. La instalación puede continuar."
+    echo ""
+    echo "¿Deseas continuar? (recomendado: si)"
+    echo "Escribe 'si' para continuar o 'no' para salir:"
+    read -r response
+    if [ "$response" = "no" ] || [ "$response" = "NO" ] || [ "$response" = "n" ]; then
+        echo "❌ Instalación cancelada por el usuario."
+        exit 1
+    fi
+else
+    echo "✅ TODOS LOS REQUISITOS CUMPLIDOS"
+    echo "Sistema óptimo para QR Manager"
+fi
+
+echo ""
+echo "🚀 CONTINUANDO CON LA INSTALACIÓN..."
+echo "====================================="
 
 # Función para mostrar progreso
 show_progress() {
@@ -58,107 +332,125 @@ chmod 644 logs/*.log 2>/dev/null || true
 show_progress "Configurando permisos de archivos de datos"
 chmod 666 *.json 2>/dev/null || true
 
-# 5. Verificar configuración PHP
-show_progress "Verificando configuración PHP"
-if command -v php >/dev/null 2>&1; then
-    php_version=$(php -v 2>/dev/null | head -n 1 | cut -d ' ' -f 2 | cut -d '.' -f 1,2)
-    echo "📋 Versión PHP detectada: $php_version"
-    
-    # Verificar si es PHP 7.4 o superior (comparación simple)
-    case "$php_version" in
-        7.4*|7.5*|7.6*|7.7*|7.8*|7.9*|8.*|9.*)
-            echo "✅ Versión PHP compatible"
-            ;;
-        *)
-            echo "⚠️  Advertencia: Se recomienda PHP 7.4 o superior"
-            ;;
-    esac
-else
-    echo "⚠️  PHP no encontrado en PATH, pero puede estar configurado en CyberPanel"
-fi
+# 5. Crear configuración específica según servidor detectado
+show_progress "Creando configuración específica para $SERVER_TYPE"
 
-# 6. Verificar extensiones PHP necesarias
-show_progress "Verificando extensiones PHP requeridas"
-
-if command -v php >/dev/null 2>&1; then
-    # Lista de extensiones requeridas
-    required_extensions="json session curl gd fileinfo"
-    missing_extensions=""
-    
-    for ext in $required_extensions; do
-        if ! php -m 2>/dev/null | grep -qi "^$ext$"; then
-            if [ -z "$missing_extensions" ]; then
-                missing_extensions="$ext"
-            else
-                missing_extensions="$missing_extensions $ext"
-            fi
-        fi
-    done
-    
-    if [ -z "$missing_extensions" ]; then
-        echo "✅ Todas las extensiones PHP requeridas están instaladas"
-    else
-        echo "⚠️  Extensiones PHP faltantes: $missing_extensions"
-        echo "   Pueden estar disponibles en CyberPanel pero no detectadas aquí"
-    fi
-else
-    echo "⚠️  No se puede verificar extensiones PHP desde línea de comandos"
-    echo "   Verifica en CyberPanel que estén instaladas: json, session, curl, gd, fileinfo"
-fi
-
-# 7. Crear archivo de configuración específico para OpenLiteSpeed
-show_progress "Creando configuración específica de OpenLiteSpeed"
-cat > openlitespeed-config.txt << 'EOF'
+if [ "$SERVER_TYPE" = "OpenLiteSpeed" ]; then
+    # Configuración específica para OpenLiteSpeed
+    cat > server-config.txt << EOF
 # =============================================================================
-# CONFIGURACIÓN CYBERPANEL PARA QR MANAGER
+# CONFIGURACIÓN PARA OPENLITESPEED + CYBERPANEL
 # =============================================================================
 
-## 1. CONFIGURACIÓN EN CYBERPANEL:
+## CONFIGURACIÓN EN CYBERPANEL:
 
-### A. PHP Settings:
-- Ir a: "Websites" > [Tu sitio] > "PHP"
+### A. PHP Settings (Websites > [Tu sitio] > PHP):
 - Versión: PHP 7.4 o superior
-- Configuraciones:
-  * max_execution_time = 300
-  * memory_limit = 256M
-  * post_max_size = 10M
-  * upload_max_filesize = 10M
-  * session.gc_maxlifetime = 3600
+- max_execution_time = 300
+- memory_limit = 256M
+- post_max_size = 10M
+- upload_max_filesize = 10M
+- session.gc_maxlifetime = 3600
+- allow_url_fopen = On
 
-### B. Security Headers:
-- Ir a: "Websites" > [Tu sitio] > "Headers"
-- Agregar:
-  * X-Frame-Options: SAMEORIGIN
-  * X-Content-Type-Options: nosniff
-  * X-XSS-Protection: 1; mode=block
-  * Referrer-Policy: strict-origin-when-cross-origin
+### B. Security Headers (Websites > [Tu sitio] > Headers):
+- X-Frame-Options: SAMEORIGIN
+- X-Content-Type-Options: nosniff
+- X-XSS-Protection: 1; mode=block
+- Referrer-Policy: strict-origin-when-cross-origin
 
-### C. SSL/HTTPS:
-- Ir a: "SSL" > [Tu sitio]
+### C. SSL/HTTPS (SSL > [Tu sitio]):
 - Activar SSL con Let's Encrypt
 - Forzar HTTPS redirect
 
-### D. Compression:
-- Ir a: "Websites" > [Tu sitio] > "Caching"
+### D. Compression (Websites > [Tu sitio] > Caching):
 - Activar Gzip compression
+- Cache para archivos estáticos
 
-## 2. VERIFICACIÓN:
-1. Accede a: https://tu-dominio.com/qr-manager/
-2. Login: admin / password
-3. Crea un QR de prueba
-4. Verifica funcionamiento
+## VENTAJAS DE OPENLITESPEED:
+- ✅ 6x más rápido que Apache
+- ✅ 50% menos memoria
+- ✅ 10,000+ conexiones simultáneas
+- ✅ Cache integrado nativo
 
 EOF
 
-# 8. Crear script de verificación
+elif [ "$SERVER_TYPE" = "Apache" ] || [ "$SERVER_TYPE" = "Apache (httpd)" ]; then
+    # Configuración específica para Apache
+    cat > server-config.txt << EOF
+# =============================================================================
+# CONFIGURACIÓN PARA APACHE
+# =============================================================================
+
+## CONFIGURACIÓN REQUERIDA:
+
+### A. Módulos Apache necesarios:
+sudo a2enmod rewrite
+sudo a2enmod headers
+sudo a2enmod expires
+sudo a2enmod deflate
+sudo systemctl reload apache2
+
+### B. Configuración Virtual Host:
+<Directory "/path/to/qr-manager">
+    AllowOverride All
+    Require all granted
+</Directory>
+
+### C. PHP Settings (en .htaccess o php.ini):
+max_execution_time = 300
+memory_limit = 256M
+post_max_size = 10M
+upload_max_filesize = 10M
+allow_url_fopen = On
+
+### D. SSL/HTTPS (recomendado):
+sudo certbot --apache -d tu-dominio.com
+
+## NOTA: El .htaccess incluido maneja las reglas de rewrite
+
+EOF
+
+else
+    # Configuración genérica
+    cat > server-config.txt << EOF
+# =============================================================================
+# CONFIGURACIÓN PARA $SERVER_TYPE
+# =============================================================================
+
+## CONFIGURACIÓN REQUERIDA:
+
+### A. PHP Settings:
+- Versión: PHP 7.4 o superior
+- max_execution_time = 300
+- memory_limit = 256M
+- post_max_size = 10M
+- upload_max_filesize = 10M
+- allow_url_fopen = On
+
+### B. Reglas de Rewrite necesarias:
+- Proteger archivos *.json
+- Configurar DirectoryIndex index.php
+- Habilitar headers de seguridad
+
+### C. Extensiones PHP requeridas:
+- json, session, curl, gd, fileinfo
+
+## NOTA: Configuración manual requerida para $SERVER_TYPE
+
+EOF
+
+fi
+
+# 6. Crear script de verificación
 show_progress "Creando script de verificación"
 cat > verify-installation.php << 'EOF'
 <?php
-// Script de verificación para QR Manager en OpenLiteSpeed
+// Script de verificación para QR Manager
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
-echo "<h2>🔍 Verificación de QR Manager - OpenLiteSpeed</h2>";
+echo "<h2>🔍 Verificación de QR Manager</h2>";
 
 // 1. Verificar versión PHP
 echo "<h3>1. Configuración PHP</h3>";
@@ -222,11 +514,11 @@ echo "<p><a href='index.php'>← Ir a QR Manager</a></p>";
 ?>
 EOF
 
-# 9. Crear archivo de configuración PHP personalizado
+# 7. Crear archivo de configuración PHP personalizado
 show_progress "Creando configuración PHP optimizada"
 cat > php-config.ini << 'EOF'
-; Configuración PHP optimizada para QR Manager en OpenLiteSpeed
-; Copia estas configuraciones en CyberPanel > Websites > [Tu sitio] > PHP
+; Configuración PHP optimizada para QR Manager
+; Aplicar según tu servidor web
 
 max_execution_time = 300
 max_input_time = 300
@@ -258,7 +550,7 @@ opcache.max_accelerated_files = 4000
 opcache.validate_timestamps = 0
 EOF
 
-# 10. Verificaciones finales
+# 8. Verificaciones finales
 show_progress "Realizando verificaciones finales"
 
 # Verificar que config.php sea accesible
@@ -268,20 +560,16 @@ else
     echo "❌ config.php no es legible"
 fi
 
-# Verificar que los JSON estén protegidos (por .htaccess)
-echo "✅ Configuración de protección aplicada"
-
-# 11. Información final
+# 9. Información final
 echo ""
 echo "==========================================================================="
-echo "🎉 INSTALACIÓN COMPLETADA PARA CYBERPANEL + OPENLITESPEED"
+echo "🎉 INSTALACIÓN COMPLETADA PARA $SERVER_TYPE"
 echo "==========================================================================="
 echo ""
 echo "📋 PRÓXIMOS PASOS:"
 echo ""
-echo "1. 🔧 CONFIGURAR CYBERPANEL:"
-echo "   - Copia el contenido de 'openlitespeed-config.txt'"
-echo "   - Aplica las configuraciones en CyberPanel"
+echo "1. 🔧 CONFIGURAR SERVIDOR:"
+echo "   - Consulta el archivo 'server-config.txt' para configuraciones específicas"
 echo ""
 echo "2. 🌐 CONFIGURAR DOMINIO:"
 echo "   - Edita config.php línea 4:"
@@ -297,10 +585,15 @@ echo "   - Usuario: admin"
 echo "   - Contraseña: password"
 echo ""
 echo "📚 ARCHIVOS CREADOS:"
-echo "   - openlitespeed-config.txt (configuración para CyberPanel)"
+echo "   - server-config.txt (configuración específica para $SERVER_TYPE)"
 echo "   - verify-installation.php (verificación automática)"
 echo "   - php-config.ini (configuración PHP recomendada)"
-echo "   - cyberpanel-openlitespeed.conf (reglas de rewrite)"
 echo ""
-echo "✅ ¡QR Manager está listo para OpenLiteSpeed!"
+echo "📊 RESUMEN DE VERIFICACIÓN:"
+echo "   - Servidor: $SERVER_TYPE"
+echo "   - PHP: $PHP_VERSION"
+echo "   - Errores: $ERRORS"
+echo "   - Advertencias: $WARNINGS"
+echo ""
+echo "✅ ¡QR Manager está listo para $SERVER_TYPE!"
 echo "==========================================================================="
