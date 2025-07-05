@@ -1,0 +1,39 @@
+# =============================================================================
+# CONFIGURACIÓN CYBERPANEL PARA QR MANAGER
+# =============================================================================
+
+## 1. CONFIGURACIÓN EN CYBERPANEL:
+
+### A. PHP Settings:
+- Ir a: "Websites" > [Tu sitio] > "PHP"
+- Versión: PHP 7.4 o superior
+- Configuraciones:
+  * max_execution_time = 300
+  * memory_limit = 256M
+  * post_max_size = 10M
+  * upload_max_filesize = 10M
+  * session.gc_maxlifetime = 3600
+
+### B. Security Headers:
+- Ir a: "Websites" > [Tu sitio] > "Headers"
+- Agregar:
+  * X-Frame-Options: SAMEORIGIN
+  * X-Content-Type-Options: nosniff
+  * X-XSS-Protection: 1; mode=block
+  * Referrer-Policy: strict-origin-when-cross-origin
+
+### C. SSL/HTTPS:
+- Ir a: "SSL" > [Tu sitio]
+- Activar SSL con Let's Encrypt
+- Forzar HTTPS redirect
+
+### D. Compression:
+- Ir a: "Websites" > [Tu sitio] > "Caching"
+- Activar Gzip compression
+
+## 2. VERIFICACIÓN:
+1. Accede a: https://tu-dominio.com/qr-manager/
+2. Login: admin / password
+3. Crea un QR de prueba
+4. Verifica funcionamiento
+

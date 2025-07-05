@@ -1,10 +1,14 @@
 <?php
 session_start();
 
-// Configuración del dominio
-define('BASE_URL', 'http://localhost/qr-manager'); // Cambiar por tu dominio
+// Configuración del dominio (Compatible OpenLiteSpeed + CyberPanel)
+define('BASE_URL', 'http://localhost/qr-manager'); // CAMBIAR POR TU DOMINIO REAL
 define('QR_DIR', __DIR__ . '/qr/');
 define('QR_URL', BASE_URL . '/qr/');
+
+// Configuración específica para OpenLiteSpeed
+define('LITESPEED_COMPATIBLE', true);
+define('ENABLE_OPCACHE', function_exists('opcache_reset'));
 
 // Archivos de datos
 define('USERS_FILE', __DIR__ . '/users.json');
