@@ -1,4 +1,3 @@
-
 {
   "name": "qreasy",
   "version": "1.0.0",
@@ -32,10 +31,14 @@
     "@radix-ui/react-tabs": "^1.1.3",
     "@radix-ui/react-toast": "^1.2.6",
     "@radix-ui/react-tooltip": "^1.1.8",
+    "chart.js": "^4.5.0",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
+    "csv-parse": "^6.1.0",
     "date-fns": "^3.6.0",
     "firebase": "^11.9.1",
+    "gridjs": "^6.2.0",
+    "gridjs-react": "^6.1.1",
     "lucide-react": "^0.408.0",
     "mysql2": "^3.10.1",
     "next": "14.2.3",
@@ -43,6 +46,7 @@
     "postcss": "^8.4.40",
     "qrcode.react": "^3.1.0",
     "react": "18.3.1",
+    "react-chartjs-2": "^5.3.0",
     "react-day-picker": "^8.10.1",
     "react-dom": "18.3.1",
     "react-hook-form": "^7.54.2",
@@ -58,5 +62,22 @@
     "@types/react-dom": "^18.3.0",
     "tailwindcss": "^3.4.4",
     "typescript": "^5.5.2"
-  }
+  },
+  "description": "Has estado viendo el mismo error una y otra vez (`La configuración de la base de datos es incompleta` o `Cannot find module './types'`) porque tu servidor **NO ESTÁ DESCARGANDO LAS CORRECCIONES**.",
+  "main": "next.config.js",
+  "directories": {
+    "doc": "docs",
+    "lib": "lib"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gbiaggioni/studio.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/gbiaggioni/studio/issues"
+  },
+  "homepage": "https://github.com/gbiaggioni/studio#readme"
 }

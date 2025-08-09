@@ -113,3 +113,58 @@ QREasy es una aplicación web moderna y sencilla para crear, gestionar y compart
 -   **Estilo:** Tailwind CSS & ShadCN UI
 -   **Base de Datos:** MariaDB / MySQL
 -   **Contenerización:** Docker
+
+---
+
+## 📊 Panel de Control de Asistencias (reporte_consolidado.csv)
+
+Este proyecto incluye un panel estadístico que procesa automáticamente el archivo `reporte_consolidado.csv` desde `http://10.0.22.87/ZKTeco/data/reporte_consolidado.csv` y lo expone en una interfaz web con filtros, métricas, gráficos y descarga CSV.
+
+### 🔧 Instalación (desarrollo)
+
+1. Instala dependencias:
+   ```bash
+   npm install
+   ```
+2. Construye la app (opcional en dev):
+   ```bash
+   npm run build
+   ```
+3. Inicia el servidor (producción):
+   ```bash
+   npm run start
+   ```
+   Por defecto servirá en `http://localhost:3000`.
+
+Para entorno de desarrollo con recarga en caliente, ejecuta:
+```bash
+npm run dev
+```
+
+### 🛣️ Rutas
+- API de datos procesados: `/api/attendance`
+- Panel interactivo: `/panel`
+
+### 🧠 Lógica de procesamiento (Node.js)
+Se realiza en el servidor (Next.js/Node) antes de enviar al frontend:
+- Para cada `userid`, se ordenan registros por `fecha_hora`.
+- Si la diferencia entre registros consecutivos del mismo `userid` es menor a 15 minutos, se descarta el último.
+- Si la diferencia es mayor a 7 horas y, además, cambia la fecha (día distinto), se inserta un registro adicional igual al primero con `fecha_hora + 15 minutos`.
+- Se agrega al final la columna `siguiente_fecha_hora` con la fecha y hora del siguiente registro del mismo `userid`.
+- Se preservan todas las columnas originales y su orden.
+
+### 📈 Interfaz
+- Tabla dinámica con búsqueda, ordenamiento y paginación.
+- Filtros por Año, Mes y `userid`.
+- Botón para descargar en CSV los datos filtrados.
+- Métricas: cantidad total, usuarios únicos, promedio por usuario, distribución por día y hora.
+
+### 🧪 Ejemplo de ejecución
+1. Asegúrate de que la URL `http://10.0.22.87/ZKTeco/data/reporte_consolidado.csv` sea accesible desde el servidor.
+2. Inicia la app:
+   ```bash
+   npm run start
+   ```
+3. Abre el panel en `http://localhost:3000/panel`.
+
+Si la URL del CSV no está disponible, la API `/api/attendance` devolverá un error HTTP 500 indicando que no se pudo descargar el archivo.
