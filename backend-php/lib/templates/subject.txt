@@ -1,0 +1,1 @@
+Aviso de ausencia docente — {{docente}} ({{desde}} → {{hasta}})

@@ -1,0 +1,10 @@
+[
+	{
+		"id": "1A",
+		"turno": "Mañana",
+		"preceptores": [
+			{"id": "PRE-100", "nombre": "Luis Pérez", "email": "l.perez@escuela.edu.ar", "telefono": "+5492944555123", "telegram_user": "@lperez", "whatsapp": "+5492944555123"},
+			{"id": "PRE-101", "nombre": "María Díaz", "email": "m.diaz@escuela.edu.ar", "telefono": "+5492944555987", "telegram_user": "@mdiaz", "whatsapp": "+5492944555987"}
+		]
+	}
+]

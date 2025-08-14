@@ -1,0 +1,5 @@
+Secretaría informa: el/la docente {{docente}} estará ausente del {{desde}} al {{hasta}}.
+Cursos afectados:
+{{#clases}}
+- {{curso}} — {{materia}} — {{fecha}} de {{hora_inicio}} a {{hora_fin}} (aula {{aula}})
+{{/clases}}
