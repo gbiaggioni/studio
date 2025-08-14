@@ -1,0 +1,13 @@
+[
+	{
+		"id": "DOC-001",
+		"apellido": "García",
+		"nombre": "Ana",
+		"email": "ana.garcia@escuela.edu.ar",
+		"telefono": "+54 9 11 5555 1111",
+		"telegram_user": "@anagarcia",
+		"whatsapp": "+5491155551111",
+		"materias": ["Matemática", "Física"],
+		"activo": true
+	}
+]

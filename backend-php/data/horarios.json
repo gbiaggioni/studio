@@ -1,0 +1,11 @@
+[
+	{
+		"curso_id": "1A",
+		"materia": "Matemática",
+		"docente_id": "DOC-001",
+		"dia_semana": 1,
+		"hora_inicio": "08:00",
+		"hora_fin": "09:20",
+		"aula": "A-3"
+	}
+]
